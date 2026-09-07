@@ -209,9 +209,8 @@ const SEED_DATA = {
     name: 'Rakesh Sharma',
     email: 'rakesh.user@demo.com',
     phone: '9876543210',
-    address: 'Flat 402, Green Avenue, Main Road, Sakoli',
+    address: '',
     savedAddresses: [
-      { id: 'addr_home', type: 'Home', label: 'ðŸ  Home', address: 'Flat 402, Green Avenue, Main Road, Sakoli', isDefault: true },
       { id: 'addr_work', type: 'Work', label: 'ðŸ¢ Office', address: 'Cabin 14, Commercial Complex, Station Road, Sakoli', isDefault: false }
     ]
   },
@@ -388,9 +387,12 @@ if (appData) {
     ];
   }
   if (appData.currentUser) {
+    if (appData.currentUser.savedAddresses && appData.currentUser.savedAddresses.length) {
+      // Drop the old seeded default Home address so no address is pre-selected
+      appData.currentUser.savedAddresses = appData.currentUser.savedAddresses.filter(a => !(a.isDefault && a.address === 'Flat 402, Green Avenue, Main Road, Sakoli'));
+    }
     if (!appData.currentUser.savedAddresses || !appData.currentUser.savedAddresses.length) {
       appData.currentUser.savedAddresses = [
-        { id: 'addr_home', type: 'Home', label: 'ðŸ  Home', address: 'Flat 402, Green Avenue, Main Road, Sakoli', isDefault: true },
         { id: 'addr_work', type: 'Work', label: 'ðŸ¢ Office', address: 'Cabin 14, Commercial Complex, Station Road, Sakoli', isDefault: false }
       ];
     }
@@ -2060,7 +2062,7 @@ async function submitOrder() {
 
   const name = document.getElementById('custName')?.value.trim() || appData.currentUser?.name || 'Rakesh Sharma';
   const phone = document.getElementById('custPhone')?.value.trim() || appData.currentUser?.phone || '9876543210';
-  const address = document.getElementById('custAddress')?.value.trim() || appData.currentUser?.address || 'Flat 402, Green Avenue, Sakoli';
+  const address = document.getElementById('custAddress')?.value.trim() || appData.currentUser?.address || '';
   let payment = document.getElementById('paymentMethod')?.value || 'UPI';
 
   const subtotal = currentCart.reduce((s, i) => s + (i.price * i.qty), 0);
