@@ -2049,6 +2049,8 @@ function setDeliveryScheduleMode(mode) {
 
 let pendingOrderForPayment = null;
 let currentRzpOrderId = null;
+let pendingUpiPayment = null;
+const BHOOKIT_UPI_VPA = 'bhookit@okhdfcbank';
 
 async function submitOrder() {
   if (!currentCart.length) {
@@ -2210,7 +2212,9 @@ async function openPaymentGateway(order) {
 
 function switchGatewayTab(tab) {
   ['tabUpi', 'tabCard', 'tabNet'].forEach(id => document.getElementById(id)?.classList.remove('active'));
-  ['gatewayUpiPanel', 'gatewayCardPanel', 'gatewayNetPanel'].forEach(id => document.getElementById(id)?.classList.add('hidden'));
+  ['gatewayUpiPanel', 'gatewayCardPanel', 'gatewayNetPanel', 'gatewayUpiReturnUi'].forEach(id => document.getElementById(id)?.classList.add('hidden'));
+  document.getElementById('gatewayProcessingState')?.classList.add('hidden');
+  document.getElementById('gatewayActionArea')?.classList.remove('hidden');
 
   if (tab === 'upi') {
     document.getElementById('tabUpi')?.classList.add('active');
@@ -2226,11 +2230,112 @@ function switchGatewayTab(tab) {
 
 function cancelGatewayPayment() {
   closeModal('paymentGatewayModal');
+  pendingUpiPayment = null;
+  sessionStorage.removeItem('bhookit_pending_upi');
   showToast('Payment cancelled by user. You can retry or choose Cash on Delivery.', 'warning');
+}
+
+// Launch real UPI deep link to PhonePe / Google Pay / default UPI app
+function payWithUpiApp(scheme) {
+  if (!pendingOrderForPayment) {
+    showToast('No pending order to pay. Please try again.', 'warning');
+    return;
+  }
+  const o = pendingOrderForPayment;
+  const am = Math.max(1, Math.round(o.total));
+  const tn = 'BhookItOrder-' + o.id + '-' + Date.now().toString(36).toUpperCase();
+  const base = `pa=${BHOOKIT_UPI_VPA}&pn=BhookIt&am=${am}&cu=INR&tn=${tn}`;
+  const urlMap = {
+    gpay: `tez://upi/?${base}`,
+    phonepe: `phonepe://pay?${base}`,
+    upi: `upi://pay?${base}`
+  };
+  const url = urlMap[scheme] || urlMap.upi;
+
+  pendingUpiPayment = { order: o, ref: o.id, scheme };
+  sessionStorage.setItem('bhookit_pending_upi', JSON.stringify({ ref: o.id, am, tn }));
+
+  const actionArea = document.getElementById('gatewayActionArea');
+  const procState = document.getElementById('gatewayProcessingState');
+  const procMsg = document.getElementById('gatewayProcessMsg');
+  if (actionArea) actionArea.classList.add('hidden');
+  if (procState) procState.classList.remove('hidden');
+  if (procMsg) procMsg.textContent = 'Opening your UPI app...';
+
+  setTimeout(() => {
+    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+    if (isMobile) {
+      try {
+        window.location.href = url;
+      } catch (err) {
+        console.warn('UPI deep link could not be launched:', err);
+      }
+    }
+    showUpiReturnUi();
+  }, 400);
+}
+
+function showUpiReturnUi() {
+  const ret = document.getElementById('gatewayUpiReturnUi');
+  const procState = document.getElementById('gatewayProcessingState');
+  if (procState) procState.classList.add('hidden');
+  if (ret) ret.classList.remove('hidden');
+}
+
+function confirmUpiPaid() {
+  if (!pendingUpiPayment || !pendingUpiPayment.order) return;
+  const o = pendingUpiPayment.order;
+  closeModal('paymentGatewayModal');
+  o.transactionId = 'UPTXN' + Date.now().toString(36).toUpperCase();
+  o.paymentStatus = 'Paid';
+  finalizeOrderPlacement(o);
+  pendingOrderForPayment = null;
+  pendingUpiPayment = null;
+  sessionStorage.removeItem('bhookit_pending_upi');
+  showToast('Payment received via UPI ✓', 'success');
+}
+
+function retryUpiPayment() {
+  const ret = document.getElementById('gatewayUpiReturnUi');
+  const actionArea = document.getElementById('gatewayActionArea');
+  const procState = document.getElementById('gatewayProcessingState');
+  if (ret) ret.classList.add('hidden');
+  if (procState) procState.classList.add('hidden');
+  if (actionArea) actionArea.classList.remove('hidden');
+  pendingUpiPayment = null;
+  showToast('Payment not completed. You can retry or choose Cash on Delivery.', 'warning');
+}
+
+// When the UPI app hands control back to the browser, surface the confirm UI
+function armUpiReturnWatcher() {
+  const onShow = () => {
+    if (document.visibilityState === 'visible' && pendingUpiPayment) {
+      const ret = document.getElementById('gatewayUpiReturnUi');
+      if (ret && ret.classList.contains('hidden')) {
+        const actionArea = document.getElementById('gatewayActionArea');
+        const procState = document.getElementById('gatewayProcessingState');
+        if (actionArea) actionArea.classList.add('hidden');
+        if (procState) procState.classList.add('hidden');
+        ret.classList.remove('hidden');
+      }
+    }
+  };
+  document.addEventListener('visibilitychange', onShow);
+  window.addEventListener('pageshow', onShow);
 }
 
 async function processGatewayPayment(isSuccess) {
   if (!pendingOrderForPayment) return;
+
+  if (isSuccess) {
+    const upiPanel = document.getElementById('gatewayUpiPanel');
+    const upiActive = !!(upiPanel && !upiPanel.classList.contains('hidden'));
+    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+    if (upiActive && isMobile) {
+      payWithUpiApp('upi');
+      return;
+    }
+  }
 
   const actionArea = document.getElementById('gatewayActionArea');
   const procState = document.getElementById('gatewayProcessingState');
@@ -6941,6 +7046,7 @@ document.addEventListener('DOMContentLoaded', () => {
   updateCartBadge();
   updateWalletUI();
   updateWeatherPillUI();
+  armUpiReturnWatcher();
   renderLocationCityTabs();
   selectDeliveryZone('zone_sakoli_1');
   renderCustomerTableBookings();

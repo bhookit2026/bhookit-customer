@@ -532,12 +532,15 @@
         </div>
         <!-- Tab 1: UPI -->
         <div id="gatewayUpiPanel">
-          <label style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Enter UPI ID / VPA</label>
-          <input type="text" id="upiIdInput" class="input-field" value="rakesh@okaxis" placeholder="yourname@upi">
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0 14px 0;">
-            <button class="btn-secondary" onclick="document.getElementById('upiIdInput').value='user@okicici'" style="font-size: 12px;">📱 GPay</button>
-            <button class="btn-secondary" onclick="document.getElementById('upiIdInput').value='user@ybl'" style="font-size: 12px;">🟣 PhonePe</button>
+          <label style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Pay with your UPI App (PhonePe / Google Pay)</label>
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 8px 0 10px 0;">
+            <button type="button" class="btn-secondary" onclick="payWithUpiApp('gpay')" style="font-size: 11px; padding: 8px 4px;">📱 Google Pay</button>
+            <button type="button" class="btn-secondary" onclick="payWithUpiApp('phonepe')" style="font-size: 11px; padding: 8px 4px;">🟣 PhonePe</button>
+            <button type="button" class="btn-secondary" onclick="payWithUpiApp('upi')" style="font-size: 11px; padding: 8px 4px;">🔵 Other UPI</button>
           </div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">Payee: <b>bhookit@okhdfcbank</b> (BhookIt)</div>
+          <label style="font-size: 11px; font-weight: 600; color: var(--text-muted);">Your UPI ID (for receipt)</label>
+          <input type="text" id="upiIdInput" class="input-field" value="rakesh@okaxis" placeholder="yourname@upi">
         </div>
         <!-- Tab 2: Card -->
         <div id="gatewayCardPanel" class="hidden">
@@ -576,6 +579,16 @@
         <div id="gatewayProcessingState" class="hidden" style="text-align: center; padding: 20px 0;">
           <div style="font-size: 32px;">⏳</div>
           <p style="font-size: 14px; font-weight: 600; color: var(--text-main); margin-top: 8px;" id="gatewayProcessMsg">Contacting banking gateway...</p>
+        </div>
+        <!-- UPI App Return Confirmation -->
+        <div id="gatewayUpiReturnUi" class="hidden" style="text-align: center; padding: 16px 0;">
+          <div style="font-size: 34px;">📲</div>
+          <p style="font-size: 14px; font-weight: 700; color: var(--text-main); margin-top: 8px;">Complete the payment in your UPI app</p>
+          <p style="font-size: 12px; color: var(--text-muted); margin: 6px 0 0 0;">Done paying on PhonePe / Google Pay? Confirm to place your order.</p>
+          <div style="display: flex; gap: 8px; margin-top: 14px;">
+            <button class="btn-primary" onclick="confirmUpiPaid()" style="margin: 0; flex: 1;">✅ I've Paid</button>
+            <button class="btn-secondary" onclick="retryUpiPayment()" style="margin: 0;">↩️ Retry</button>
+          </div>
         </div>
       </div>
     </div>
