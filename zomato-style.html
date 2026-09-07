@@ -1,0 +1,1229 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#e23744">
+  <title>BhookIt — Food Delivery</title>
+  <link rel="icon" href="favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Signika:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --red: #e23744;
+      --red-dark: #c22533;
+      --red-soft: #fff4f4;
+      --bg: #ffffff;
+      --bg-soft: #f8f8f8;
+      --text: #1c1c1c;
+      --muted: #696969;
+      --muted2: #9b9b9b;
+      --line: #eeeeee;
+      --green: #1c9c43;
+      --amber: #d47f00;
+      --violet: #8a2be2;
+      --chip-bg: #fff4f3;
+      --radius: 14px;
+      --shadow: 0 4px 24px rgba(28, 28, 28, .08);
+      --font: 'Inter', system-ui, sans-serif;
+      --display: 'Signika', var(--font);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body { font-family: var(--font); color: var(--text); background: var(--bg); font-size: 14px; }
+    button { font-family: var(--font); cursor: pointer; border: 0; background: none; color: inherit; }
+    input, select { font-family: var(--font); }
+    img { display: block; }
+
+    /* ---------- HEADER ---------- */
+    .topbar { position: sticky; top: 0; z-index: 60; background: var(--bg); border-bottom: 1px solid var(--line); }
+    .topbar-inner { max-width: 1280px; margin: 0 auto; padding: 10px 18px; display: flex; align-items: center; gap: 22px; }
+    .brand { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+    .brand .logo-dot { width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg, var(--red), #ff7a5c); display: flex; align-items: center; justify-content: center; font-size: 18px; color: #fff; font-weight: 800; }
+    .brand b { font-family: var(--display); font-size: 24px; letter-spacing: .5px; }
+    .brand b span { color: var(--red); }
+    .brand small { display: block; color: var(--muted); font-size: 11px; font-weight: 500; margin-top: -3px; }
+    .tabs { display: flex; gap: 6px; }
+    .tab { display: flex; align-items: center; gap: 5px; padding: 8px 14px; border-radius: 999px; color: #0c0c0c; font-weight: 500; font-size: 14px; }
+    .tab.active { background: var(--chip-bg); color: var(--red); font-weight: 700; }
+    .head-search { flex: 1; max-width: 480px; display: flex; align-items: center; gap: 8px; background: var(--bg-soft); border: 1px solid var(--line); border-radius: 999px; padding: 9px 16px; cursor: pointer; }
+    .head-search:focus-within { border-color: var(--red); background: #fff; box-shadow: 0 0 0 4px rgba(226,55,68,.08); }
+    .head-search input { border: 0; outline: 0; flex: 1; background: none; font-size: 14px; }
+    .head-search .loc { color: var(--red); font-weight: 600; font-size: 12px; white-space: nowrap; }
+    .head-actions { margin-left: auto; display: flex; align-items: center; gap: 14px; }
+    .login-btn { color: #0c0c0c; font-weight: 600; font-size: 18px; padding: 6px 10px; }
+    .login-btn:hover { color: var(--red); }
+
+    /* ---------- BOTTOM NAV ---------- */
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 70; background: #fff; border-top: 1px solid var(--line); display: none; }
+    .bottom-nav-inner { max-width: 480px; margin: 0 auto; display: grid; grid-template-columns: repeat(5, 1fr); }
+    .bnav-btn { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 9px 4px 7px; color: #aaa; font-size: 10.5px; font-weight: 500; position: relative; }
+    .bnav-btn .ico { font-size: 21px; line-height: 1; }
+    .bnav-btn.active { color: var(--red); font-weight: 700; }
+    .bnav-btn .dot { position: absolute; top: 6px; right: 50%; transform: translateX(46px); background: var(--red); color: #fff; font-size: 10px; font-weight: 800; border-radius: 999px; padding: 0 5px; }
+
+    /* ---------- LAYOUT / VIEWS ---------- */
+    main { max-width: 1280px; margin: 0 auto; padding: 0 18px 90px; }
+    .view { display: none; }
+    .view.active { display: block; animation: fade .25s ease; }
+    @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+    /* ---------- HERO ---------- */
+    .hero { margin: 26px auto 30px; max-width: 920px; text-align: center; }
+    .hero h1 { font-family: var(--display); font-size: clamp(30px, 5vw, 52px); font-weight: 700; line-height: 1.1; }
+    .hero h1 span { color: var(--red); }
+    .hero p { color: var(--muted); margin-top: 10px; font-size: 17px; }
+    .hero-search { max-width: 640px; margin: 28px auto 0; display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 4px; box-shadow: 0 14px 40px rgba(0,0,0,.06); }
+    .hero-search .sep { width: 1px; height: 30px; background: var(--line); }
+    .hero-search input { flex: 1; border: 0; outline: 0; padding: 8px 6px; font-size: 15px; background: none; }
+    .hero-search .loc { color: var(--red); font-weight: 600; font-size: 13px; white-space: nowrap; }
+    .hero-search button { background: var(--red); color: #fff; border-radius: 8px; padding: 12px 26px; font-weight: 700; font-size: 14px; }
+    .hero-search button:hover { background: var(--red-dark); }
+
+    /* ---------- CATEGORY CARDS ---------- */
+    .cat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; max-width: 920px; margin: 0 auto 34px; }
+    .cat-card { position: relative; border-radius: var(--radius); overflow: hidden; cursor: pointer; box-shadow: 0 6px 22px rgba(0,0,0,.06); transition: transform .2s; }
+    .cat-card:hover { transform: translateY(-3px); }
+    .cat-card img { width: 100%; height: 210px; object-fit: cover; }
+    .cat-card .cap { position: absolute; inset: auto 0 0 0; padding: 34px 16px 12px; background: linear-gradient(transparent, rgba(0,0,0,.72)); color: #fff; font-weight: 700; font-size: 16px; }
+    .cat-card .cap small { display: block; font-weight: 400; font-size: 12px; opacity: .9; }
+
+    /* ---------- SECTION HEAD + SCROLL ROWS ---------- */
+    .sec-head { display: flex; align-items: center; justify-content: space-between; margin: 34px 0 14px; }
+    .sec-head h2 { font-family: var(--display); font-size: 26px; }
+    .sec-head a { color: var(--red); font-weight: 600; font-size: 13px; }
+    .hscroll { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 8px; scroll-snap-type: x mandatory; }
+    .hscroll::-webkit-scrollbar { height: 6px; }
+    .hscroll::-webkit-scrollbar-thumb { background: #ddd; border-radius: 3px; }
+
+    .col-card { flex: 0 0 260px; border-radius: var(--radius); overflow: hidden; cursor: pointer; position: relative; box-shadow: 0 4px 18px rgba(0,0,0,.07); scroll-snap-align: start; }
+    .col-card img { width: 100%; height: 150px; object-fit: cover; }
+    .col-card .t { padding: 12px 12px 14px; font-weight: 700; font-size: 15px; }
+    .col-card .t small { display: block; color: var(--muted); font-weight: 400; font-size: 12px; margin-top: 3px; }
+
+    /* ---------- RESTAURANT LIST ---------- */
+    .rest-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+    .rest-card { cursor: pointer; border-radius: var(--radius); overflow: hidden; transition: transform .2s, box-shadow .2s; }
+    .rest-card:hover { transform: translateY(-3px); }
+    .rest-card .imgwrap { position: relative; border-radius: var(--radius); overflow: hidden; aspect-ratio: 4/3; background: #eee; }
+    .rest-card .imgwrap img { width: 100%; height: 100%; object-fit: cover; }
+    .rest-card .ribbon { position: absolute; top: 12px; left: 0; background: var(--violet); color: #fff; font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 0 6px 6px 0; }
+    .rest-card .bookmark { position: absolute; top: 10px; right: 10px; width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,.94); display: flex; align-items: center; justify-content: center; font-size: 16px; color: #444; box-shadow: 0 2px 8px rgba(0,0,0,.15); }
+    .rest-card .bookmark.on { color: var(--red); }
+    .rest-meta { padding: 10px 2px 0; display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .rest-meta b { font-size: 16px; font-weight: 700; }
+    .rest-meta .rchip { display: flex; align-items: center; gap: 4px; background: var(--green); color: #fff; font-weight: 700; font-size: 12px; padding: 3px 7px; border-radius: 6px; }
+    .rest-meta .rchip.red { background: var(--red); }
+    .rest-sub { padding: 4px 2px 0; color: var(--muted); font-size: 13px; display: flex; justify-content: space-between; gap: 8px; }
+    .rest-sub .cuisines { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rest-sub .meta { white-space: nowrap; font-weight: 500; color: var(--text); }
+    .rest-sub2 { padding: 6px 2px 0; color: var(--muted2); font-size: 13px; }
+
+    /* ---------- FILTER CHIPS ---------- */
+    .filters { display: flex; gap: 10px; flex-wrap: wrap; margin: 18px 0 24px; }
+    .fchip { border: 1px solid var(--line); padding: 9px 16px; border-radius: 999px; font-size: 13px; font-weight: 500; color: var(--text); background: #fff; display: flex; align-items: center; gap: 6px; }
+    .fchip:hover { border-color: #bbb; }
+    .fchip.on { border-color: var(--red); color: var(--red); background: var(--red-soft); font-weight: 700; }
+    .fchip .n { color: var(--muted2); font-weight: 400; }
+
+    /* ---------- RESTAURANT DETAIL ---------- */
+    .rd-head { position: relative; border-radius: 16px; overflow: hidden; height: 250px; }
+    .rd-head img { width: 100%; height: 100%; object-fit: cover; }
+    .rd-head .grab { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.05) 40%, rgba(0,0,0,.35)); }
+    .back-btn { position: absolute; top: 14px; left: 14px; width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,.95); display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 2px 10px rgba(0,0,0,.2); }
+    .rd-info-card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin: -34px 18px 0; position: relative; padding: 18px 20px; }
+    .rd-info-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+    .rd-info-top h1 { font-family: var(--display); font-size: 28px; }
+    .rd-info-top .rchip { display: flex; align-items: center; gap: 4px; background: var(--green); color: #fff; font-weight: 700; font-size: 13px; padding: 5px 9px; border-radius: 8px; }
+    .rd-facts { display: flex; gap: 24px; margin-top: 12px; color: var(--muted); font-size: 13px; flex-wrap: wrap; }
+    .rd-facts b { color: var(--text); }
+    .rd-tabs { display: flex; gap: 26px; margin: 26px 2px 4px; border-bottom: 1px solid var(--line); }
+    .rd-tab { padding: 10px 2px 12px; font-weight: 500; color: var(--muted); font-size: 14px; border-bottom: 3px solid transparent; }
+    .rd-tab.active { color: var(--red); border-bottom-color: var(--red); font-weight: 700; }
+    .rd-search { margin: 16px 0; position: relative; }
+    .rd-search input { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 11px 16px 11px 42px; outline: 0; font-size: 13px; background: var(--bg-soft); }
+    .rd-search .mag { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted2); }
+    .cat-nav { position: sticky; top: 76px; z-index: 40; display: flex; gap: 8px; overflow-x: auto; background: #fff; padding: 6px 0 10px; }
+    .cat-nav::-webkit-scrollbar { display: none; }
+    .cat-pill { white-space: nowrap; border: 1px solid var(--line); padding: 7px 14px; border-radius: 999px; font-size: 12.5px; font-weight: 500; color: var(--muted); }
+    .cat-pill.active { background: var(--text); color: #fff; border-color: var(--text); }
+    .menu-sec { margin: 18px 0 10px; }
+    .menu-sec h3 { font-family: var(--display); font-size: 20px; margin-bottom: 6px; }
+    .menu-sec .count { color: var(--muted2); font-size: 12px; margin-bottom: 10px; }
+    .dish { display: flex; gap: 14px; justify-content: space-between; padding: 16px 2px; border-top: 1px solid var(--line); }
+    .dish-info { flex: 1; min-width: 0; }
+    .vegdot { width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid var(--green); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 6px; }
+    .vegdot::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+    .vegdot.nv { border-color: var(--red); }
+    .vegdot.nv::after { background: var(--red); }
+    .dish .name { font-weight: 700; font-size: 15px; }
+    .dish .price { font-weight: 500; font-size: 14px; margin-top: 3px; }
+    .dish .desc { color: var(--muted); font-size: 12.5px; margin-top: 5px; line-height: 1.45; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .dish .rate { color: var(--muted2); font-size: 12px; margin-top: 4px; }
+    .bestseller { background: var(--red-soft); color: var(--red); font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 999px; margin-left: 6px; vertical-align: middle; }
+    .dish-right { width: 108px; text-align: center; position: relative; }
+    .dish-right .photo { width: 108px; height: 100px; border-radius: 12px; object-fit: cover; background: #eee; }
+    .add-btn { position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 84px; background: #fff; border: 1px solid #dcdcdc; box-shadow: 0 3px 14px rgba(0,0,0,.08); border-radius: 8px; font-weight: 700; color: var(--green); padding: 7px 0; font-size: 13px; }
+    .stepper { position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #dcdcdc; box-shadow: 0 3px 14px rgba(0,0,0,.08); border-radius: 8px; padding: 5px 10px; }
+    .stepper button { font-size: 16px; font-weight: 700; color: var(--green); width: 20px; }
+    .stepper b { min-width: 12px; text-align: center; color: var(--text); font-weight: 600; }
+
+    /* ---------- CART BAR ---------- */
+    .cartbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 65; }
+    .cartbar .pill { max-width: 480px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: space-between; background: var(--green); color: #fff; padding: 14px 18px; border-radius: 12px; box-shadow: 0 8px 30px rgba(28,157,67,.35); font-weight: 600; font-size: 14px; cursor: pointer; }
+    .cartbar .pill b { font-weight: 800; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+
+    /* ---------- CART / CHECKOUT ---------- */
+    .checkout { max-width: 760px; margin: 0 auto; }
+    .checkout h1 { font-family: var(--display); font-size: 30px; margin: 8px 0 6px; }
+    .checkout .res { color: var(--muted); font-size: 13px; }
+    .card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; margin: 14px 0; }
+    .card h3 { font-family: var(--display); font-size: 17px; margin-bottom: 6px; }
+    .card .sub { color: var(--muted); font-size: 12.5px; }
+    .citem { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--line); gap: 10px; }
+    .citem:last-child { border-bottom: 0; }
+    .citem .nm { font-weight: 500; font-size: 14px; }
+    .citem .pr { color: var(--muted); font-size: 13px; margin-top: 2px; }
+    .steppersm { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 4px 10px; }
+    .steppersm button { color: var(--green); font-size: 15px; font-weight: 700; }
+    .coupon { border: 1.5px dashed #cdcdcd; border-radius: 10px; padding: 8px 12px; font-weight: 700; font-size: 13px; color: var(--green); display: flex; justify-content: space-between; align-items: center; margin: 12px 0; }
+    .coupon .chk { font-size: 18px; }
+    .coupon.applied { border-color: var(--green); background: #f0faf3; }
+    .bill-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13.5px; color: var(--text); }
+    .bill-row.muted { color: var(--muted); }
+    .bill-row.total { border-top: 1px solid var(--line); margin-top: 8px; padding-top: 10px; font-weight: 800; font-size: 15px; }
+    .bill-row.saving { color: var(--green); font-weight: 600; font-size: 12px; padding-top: 2px; }
+    .addr-box { display: flex; align-items: flex-start; gap: 12px; }
+    .addr-box .ic { width: 34px; height: 34px; border-radius: 9px; background: #f1f1f1; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .addr-box b { font-size: 13.5px; }
+    .addr-box p { color: var(--muted); font-size: 12px; margin-top: 2px; }
+    .addr-box .chg { margin-left: auto; color: var(--red); font-weight: 700; font-size: 12.5px; }
+    .pay-opt { display: flex; align-items: center; gap: 12px; padding: 13px 12px; border: 1px solid var(--line); border-radius: 11px; margin: 8px 0; font-weight: 600; font-size: 14px; }
+    .pay-opt.on { border-color: var(--red); background: var(--red-soft); }
+    .pay-opt .ic { font-size: 20px; }
+    .pay-opt .rad { margin-left: auto; width: 18px; height: 18px; border-radius: 50%; border: 2px solid #ccc; display: inline-block; }
+    .pay-opt.on .rad { border-color: var(--red); border-width: 5px; }
+    .place-btn { width: 100%; background: var(--red); color: #fff; font-weight: 800; font-size: 16px; padding: 15px; border-radius: 12px; margin-top: 8px; }
+    .place-btn:hover { background: var(--red-dark); }
+    .savedline { color: var(--green); font-weight: 700; font-size: 13px; text-align: center; margin-top: 10px; }
+
+    /* ---------- ORDERS ---------- */
+    .order-card { border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; margin: 12px 0; }
+    .order-card .top { display: flex; justify-content: space-between; align-items: center; }
+    .order-card .restnm { font-weight: 700; font-size: 15px; }
+    .order-card .ordid { color: var(--muted2); font-size: 12px; }
+    .order-card .stat { font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; }
+    .stat.placed { background: #fff2d9; color: var(--amber); }
+    .stat.preparing { background: #ffe4e6; color: var(--red); }
+    .stat.ontheway { background: #ede9fe; color: var(--violet); }
+    .stat.delivered { background: #dcfce7; color: var(--green); }
+    .order-items { color: var(--muted); font-size: 13px; margin: 8px 0; }
+    .order-foot { display: flex; justify-content: space-between; align-items: center; padding-top: 8px; border-top: 1px dashed var(--line); font-size: 13px; }
+    .order-foot .act { color: var(--red); font-weight: 700; }
+    .trackline { display: flex; justify-content: space-between; margin: 10px 0 2px; position: relative; }
+    .trackline::before { content: ''; position: absolute; top: 14px; left: 6%; right: 6%; height: 3px; background: var(--line); }
+    .tls { width: 25%; text-align: center; position: relative; }
+    .tls .c { width: 28px; height: 28px; border-radius: 50%; background: #fff; border: 2px solid #ddd; margin: 0 auto 6px; display: flex; align-items: center; justify-content: center; font-size: 13px; position: relative; z-index: 1; }
+    .tls.done .c { background: var(--green); border-color: var(--green); color: #fff; }
+    .tls.now .c { border-color: var(--green); color: var(--green); animation: pulse 1.4s infinite; }
+    .tls small { font-size: 10px; color: var(--muted); font-weight: 500; }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(28,157,67,.4); } 70% { box-shadow: 0 0 0 10px rgba(28,157,67,0); } 100% { box-shadow: 0 0 0 0 rgba(28,157,67,0); } }
+
+    /* ---------- BOOKMARKS / EMPTY ---------- */
+    .empty { text-align: center; padding: 60px 0 30px; }
+    .empty .ic { font-size: 52px; }
+    .empty h2 { font-family: var(--display); font-size: 20px; margin: 10px 0 4px; }
+    .empty p { color: var(--muted); font-size: 13px; max-width: 320px; margin: 0 auto 18px; }
+    .empty .btn { background: var(--red); color: #fff; padding: 11px 26px; border-radius: 10px; font-weight: 700; }
+
+    /* ---------- PROFILE ---------- */
+    .pcard { background: linear-gradient(135deg, var(--red), #ff7a5c); color: #fff; border-radius: var(--radius); padding: 20px; display: flex; align-items: center; gap: 14px; }
+    .pcard .av { width: 54px; height: 54px; border-radius: 50%; background: rgba(255,255,255,.25); display: flex; align-items: center; justify-content: center; font-size: 26px; }
+    .pcard b { font-family: var(--display); font-size: 20px; }
+    .pcard p { opacity: .9; font-size: 12.5px; margin-top: 2px; }
+    .wallet-card { border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; margin: 14px 0; display: flex; justify-content: space-between; align-items: center; }
+    .wallet-card b { font-size: 22px; color: var(--red); }
+    .wallet-card .addr { color: var(--muted); font-size: 12px; }
+    .menu-row { display: flex; align-items: center; gap: 14px; padding: 15px 2px; border-bottom: 1px solid var(--line); cursor: pointer; }
+    .menu-row:last-child { border-bottom: 0; }
+    .menu-row .ic { width: 40px; height: 40px; border-radius: 11px; background: #f1f1f1; display: flex; align-items: center; justify-content: center; font-size: 19px; }
+    .menu-row b { font-size: 14.5px; font-weight: 600; }
+    .menu-row small { display: block; color: var(--muted); font-size: 12px; }
+    .addr-item { border: 1px solid var(--line); border-radius: 11px; padding: 13px 15px; margin: 9px 0; }
+    .addr-item b { font-size: 13px; }
+    .addr-item p { color: var(--muted); font-size: 12px; margin-top: 3px; }
+
+    /* ---------- SEARCH ---------- */
+    .search-page { max-width: 640px; margin: 0 auto; }
+    .search-page .box { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 12px; padding: 4px 8px; margin: 12px 0 20px; }
+    .search-page .box input { flex: 1; padding: 10px 8px; border: 0; outline: 0; font-size: 15px; }
+    .chip-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .schip { border: 1px solid var(--line); padding: 8px 14px; border-radius: 999px; font-size: 13px; }
+    .search-res .rest-card { margin: 12px 0; }
+
+    /* ---------- MODALS ---------- */
+    .ovl { position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,.5); display: none; align-items: flex-end; justify-content: center; }
+    .ovl.show { display: flex; }
+    .ovl .box { background: #fff; width: 100%; max-width: 460px; border-radius: 18px 18px 0 0; padding: 20px 22px 26px; animation: slide .25s ease; max-height: 88vh; overflow-y: auto; }
+    @keyframes slide { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+    .ovl h3 { font-family: var(--display); font-size: 22px; margin-bottom: 14px; }
+    .inp { width: 100%; border: 1px solid #d5d5d5; border-radius: 10px; padding: 13px 14px; font-size: 14px; outline: 0; margin: 8px 0; }
+    .inp:focus { border-color: var(--red); }
+    .btn-red { display: block; width: 100%; background: var(--red); color: #fff; font-weight: 800; padding: 14px; border-radius: 10px; font-size: 15px; margin-top: 12px; }
+    .btn-red:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-ghost { display: block; width: 100%; border: 1px solid var(--line); padding: 13px; border-radius: 10px; font-weight: 600; margin-top: 8px; }
+    .otp-row { display: flex; gap: 10px; justify-content: center; margin: 16px 0; }
+    .otp-row input { width: 48px; height: 56px; text-align: center; font-size: 22px; font-weight: 700; border: 1px solid #d5d5d5; border-radius: 11px; outline: 0; }
+    .otp-row input:focus { border-color: var(--red); }
+    .otp-hint { background: var(--red-soft); color: var(--red); border: 1.5px dashed var(--red); padding: 10px; border-radius: 10px; text-align: center; font-size: 13px; font-weight: 600; }
+    .suc { text-align: center; padding: 10px 0; }
+    .suc .ic { font-size: 60px; }
+    .suc h2 { font-family: var(--display); font-size: 24px; margin: 8px 0 4px; }
+    .suc p { color: var(--muted); font-size: 13px; }
+    .suc .btn { display: inline-block; width: auto; background: var(--red); color: #fff; padding: 12px 28px; border-radius: 10px; font-weight: 700; margin-top: 16px; }
+
+    /* ---------- TOAST ---------- */
+    .toast { position: fixed; z-index: 120; top: 74px; left: 50%; transform: translateX(-50%); background: rgba(20,20,20,.92); color: #fff; padding: 11px 18px; border-radius: 10px; font-size: 13px; font-weight: 500; opacity: 0; pointer-events: none; transition: opacity .25s, top .25s; }
+    .toast.show { opacity: 1; top: 84px; }
+
+    @media (max-width: 760px) {
+      .tabs, .head-actions .login-btn { display: none; }
+      .bottom-nav { display: block; }
+      main { padding-bottom: 80px; }
+      .head-search .loc { display: none; }
+      .cat-grid { grid-template-columns: 1fr; max-width: 480px; }
+      .cat-card img { height: 130px; }
+      .hero { margin-top: 20px; }
+      .rest-list { grid-template-columns: 1fr; }
+      .cat-nav { top: 64px; }
+    }
+    @media (min-width: 1200px) {
+      .menu-wrap { display: grid; grid-template-columns: 220px 1fr; gap: 30px; align-items: start; }
+      .cat-nav { position: sticky; top: 90px; flex-direction: column; gap: 4px; }
+      .cat-pill { text-align: left; border: 0; padding: 8px 12px; color: var(--muted); border-radius: 8px; }
+      .cat-pill.active { background: var(--red-soft); color: var(--red); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand" onclick="go('home')">
+        <div class="logo-dot">🍔</div>
+        <div><b>BHOO<b style="color:var(--red)">KIT</b></b><small>Order food online</small></div>
+      </div>
+      <div class="tabs">
+        <button class="tab active" id="tab-delivery" onclick="setDining('delivery')">🛵 Delivery</button>
+        <button class="tab" id="tab-dinein" onclick="setDining('dinein')">🍽️ Dine-out</button>
+      </div>
+      <button class="head-search" onclick="go('search')">
+        <span class="loc">▲</span>
+        <input id="headSearchInput" placeholder="Search for restaurant, cuisine or a dish" readonly>
+        <span style="color:var(--muted2)">🔍</span>
+      </button>
+      <div class="head-actions">
+        <button class="login-btn" id="loginBtnHeader" onclick="go('profile')">🔓 Login</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- HOME -->
+    <section class="view active" id="v-home">
+      <div class="hero">
+        <h1>Craving <span>tasty food?</span><br>Order from the best eateries.</h1>
+        <p>One single platform for the best food, partner restaurants and trackers — familiar vibes, zero hassle.</p>
+        <div class="hero-search">
+          <span class="loc">▲</span>
+          <input id="heroLocInput" placeholder="Deliver to Sakoli" readonly>
+          <span class="sep"></span>
+          <input id="heroSearchInput" placeholder="Search restaurant, cuisine or a dish..." onfocus="go('search')">
+          <button onclick="go('search')">Search</button>
+        </div>
+      </div>
+      <div class="cat-grid" id="catGrid"></div>
+      <div class="sec-head" id="collectionsHead"><h2>Collections</h2><a onclick="go('search')">View all</a></div>
+      <div class="hscroll" id="collectionsRow"></div>
+      <div class="sec-head"><h2>Top restaurant chains in Sakoli</h2><a onclick="showAllRestaurants()">40+ places</a></div>
+      <div class="filters" id="homeFilters"></div>
+      <div id="homeRestWrap"><div class="rest-list" id="homeRestList"></div></div>
+      <div class="empty" style="display:none" id="homeEmpty">
+        <div class="ic">🍽️</div>
+        <h2>No restaurants found</h2>
+        <p>Try removing the filters or searching for something else.</p>
+        <button class="btn" onclick="resetHomeFilters()">Clear all filters</button>
+      </div>
+    </section>
+
+    <!-- SEARCH -->
+    <section class="view" id="v-search">
+      <div class="search-page">
+        <h1 style="font-family:var(--display);font-size:26px;margin:14px 0 0">Search</h1>
+        <div class="box">
+          <span>🔍</span>
+          <input id="searchInput" placeholder="Search for restaurant, cuisine or a dish" oninput="runSearch(this.value)">
+          <button onclick="document.getElementById('searchInput').value='';runSearch('')">✕</button>
+        </div>
+        <div id="recentChips" class="chip-row"></div>
+        <div id="searchResults"></div>
+      </div>
+    </section>
+
+    <!-- RESTAURANT DETAIL -->
+    <section class="view" id="v-restaurant">
+      <div id="rdWrap"></div>
+    </section>
+
+    <!-- CART -->
+    <section class="view" id="v-cart">
+      <div id="cartWrap" class="checkout"></div>
+    </section>
+
+    <!-- ORDERS -->
+    <section class="view" id="v-orders">
+      <h1 style="font-family:var(--display);font-size:30px;margin:16px 0 4px">My Orders</h1>
+      <p style="color:var(--muted);font-size:13px">Track, reorder and rate your past orders.</p>
+      <div id="ordersWrap"></div>
+    </section>
+
+    <!-- BOOKMARKS -->
+    <section class="view" id="v-bookmarks">
+      <h1 style="font-family:var(--display);font-size:30px;margin:16px 0 4px">My Bookmarks</h1>
+      <p style="color:var(--muted);font-size:13px">Places and dishes you saved for later.</p>
+      <div id="bookmarksWrap"></div>
+    </section>
+
+    <!-- PROFILE -->
+    <section class="view" id="v-profile">
+      <div style="max-width:520px;margin:0 auto">
+        <h1 style="font-family:var(--display);font-size:30px;margin:16px 0 14px">Account</h1>
+        <div id="profileWrap"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <div class="bottom-nav-inner">
+      <button class="bnav-btn active" id="bn-home" onclick="go('home')"><span class="ico">🏠</span>Home</button>
+      <button class="bnav-btn" id="bn-search" onclick="go('search')"><span class="ico">🔍</span>Search</button>
+      <button class="bnav-btn" id="bn-orders" onclick="go('orders')"><span class="ico">🧾</span>Orders</button>
+      <button class="bnav-btn" id="bn-bookmarks" onclick="go('bookmarks')"><span class="ico">❤️</span>Bookmark</button>
+      <button class="bnav-btn" id="bn-profile" onclick="go('profile')"><span class="ico">👤</span>Profile</button>
+    </div>
+  </nav>
+
+  <!-- CART BAR (restaurant page) -->
+  <div class="cartbar" id="cartBar" style="display:none">
+    <div class="pill" onclick="go('cart')">
+      <span><b id="cbCount">0</b> items</span>
+      <span>View Cart <b id="cbTotal">₹0</b> ▸</span>
+    </div>
+  </div>
+
+  <!-- MODALS -->
+  <div class="ovl" id="ovlCoupon"><div class="box">
+    <h3>Available coupons</h3>
+    <div id="couponList"></div>
+    <button class="btn-ghost" onclick="closeOvl('ovlCoupon')">Close</button>
+  </div></div>
+
+  <div class="ovl" id="ovlAddress"><div class="box">
+    <h3>Add delivery address</h3>
+    <input class="inp" id="addrFlat" placeholder="Flat / House no, Floor">
+    <input class="inp" id="addrStreet" placeholder="Street, Area, Landmark">
+    <div class="chip-row">
+      <button class="schip" onclick="setAddrType(this,'Home')">Home</button>
+      <button class="schip" onclick="setAddrType(this,'Work')">Work</button>
+      <button class="schip" onclick="setAddrType(this,'Other')">Other</button>
+    </div>
+    <button class="btn-red" onclick="saveAddress()">Save address</button>
+  </div></div>
+
+  <div class="ovl" id="ovlFilters"><div class="box">
+    <h3>Filter</h3>
+    <div id="filterList"></div>
+    <button class="btn-red" onclick="applyFilters()">Apply filters</button>
+    <button class="btn-ghost" onclick="closeOvl('ovlFilters')">Reset</button>
+  </div></div>
+
+  <div class="ovl" id="ovlLogin"><div class="box">
+    <div style="text-align:center">
+      <div style="font-size:44px">🍔</div>
+      <h3 style="margin-top:6px">Login to BhookIt</h3>
+      <p style="color:var(--muted);font-size:13px;margin-bottom:10px">Enter your mobile number to get an OTP</p>
+    </div>
+    <div id="loginStep1">
+      <input class="inp" id="loginPhone" type="tel" maxlength="10" placeholder="Mobile number (demo: 9876543210)">
+      <button class="btn-red" onclick="startOtp()">Send OTP</button>
+    </div>
+    <div id="loginStep2" style="display:none">
+      <div class="otp-hint">Demo OTP is <b id="otpCode">0000</b></div>
+      <div class="otp-row">
+        <input maxlength="1" data-i="0" oninput="otpIn(this)"><input maxlength="1" data-i="1" oninput="otpIn(this)"><input maxlength="1" data-i="2" oninput="otpIn(this)"><input maxlength="1" data-i="3" oninput="otpIn(this)">
+      </div>
+      <button class="btn-red" onclick="verifyOtp()">Verify OTP</button>
+    </div>
+  </div></div>
+
+  <div class="ovl" id="ovlPay"><div class="box" id="payBox"></div></div>
+
+  <div class="ovl" id="ovlSuccess"><div class="box">
+    <div class="suc">
+      <div class="ic">🎉</div>
+      <h2>Order placed!</h2>
+      <p id="sucSub">Your food is being prepared.</p>
+      <p id="sucTotal" style="font-weight:800;font-size:18px;margin-top:6px"></p>
+      <button class="btn" onclick="closeOvl('ovlSuccess');go('orders')">Track order</button>
+    </div>
+  </div></div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+  /* ================= DATA ================= */
+  const COUPONS = [
+    { code: 'BHOOKIT20', label: 'Flat 20% OFF up to ₹100', min: 200 },
+    { code: 'JB10', label: '10% OFF up to ₹80', min: 150 },
+    { code: 'WELCOME50', label: 'Flat ₹50 OFF', min: 0 },
+    { code: 'SPIN50', label: 'Flat ₹50 OFF (Lucky spin prize)', min: 0 }
+  ];
+
+  const COLLECTIONS = [
+    { t: 'Trending near you', s: '20 places', img: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400' },
+    { t: 'Best offers', s: '14 places', img: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400' },
+    { t: 'New on BhookIt', s: '8 places', img: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400' },
+    { t: 'Quick night bites', s: '30 places', img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400' }
+  ];
+
+  const CAT_CARDS = [
+    { t: 'Order online', s: '150+ places', img: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=400', act: () => go('home') },
+    { t: 'Dining out', s: '45+ places', img: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400', act: () => setDining('dinein') },
+    { t: 'Nightlife', s: '12 places', img: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=400', act: () => go('search') }
+  ];
+
+  const RESTAURANTS = [
+    {
+      id: 1, name: 'Sakoli Food Corner', area: 'Main Market Road', cuisine: 'North Indian, Fast Food', rating: 4.6, time: 20, cost: 300,
+      offer: '50% OFF UPTO ₹100', img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500', bookmarked: false,
+      categories: [
+        { cat: 'Popular', items: [
+          { id: 11, name: 'Paneer Butter Masala', price: 180, veg: true, best: true, desc: 'Creamy tomato gravy, hand-pounded spices, garlic naan side.', img: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=300' },
+          { id: 12, name: 'Veg Classic Thali', price: 220, veg: true, best: true, desc: 'Dal tadka, paneer sabzi, 3 rotis, rice, salad, sweet, papad.', img: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=300' },
+          { id: 13, name: 'Butter Chicken', price: 260, veg: false, best: true, desc: 'Smoked makhani gravy, tandoori chicken, kasuri methi finish.', img: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=300' },
+          { id: 14, name: 'Masala Fries', price: 99, veg: true, desc: 'Crispy golden fries tossed in chaat masala.', img: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=300' }
+        ]},
+        { cat: 'North Indian', items: [
+          { id: 15, name: 'Dal Makhani', price: 150, veg: true, desc: 'Slow-cooked black lentils, cream and butter.', img: 'https://images.unsplash.com/photo-1545247181-516773cae754?w=300' },
+          { id: 16, name: 'Kadai Chicken', price: 240, veg: false, desc: 'Wok-tossed chicken, capsicum, onion masala.', img: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=300' },
+          { id: 17, name: 'Garlic Naan', price: 40, veg: true, desc: 'Naan brushed with garlic butter.', img: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=300' }
+        ]},
+        { cat: 'Biryani', items: [
+          { id: 18, name: 'Chicken Dum Biryani', price: 210, veg: false, best: true, desc: 'Saffron basmati, fried onion, mint, sealed handi.', img: 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=300' },
+          { id: 19, name: 'Veg Biryani', price: 160, veg: true, desc: 'Seasonal veggies, mint raita, salan.', img: 'https://images.unsplash.com/photo-1633945274405-b6c8069047b0?w=300' }
+        ]}
+      ]
+    },
+    {
+      id: 2, name: 'Aapla Bhojanalay', area: 'Old Bus Stand', cuisine: 'Maharashtrian, South Indian', rating: 4.4, time: 15, cost: 250,
+      offer: 'FREE DELIVERY', img: 'https://images.unsplash.com/photo-1585032226651-759b368d7246?w=500', bookmarked: true,
+      categories: [
+        { cat: 'Popular', items: [
+          { id: 21, name: 'Misal Pav', price: 90, veg: true, best: true, desc: 'Spicy moth misal, farsan, poha, crisp pav.', img: 'https://images.unsplash.com/photo-1601050690117-94f5f6fa8bd7?w=300' },
+          { id: 22, name: 'Vada Pav', price: 25, veg: true, desc: 'Garlic chutney, fried vada, pav.', img: 'https://images.unsplash.com/photo-1606491956689-2ea866880c84?w=300' },
+          { id: 23, name: 'Pav Bhaji', price: 110, veg: true, best: true, desc: 'Buttery bhaji, tomato mash, extra pav.', img: 'https://images.unsplash.com/photo-1606491956689-2ea866880c84?w=300' },
+          { id: 24, name: 'Masala Dosa', price: 95, veg: true, desc: 'Crisp dosa, potato masala, chutneys, sambar.', img: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=300' }
+        ]},
+        { cat: 'South Indian', items: [
+          { id: 25, name: 'Idli Sambar', price: 70, veg: true, desc: 'Steamed idlis, hot sambar, chutney.', img: 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=300' },
+          { id: 26, name: 'Uttapam', price: 80, veg: true, desc: 'Thick savoury pancake, onion & tomato.', img: 'https://images.unsplash.com/photo-1630383249896-424e482df921?w=300' }
+        ]},
+        { cat: 'Poha & Snacks', items: [
+          { id: 27, name: 'Kanda Poha', price: 45, veg: true, desc: 'Flattened rice, onion, curry leaves, sev.', img: 'https://images.unsplash.com/photo-1606491956689-2ea866880c84?w=300' },
+          { id: 28, name: 'Sabudana Khichdi', price: 70, veg: true, desc: 'Tapioca pearls, peanuts, roasted.', img: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=300' }
+        ]}
+      ]
+    },
+    {
+      id: 3, name: 'Royal Biryani & Rolls', area: 'Station Road', cuisine: 'Biryani, Rolls, Mughlai', rating: 4.5, time: 25, cost: 350,
+      offer: '20% OFF UPTO ₹80', img: 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=500', bookmarked: false,
+      categories: [
+        { cat: 'Biryani', items: [
+          { id: 31, name: 'Hyderabadi Chicken Biryani', price: 240, veg: false, best: true, desc: 'Dum biryani, saffron, kebab, raita.', img: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=300' },
+          { id: 32, name: 'Egg Biryani', price: 180, veg: false, desc: 'Boiled eggs, basmati rice, fried onion.', img: 'https://images.unsplash.com/photo-1633945274405-b6c8069047b0?w=300' },
+          { id: 33, name: 'Mutton Biryani', price: 290, veg: false, best: true, desc: 'Tender mutton pieces, handi dum.', img: 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=300' }
+        ]},
+        { cat: 'Rolls & Kebab', items: [
+          { id: 34, name: 'Chicken Kathi Roll', price: 120, veg: false, desc: 'Paratha roll, spicy chicken, onions, mint.', img: 'https://images.unsplash.com/photo-1553909489-cd47e0907980?w=300' },
+          { id: 35, name: 'Paneer Roll', price: 100, veg: true, desc: 'Tandoori paneer, veggies, chutney.', img: 'https://images.unsplash.com/photo-1563620915-847aba9d65a0?w=300' }
+        ]}
+      ]
+    },
+    {
+      id: 4, name: 'Sweet Treats & Shakes', area: 'M.G. Road', cuisine: 'Desserts, Beverages', rating: 4.7, time: 18, cost: 200,
+      offer: 'BUY 1 GET 1', img: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=500', bookmarked: false,
+      categories: [
+        { cat: 'Desserts', items: [
+          { id: 41, name: 'Gulab Jamun (2 pc)', price: 60, veg: true, desc: 'Warm khoya jamuns, saffron syrup.', img: 'https://images.unsplash.com/photo-1601303516545-7ff8209e79c0?w=300' },
+          { id: 42, name: 'Chocolate Brownie', price: 120, veg: true, best: true, desc: 'Walnut brownie, hot chocolate sauce.', img: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=300' },
+          { id: 43, name: 'Ice Cream Sundae', price: 140, veg: true, desc: '3 scoops, nuts, cherry, chocolate syrup.', img: 'https://images.unsplash.com/photo-1497034825429-c343d7c6a68f?w=300' }
+        ]},
+        { cat: 'Shakes', items: [
+          { id: 44, name: 'Oreo Shake', price: 110, veg: true, best: true, desc: 'Oreo chunks, vanilla ice cream, cream.', img: 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=300' },
+          { id: 45, name: 'Strawberry Shake', price: 100, veg: true, desc: 'Fresh strawberries, milk, sugar.', img: 'https://images.unsplash.com/photo-1553787499-6f9133860278?w=300' }
+        ]}
+      ]
+    }
+  ];
+
+  /* ================= STATE ================= */
+  const LS = 'bhookit_zomato_v1';
+  const state = Object.assign(
+    { cart: [], orders: [], favorites: {}, login: null, wallet: 500, addresses: [], recent: [] },
+    JSON.parse(localStorage.getItem(LS) || '{}')
+  );
+
+  function save() { localStorage.setItem(LS, JSON.stringify(state)); }
+
+  const byId = (restId, dishId) => {
+    const r = RESTAURANTS.find(x => x.id === restId);
+    const d = r.categories.flatMap(c => c.items).find(i => i.id === dishId);
+    return { r, d };
+  };
+  const fmt = n => '₹' + n.toLocaleString('en-IN');
+  const findDish = id => RESTAURANTS.flatMap(r => r.categories.flatMap(c => c.items)).find(d => d.id === id);
+
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._h);
+    t._h = setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  let currentView = '';
+  function go(view) {
+    currentView = view;
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    const el = document.getElementById('v-' + view);
+    if (el) el.classList.add('active');
+    document.querySelectorAll('.bnav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('bn-' + view)?.classList.add('active');
+    const isShop = (view === 'restaurant' || view === 'cart' || view === 'orders' || view === 'profile');
+    window.scrollTo(0, 0);
+    if (view === 'home') renderHome();
+    if (view === 'search') renderSearch();
+    if (view === 'restaurant') renderRestaurant();
+    if (view === 'cart') renderCart();
+    if (view === 'orders') renderOrders();
+    if (view === 'bookmarks') renderBookmarks();
+    if (view === 'profile') renderProfile();
+    const nav = document.querySelector('.bottom-nav');
+    if (nav) nav.style.display = (view === 'home' || view === 'search' || view === 'orders' || view === 'bookmarks' || view === 'profile') ? 'block' : 'none';
+  }
+
+  const openOvl = id => document.getElementById(id).classList.add('show');
+  const closeOvl = id => document.getElementById(id).classList.remove('show');
+
+  /* ================= HOME ================= */
+  const homeFilterState = { sort: 'relevance', pureVeg: false, fast: false, minRating: 0, cuisine: null };
+
+  function setDining(mode) {
+    document.getElementById('tab-delivery').classList.toggle('active', mode === 'delivery');
+    document.getElementById('tab-dinein').classList.toggle('active', mode === 'dinein');
+    toast(mode === 'delivery' ? 'Delivery mode selected' : 'Dine-out mode selected');
+    renderHome();
+  }
+
+  function renderHome() {
+    const grid = document.getElementById('catGrid');
+    grid.innerHTML = CAT_CARDS.map((c, i) => `
+      <div class="cat-card" onclick="${c.act.toString().replace(/"/g, "'")}">
+        <img src="${c.img}" alt="">
+        <div class="cap">${c.t}<small>${c.s}</small></div>
+      </div>`).join('');
+    document.getElementById('collectionsRow').innerHTML = COLLECTIONS.map((c, i) => `
+      <div class="col-card" onclick="filterCollection(${i})">
+        <img src="${c.img}" alt="">
+        <div class="t">${c.t}<small>${c.s}</small></div>
+      </div>`).join('');
+    const pc = { relevance: 'Relevance', rating: 'Rating', time: 'Delivery time', low: 'Cost: Low to High', high: 'Cost: High to Low' };
+    document.getElementById('homeFilters').innerHTML = `
+      <button class="fchip ${homeFilterState.pureVeg ? 'on' : ''}" onclick="homeFilterState.pureVeg=!homeFilterState.pureVeg;renderHome()">🌱 Pure Veg ${homeFilterState.pureVeg ? '✓' : ''}</button>
+      <button class="fchip ${homeFilterState.fast ? 'on' : ''}" onclick="homeFilterState.fast=!homeFilterState.fast;renderHome()">⚡ Fast Delivery ${homeFilterState.fast ? '✓' : ''}</button>
+      <button class="fchip ${homeFilterState.minRating ? 'on' : ''}" onclick="homeFilterState.minRating = homeFilterState.minRating?0:4;renderHome()">⭐ ${homeFilterState.minRating || 'Rating 4.0+'}</button>
+      <button class="fchip" onclick="openOvl('ovlFilters')">Sort <span class="n">▾</span></button>`;
+    renderRestList('homeRestList');
+  }
+
+  function renderRestList(containerId, list) {
+    const container = document.getElementById(containerId);
+    const data = list || filteredRestaurants();
+    document.getElementById('homeEmpty').style.display = data.length ? 'none' : 'block';
+    container.innerHTML = data.map(r => `
+      <div class="rest-card" onclick="openRestaurant(${r.id})">
+        <div class="imgwrap">
+          <img src="${r.img}" alt="">
+          ${r.offer ? `<div class="ribbon">${r.offer}</div>` : ''}
+          <button class="bookmark ${state.favorites['r' + r.id] ? 'on' : ''}" onclick="event.stopPropagation();toggleBookmark(${r.id})">${state.favorites['r' + r.id] ? '❤️' : '🤍'}</button>
+        </div>
+        <div class="rest-meta">
+          <b>${r.name}</b>
+          <span class="rchip ${r.rating < 4 ? 'red' : ''}">★ ${r.rating}</span>
+        </div>
+        <div class="rest-sub"><span class="cuisines">${r.cuisine}</span><span class="meta">${r.time} min ▸ ${fmt(r.cost)} for two</span></div>
+        <div class="rest-sub2">${r.area} · Free delivery above ₹199</div>
+      </div>`).join('');
+  }
+
+  function filteredRestaurants() {
+    let list = RESTAURANTS.slice();
+    if (homeFilterState.pureVeg) list = list.map(r => ({ ...r, categories: r.categories.filter(c => c.items.some(i => i.veg)) })).filter(r => r.categories.length);
+    if (homeFilterState.fast) list = list.filter(r => r.time <= 20);
+    if (homeFilterState.minRating) list = list.filter(r => r.rating >= homeFilterState.minRating);
+    if (homeFilterState.cuisine) list = list.filter(r => r.cuisine.toLowerCase().includes(homeFilterState.cuisine));
+    switch (homeFilterState.sort) {
+      case 'rating': list.sort((a, b) => b.rating - a.rating); break;
+      case 'time': list.sort((a, b) => a.time - b.time); break;
+      case 'low': list.sort((a, b) => a.cost - b.cost); break;
+      case 'high': list.sort((a, b) => b.cost - a.cost); break;
+    }
+    return list;
+  }
+
+  function filterCollection(i) { toast('Showing: ' + COLLECTIONS[i].t); go('search'); }
+  function showAllRestaurants() { homeFilterState.sort = 'relevance'; renderHome(); }
+  function resetHomeFilters() { Object.assign(homeFilterState, { sort: 'relevance', pureVeg: false, fast: false, minRating: 0, cuisine: null }); renderHome(); }
+
+  /* ================= FILTER MODAL ================= */
+  const sortModes = [['relevance', 'Relevance'], ['rating', 'Rating: High to Low'], ['time', 'Delivery time: Fastest first'], ['low', 'Cost: Low to High'], ['high', 'Cost: High to Low']];
+  function buildFilterList() {
+    document.getElementById('filterList').innerHTML = `
+      <p style="font-weight:700;margin:8px 0">Sort</p>
+      ${sortModes.map(s => `<label style="display:flex;align-items:center;gap:10px;padding:8px 0;font-size:14px" onclick="homeFilterState.sort='${s[0]}';buildFilterList()"><span class="rad" style="width:16px;height:16px;border:2px solid ${homeFilterState.sort===s[0]?'var(--red)':'#ccc'};border-width:${homeFilterState.sort===s[0]?'5':'2'}px;border-radius:50%;display:inline-block"></span>${s[1]}</label>`).join('')}
+      <p style="font-weight:700;margin:10px 0 6px">Rating</p>
+      <div class="chip-row">${[4, 3.5, 3].map(x => `<button class="schip ${homeFilterState.minRating===x?'on':''}" style="${homeFilterState.minRating===x?'border-color:var(--red);color:var(--red)':''}" onclick="homeFilterState.minRating=homeFilterState.minRating===x?0:x;buildFilterList()">${x}+</button>`).join('')}</div>
+      <p style="font-weight:700;margin:14px 0 6px">Cuisine</p>
+      <div class="chip-row">${['north indian', 'south', 'biryani', 'dessert', 'momos'].map(c => `<button class="schip ${homeFilterState.cuisine===c?'on':''}" style="${homeFilterState.cuisine===c?'border-color:var(--red);color:var(--red)':''}" onclick="homeFilterState.cuisine=homeFilterState.cuisine===c?null:c;buildFilterList()">${c.replace(/\b\w/g, m => m.toUpperCase())}</button>`).join('')}</div>`;
+  }
+  function applyFilters() {
+    closeOvl('ovlFilters');
+    renderHome();
+    toast('Filters updated');
+  }
+  document.getElementById('ovlFilters').addEventListener('click', e => { if (e.target.id === 'ovlFilters') applyFilters(); });
+
+  /* ================= RESTAURANT DETAIL ================= */
+  let activeRestId = 1;
+  let menuFilter = '';
+
+  function openRestaurant(id) {
+    activeRestId = id;
+    go('restaurant');
+  }
+
+  function renderRestaurant() {
+    const r = RESTAURANTS.find(x => x.id === activeRestId);
+    const el = document.getElementById('rdWrap');
+    const allItems = () => r.categories.flatMap(c => c.items).filter(i => !menuFilter || i.name.toLowerCase().includes(menuFilter));
+    const vgCount = r.categories.reduce((n, c) => n + c.items.filter(i => i.veg).length, 0);
+    el.innerHTML = `
+      <div class="rd-head">
+        <img src="${r.img}" alt="">
+        <div class="grab"></div>
+        <button class="back-btn" onclick="go('home')">←</button>
+      </div>
+      <div class="rd-info-card">
+        <div class="rd-info-top">
+          <div><h1>${r.name}</h1>
+            <div style="color:var(--muted);font-size:13px;margin-top:4px">${r.cuisine}</div>
+            <div class="rd-facts">
+              <span><b>${r.time} min</b></span>
+              <span><b>${fmt(r.cost)}</b> for two</span>
+              <span style="color:var(--green);font-weight:600">Open now</span>
+            </div>
+          </div>
+          <span class="rchip ${r.rating < 4 ? '' : ''}">★ ${r.rating}<br><small style="font-weight:500;font-size:10px">${r.rating >= 4 ? 'EXCELLENT' : 'GOOD'}</small></span>
+        </div>
+      </div>
+      <div class="rd-tabs">
+        <button class="rd-tab active">Order Online</button>
+        <button class="rd-tab" onclick="toast('Overview coming soon')">Overview</button>
+        <button class="rd-tab" onclick="toast('Photos coming soon')">Photos</button>
+      </div>
+      <div class="rd-search"><span class="mag">🔍</span><input placeholder="Search in menu" oninput="menuFilter=this.value.toLowerCase();renderMenu()"></div>
+      <div class="menu-wrap">
+        <div class="cat-nav" id="menuCatNav">${r.categories.map((c, i) => `<button class="cat-pill ${i === 0 ? 'active' : ''}" data-offset="sec-${c.cat}" onclick="scrollToCat('${c.cat}')">${c.cat} <span style="opacity:.6">${c.items.length}</span></button>`).join('')}</div>
+        <div id="menuBody"></div>
+      </div>`;
+    renderMenu();
+    updateCartBar();
+  }
+
+  function scrollToCat(cat) {
+    const el = document.getElementById('sec-' + cat);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function renderMenu() {
+    const r = RESTAURANTS.find(x => x.id === activeRestId);
+    const body = document.getElementById('menuBody');
+    body.innerHTML = r.categories.map(c => {
+      const items = c.items.filter(i => !menuFilter || i.name.toLowerCase().includes(menuFilter));
+      if (!items.length) return '';
+      return `<div id="sec-${c.cat}" class="menu-sec">
+        <h3>${c.cat}</h3><div class="count">${items.length} items</div>
+        ${items.map(d => renderDish(d)).join('')}
+      </div>`;
+    }).join('');
+    if (menuFilter && !body.innerHTML.trim()) {
+      body.innerHTML = '<div class="empty" style="padding:30px 0"><div class="ic">🔍</div><h2>No dishes match your search</h2></div>';
+    }
+    document.querySelectorAll('.cat-pill').forEach(p => { const id = p.dataset.offset; p.classList.toggle('active', document.getElementById(id)?.getBoundingClientRect().top <= 140); });
+  }
+
+  function renderDish(d) {
+    const cartItem = state.cart.find(i => i.dish === d.id);
+    return `<div class="dish">
+      <div class="dish-info">
+        <span class="vegdot ${d.veg ? '' : 'nv'}"></span><br>
+        <span class="name">${d.name} ${d.best ? '<span class="bestseller">Bestseller</span>' : ''}</span>
+        <div class="price">${fmt(d.price)}</div>
+        <div class="desc">${d.desc}</div>
+        <div class="rate">★ ${(4 + Math.random() * 0.9).toFixed(1)} (${Math.floor(Math.random() * 500) + 80})</div>
+      </div>
+      <div class="dish-right">
+        <img class="photo" src="${d.img}" alt="">
+        ${cartItem ? `
+        <div class="stepper">
+          <button onclick="changeQty(${d.id},-1)">−</button><b id="qty-${d.id}">${cartItem.qty}</b><button onclick="changeQty(${d.id},1)">+</button>
+        </div>` : `<button class="add-btn" onclick="addToCart(${d.id})">ADD</button>`}
+      </div>
+    </div>`;
+  }
+
+  function addToCart(dishId) {
+    const { r } = byId(activeRestId, dishId);
+    const multiRest = state.cart.some(i => byId(i.rest, i.dish).r.id !== r.id);
+    if (multiRest) {
+      toast('Cart has items from another restaurant');
+      return;
+    }
+    const ex = state.cart.find(i => i.dish === dishId);
+    if (ex) ex.qty++;
+    else state.cart.push({ rest: r.id, dish: dishId, qty: 1 });
+    save();
+    renderMenu();
+    updateCartBar();
+    toast('Added to cart');
+  }
+  function changeQty(dishId, delta) {
+    const it = state.cart.find(i => i.dish === dishId);
+    if (!it) return;
+    it.qty += delta;
+    if (it.qty <= 0) state.cart = state.cart.filter(i => i.dish !== dishId);
+    save();
+    renderMenu();
+    updateCartBar();
+    if (document.getElementById('v-cart').classList.contains('active')) renderCart();
+  }
+  function updateCartBar() {
+    const bar = document.getElementById('cartBar');
+    const count = state.cart.reduce((n, i) => n + i.qty, 0);
+    const total = state.cart.reduce((n, i) => n + i.qty * findDish(i.dish).price, 0);
+    document.getElementById('cbCount').textContent = count;
+    document.getElementById('cbTotal').textContent = fmt(total);
+    bar.style.display = (count && currentView === 'restaurant') ? 'block' : 'none';
+  }
+
+  /* ================= SEARCH ================= */
+  function renderSearch() {
+    const recent = document.getElementById('recentChips');
+    recent.innerHTML = '<p style="font-weight:700;font-size:15px;margin-bottom:8px">Recent searches</p>' + (state.recent.length
+      ? `<div class="chip-row">${state.recent.map(s => `<button class="schip" onclick="searchText('${s.replace(/'/g, "\\'")}')">${s}</button>`).join('')}</div>`
+      : '<p style="color:var(--muted);font-size:13px">No recent searches yet</p>');
+  }
+  function searchText(q) {
+    document.getElementById('searchInput').value = q;
+    runSearch(q);
+  }
+  function runSearch(q) {
+    const ql = q.trim().toLowerCase();
+    const res = document.getElementById('searchResults');
+    if (!ql) { res.innerHTML = '<div style="color:var(--muted);font-size:13px;margin-top:10px">Search for restaurants, cuisines or dishes.</div>'; return; }
+    if (!state.recent.includes(q) && ql.length > 2) { state.recent = [q, ...state.recent].slice(0, 6); save(); renderSearch(); }
+    const restMatch = RESTAURANTS.filter(r => (r.name + r.cuisine + r.area).toLowerCase().includes(ql));
+    const dishMatches = RESTAURANTS.flatMap(r => r.categories.flatMap(c => c.items).filter(d => d.name.toLowerCase().includes(ql)).map(d => ({ r, d })));
+    let html = '<div style="color:var(--muted);font-size:13px;margin:8px 0">Restaurants</div>';
+    html += restMatch.length ? restMatch.map(r => `<div class="rest-card" onclick="openRestaurant(${r.id})">
+        <div class="imgwrap" style="aspect-ratio:auto;height:72px;display:flex;gap:12px;align-items:center">
+          <img src="${r.img}" style="width:72px;height:100%;border-radius:8px">
+          <div><b>${r.name}</b><div style="color:var(--muted);font-size:12px">${r.cuisine}</div><div style="color:var(--muted2);font-size:11px">${r.time} min · ★ ${r.rating}</div></div>
+        </div>
+      </div>`).join('') : '<p style="color:var(--muted2);font-size:13px;margin:4px 0">No restaurants found</p>';
+    html += '<div style="color:var(--muted);font-size:13px;margin:14px 0 8px">Dishes</div>';
+    html += dishMatches.length ? dishMatches.map(({ r, d }) => `
+      <div class="dish" style="border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0">
+        <div class="dish-info"><span class="vegdot ${d.veg ? '' : 'nv'}"></span><br><span class="name">${d.name}</span><div class="price">${fmt(d.price)}</div><div class="desc" style="font-size:11px">${r.name}</div></div>
+        <div class="dish-right" style="width:88px"><img class="photo" style="width:88px;height:80px" src="${d.img}"><button class="add-btn" onclick="event.stopPropagation();addToCart(${d.id})">ADD</button></div>
+      </div>`).join('') : '<p style="color:var(--muted2);font-size:13px;margin:4px 0">No dishes found</p>';
+    res.innerHTML = html;
+  }
+
+  /* ================= CART ================= */
+  function renderCart() {
+    updateCartBar();
+    const wrap = document.getElementById('cartWrap');
+    if (!state.cart.length) {
+      wrap.innerHTML = `<div class="empty"><div class="ic">🛒</div><h2>Your cart is empty</h2><p>Looks like you have not added anything to your cart yet.</p><button class="btn" onclick="go('home')">See restaurants near you</button></div>`;
+      return;
+    }
+    const restId = state.cart[0].rest;
+    const r = RESTAURANTS.find(x => x.id === restId);
+    const rows = state.cart.map(i => { const d = findDish(i.dish); return { d, qty: i.qty }; });
+    const bill = computeBill();
+    wrap.innerHTML = `
+      <button class="back-btn" style="position:static;width:auto;border-radius:8px;padding:6px 12px;background:var(--bg-soft);margin:14px 0 0" onclick="go('home')">← Back</button>
+      <h1>Checkout</h1>
+      <p class="res">${r.name} · ${r.area}</p>
+      <div class="card">
+        <h3>Your order</h3>
+        <p class="sub">${rows.length} items from ${r.name}</p>
+        ${rows.map(i => `<div class="citem">
+          <div><div class="nm">${i.d.name}</div><div class="pr">${fmt(i.d.price)}</div></div>
+          <div class="steppersm"><button onclick="changeQty(${i.d.id},-1)">−</button><b>${i.qty}</b><button onclick="changeQty(${i.d.id},1)">+</button></div>
+        </div>`).join('')}
+      </div>
+      <div class="card">
+        <h3>${state.coupon ? 'Coupon applied' : 'Apply coupon'}</h3>
+        ${state.coupon
+          ? `<div class="coupon applied"><span>🎉 ${state.coupon.code} · ${COUPONS.find(c => c.code === state.coupon.code)?.label || ''}</span><span class="chk">✓</span></div>
+             <button class="btn-ghost" style="padding:8px" onclick="removeCoupon()">Remove coupon</button>`
+          : `<div class="coupon" onclick="openOvl('ovlCoupon')"><span>🎟️ Apply Coupon</span><span class="chk">+</span></div>`}
+      </div>
+      <div class="card">
+        <h3>Bill details</h3>
+        <div class="bill-row"><span>Item total</span><span>${fmt(bill.subtotal)}</span></div>
+        <div class="bill-row muted"><span>Platform fee</span><span>₹0</span></div>
+        <div class="bill-row"><span>Delivery fee</span><span>${bill.delivery === 0 ? 'FREE' : fmt(bill.delivery)}</span></div>
+        <div class="bill-row muted"><span>GST & taxes (5%)</span><span>${fmt(bill.tax)}</span></div>
+        <div class="bill-row" style="color:var(--green)"><span>${bill.discount > 0 ? 'Coupon discount' : ''}</span><span>${bill.discount > 0 ? '− ' + fmt(bill.discount) : ''}</span></div>
+        <div class="bill-row total"><span>To pay</span><span>${fmt(bill.total)}</span></div>
+        <div class="bill-row saving">You saved ₹${(bill.discount + (bill.delivery ? 0 : 15)).toFixed(0)} on this order 🎉</div>
+      </div>
+      <div class="card">
+        <h3>Deliver to</h3>
+        <div class="addr-box">
+          <div class="ic">📌</div>
+          <div><b>${state.addresses[state.addrIdx] ? state.addresses[state.addrIdx].flat + ', ' + state.addresses[state.addrIdx].street : 'Home'}</b><p>${state.addresses[state.addrIdx] ? state.addresses[state.addrIdx].type + ' address · Sakoli' : 'Add a delivery address so we can send your order'}</p></div>
+          <button class="chg" onclick="openOvl('ovlAddress');buildAddrList()">${state.addresses.length ? 'CHANGE' : 'ADD'}</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Payment method</h3>
+        <div id="payMethods"></div>
+      </div>
+      <button class="place-btn" onclick="placeOrder()">Place Order · ${fmt(bill.total)}</button>
+      <p style="text-align:center;color:var(--muted2);font-size:11px;margin:10px 0 20px">By placing this order you agree to our Terms and Privacy Policy</p>`;
+    renderPayMethods();
+    buildCouponList();
+  }
+
+  const DELIVERY_FEE = 15;
+  function computeBill() {
+    const subtotal = state.cart.reduce((n, i) => n + i.qty * findDish(i.dish).price, 0);
+    let discount = 0;
+    if (state.coupon) {
+      const c = COUPONS.find(x => x.code === state.coupon.code);
+      if (c) {
+        if (c.code === 'BHOOKIT20') discount = Math.min(100, subtotal * 0.2);
+        else if (c.code === 'JB10') discount = Math.min(80, subtotal * 0.1);
+        else if (c.code === 'WELCOME50') discount = 50;
+        else discount = 50;
+      }
+    }
+    const delivery = subtotal >= 199 ? 0 : DELIVERY_FEE;
+    const tax = Math.round((subtotal - discount) * 0.05);
+    const total = subtotal - discount + delivery + tax;
+    return { subtotal, discount, delivery, tax, total };
+  }
+
+  function renderPayMethods() {
+    const methods = [['upi', 'UPI', 'Google Pay, PhonePe, Paytm & BHIM'], ['card', 'Credit / Debit Card', 'Visa, Mastercard, RuPay'], ['net', 'Net Banking', 'ICICI, HDFC, SBI & more'], ['cod', 'Cash on Delivery', 'Pay when order arrives']];
+    document.getElementById('payMethods').innerHTML = methods.map(([k, t, s]) => `
+      <div class="pay-opt ${state.pay === k ? 'on' : ''}" onclick="state.pay='${k}';renderPayMethods()">
+        <span class="ic">${k === 'upi' ? '📲' : k === 'card' ? '💳' : k === 'net' ? '🏦' : '💵'}</span>
+        <div><div>${t}</div><div style="color:var(--muted);font-weight:400;font-size:11.5px">${s}</div></div>
+        <span class="rad"></span>
+      </div>`).join('');
+  }
+
+  function buildCouponList() {
+    const bill = computeBill();
+    document.getElementById('couponList').innerHTML = COUPONS.map(c => {
+      const ok = bill.subtotal >= c.min;
+      return `<div class="coupon ${state.coupon && state.coupon.code === c.code ? 'applied' : ''}" style="${ok ? '' : 'opacity:.5'}">
+        <div><div>${c.label}</div><div style="color:var(--muted2);font-weight:400;font-size:11px">${ok ? 'CODE: ' + c.code : 'Applies above ' + fmt(c.min)}</div></div>
+        <button style="color:var(--red);font-weight:800;white-space:nowrap" onclick="applyCoupon('${c.code}')">${state.coupon && state.coupon.code === c.code ? '✓ APPLIED' : ok ? 'APPLY' : 'LOCKED'}</button>
+      </div>`;
+    }).join('');
+  }
+  function applyCoupon(code) {
+    const bill = computeBill();
+    const c = COUPONS.find(x => x.code === code);
+    if (bill.subtotal < c.min) { toast('Add items worth ' + fmt(c.min) + ' to apply'); return; }
+    state.coupon = { code };
+    save();
+    closeOvl('ovlCoupon');
+    renderCart();
+    toast('Coupon ' + code + ' applied');
+  }
+  function removeCoupon() { delete state.coupon; save(); renderCart(); }
+
+  /* ================= ADDRESS ================= */
+  function buildAddrList() { /* keeps modal simple */ }
+  function setAddrType(btn, t) { document.querySelectorAll('#ovlAddress .schip').forEach(b => { b.style.borderColor = ''; }); btn.style.borderColor = 'var(--red)'; state.addrType = t; }
+  function saveAddress() {
+    const flat = document.getElementById('addrFlat').value.trim();
+    const street = document.getElementById('addrStreet').value.trim();
+    if (!flat || !street) { toast('Please fill address fields'); return; }
+    const type = state.addrType || 'Home';
+    state.addresses.push({ flat, street, type });
+    state.addrIdx = state.addresses.length - 1;
+    save();
+    closeOvl('ovlAddress');
+    renderCart();
+    toast('Address saved');
+  }
+
+  /* ================= PLACE ORDER ================= */
+  function placeOrder() {
+    const bill = computeBill();
+    if (!state.addresses.length && state.pay !== 'cod') { openOvl('ovlAddress'); toast('Please add a delivery address'); return; }
+    openOvl('ovlPay');
+    document.getElementById('payBox').innerHTML = `
+      <h3>Complete payment</h3>
+      <div style="background:var(--bg-soft);border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:26px;font-weight:800;color:var(--red)">${fmt(bill.total)}</div>
+        <div style="color:var(--muted);font-size:13px;margin-top:4px">${state.pay === 'upi' ? 'UPI payment' : state.pay === 'card' ? 'Card payment' : state.pay === 'net' ? 'Net banking' : 'Cash on Delivery'}</div>
+      </div>
+      ${state.pay === 'cod'
+        ? `<p style="color:var(--muted);font-size:13px;margin:14px 0">You will pay <b>${fmt(bill.total)}</b> in cash when your order arrives.</p>
+           <button class="btn-red" onclick="placeOrderConfirm()">Place Order</button>`
+        : `<input class="inp" id="upiId" placeholder="${state.pay === 'upi' ? 'yourname@upi (demo: bhookit@ybl)' : state.pay === 'card' ? 'Demo card: 4242 4242 4242 4242' : 'Select your bank'}" style="margin:12px 0">
+           <button class="btn-red" onclick="payNow('${state.pay}')">Pay ${fmt(bill.total)}</button>`}
+      <button class="btn-ghost" onclick="closeOvl('ovlPay')">Cancel</button>`;
+  }
+
+  function payNow(mode) {
+    const bill = computeBill();
+    if (mode !== 'cod') {
+      const val = document.getElementById('upiId')?.value.trim();
+      if (!val) { toast('Please enter your ' + (mode === 'upi' ? 'UPI ID' : mode === 'card' ? 'card details' : 'bank')); return; }
+    }
+    document.getElementById('payBox').innerHTML = `
+      <h3 style="text-align:center">Processing payment…</h3>
+      <div style="text-align:center;padding:18px 0"><div style="font-size:44px">🔄</div>
+      <p style="color:var(--muted);font-size:13px;margin-top:8px">Contacting ${mode === 'upi' ? 'your UPI app' : mode === 'card' ? 'your bank' : 'net banking'}</p></div>`;
+    setTimeout(() => document.getElementById('payBox').innerHTML = `
+      <div class="suc"><div class="ic">✅</div><h2>Payment successful</h2><p>${fmt(bill.total)} paid via ${mode.toUpperCase()}</p>
+      <button class="btn" onclick="closeOvl('ovlPay');placeOrderConfirm()">Continue</button></div>`, 1300);
+  }
+
+  function placeOrderConfirm() {
+    closeOvl('ovlPay');
+    const r = RESTAURANTS.find(x => x.id === state.cart[0].rest);
+    const bill = computeBill();
+    const order = {
+      id: 'FB-' + Math.floor(10000 + Math.random() * 89999),
+      restId: r.id,
+      restName: r.name,
+      items: state.cart.map(i => ({ name: findDish(i.dish).name, qty: i.qty, price: findDish(i.dish).price })),
+      total: bill.total,
+      savings: Math.round(bill.discount + (bill.delivery === 0 ? 15 : 0)),
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      status: 'placed',
+      trackIdx: 0
+    };
+    state.orders.unshift(order);
+    state.cart = [];
+    delete state.coupon;
+    state.wallet += Math.round(bill.subtotal * 0.05);
+    save();
+    renderCart();
+    updateCartBar();
+    document.getElementById('sucSub').innerHTML = `${r.name} is preparing your food`;
+    document.getElementById('sucTotal').textContent = 'To pay: ' + fmt(bill.total) + ' · 5% cashback credited 💰';
+    openOvl('ovlSuccess');
+    simulateTracking(order.id);
+  }
+
+  async function simulateTracking(orderId) {
+    const o = state.orders.find(x => x.id === orderId);
+    for (const s of ['preparing', 'ontheway', 'delivered']) {
+      await new Promise(res => setTimeout(res, 6000));
+      if (o) { o.status = s; save(); renderOrders(); }
+    }
+  }
+
+  /* ================= ORDERS ================= */
+  function renderOrders() {
+    const wrap = document.getElementById('ordersWrap');
+    if (!state.orders.length) {
+      wrap.innerHTML = `<div class="empty"><div class="ic">🧾</div><h2>No orders yet</h2><p>When you place your first order, it will show up here.</p><button class="btn" onclick="go('home')">Order now</button></div>`;
+      return;
+    }
+    const stepMap = { placed: ['placed', '', ''], preparing: ['placed', 'preparing', ''], ontheway: ['placed', 'preparing', 'ontheway'], delivered: ['placed', 'preparing', 'ontheway'] };
+    const shown = [['placed', 'Placed', '📋'], ['preparing', 'Preparing', '👨‍🍳'], ['ontheway', 'On the way', '🛵']];
+    wrap.innerHTML = state.orders.map(o => `
+      <div class="order-card">
+        <div class="top">
+          <div><div class="restnm">${o.restName}</div><div class="ordid">${o.id} · ${o.time}</div></div>
+          <span class="stat ${o.status}">${o.status === 'delivered' ? 'Delivered ✓' : shown.find(s => s[0] === stepMap[o.status][0])?.[1]}</span>
+        </div>
+        <div class="order-items">${o.items.map(i => `${i.qty}× ${i.name}`).join(', ')}</div>
+        <div class="order-foot">
+          <span>Total <b>${fmt(o.total)}</b> · Saved ₹${o.savings}</span>
+          <span style="display:flex;gap:14px">
+            <button class="act" onclick="reorder('${o.id}')">Reorder</button>
+            <button class="act" onclick="openOrderChat('${o.id}')">Help</button>
+          </span>
+        </div>
+        ${o.status === 'delivered'
+          ? `<div style="margin-top:10px"><button class="fchip on" style="width:100%;justify-content:center;font-weight:700" onclick="rateOrder('${o.id}')">⭐ Rate this order</button></div>`
+          : `<div class="trackline">
+              ${shown.map(([k, lab, ic]) => `<div class="tls ${stepMap[o.status].includes(k) ? 'done' : ''} ${stepMap[o.status][stepMap[o.status].filter(x => x).length - 1] === k && o.status !== 'delivered' ? 'now' : ''}"><div class="c">${ic}</div><small>${lab}</small></div>`).join('')}
+              <div class="tls ${o.status === 'delivered' ? 'done' : ''}"><div class="c">✅</div><small>Delivered</small></div>
+            </div>`}
+      </div>`).join('');
+  }
+  function reorder(id) {
+    const o = state.orders.find(x => x.id === id);
+    const valid = o.items.map(it => findDishByName(it.name)).filter(Boolean);
+    if (!valid.length) { toast('Could not rebuild cart'); return; }
+    state.cart = valid.map(d => ({ rest: restaurantOfDish(d.id), dish: d.id, qty: 1 }));
+    save();
+    go('cart');
+    toast('Items added — review cart');
+  }
+  function findDishByName(name) {
+    return RESTAURANTS.flatMap(r => r.categories.flatMap(c => c.items)).find(d => d.name === name);
+  }
+  function restaurantOfDish(dishId) {
+    return RESTAURANTS.find(r => r.categories.some(c => c.items.some(i => i.id === dishId))).id;
+  }
+  function rateOrder(id) { toast('Thanks! Rating saved ⭐'); }
+  function openOrderChat(id) { toast('Connecting to support for ' + id + '…'); }
+
+  /* ================= BOOKMARKS ================= */
+  function toggleBookmark(restId) {
+    const k = 'r' + restId;
+    state.favorites[k] = !state.favorites[k];
+    save();
+    renderHome();
+    renderRestList('homeRestList');
+    toast(state.favorites[k] ? 'Saved to bookmarks' : 'Removed from bookmarks');
+  }
+  function renderBookmarks() {
+    const wrap = document.getElementById('bookmarksWrap');
+    const saved = RESTAURANTS.filter(r => state.favorites['r' + r.id]);
+    if (!saved.length) {
+      wrap.innerHTML = `<div class="empty"><div class="ic">❤️</div><h2>No bookmarks yet</h2><p>Tap the bookmark icon on any restaurant to save it here.</p><button class="btn" onclick="go('home')">Explore restaurants</button></div>`;
+      return;
+    }
+    wrap.innerHTML = '<div class="rest-list">' + saved.map(r => `
+      <div class="rest-card" onclick="openRestaurant(${r.id})">
+        <div class="imgwrap"><img src="${r.img}"><div class="ribbon">${r.offer}</div>
+        <button class="bookmark on" onclick="event.stopPropagation();toggleBookmark(${r.id})">❤️</button></div>
+        <div class="rest-meta"><b>${r.name}</b><span class="rchip">★ ${r.rating}</span></div>
+        <div class="rest-sub"><span class="cuisines">${r.cuisine}</span><span class="meta">${r.time} min</span></div>
+      </div>`).join('') + '</div>';
+  }
+
+  /* ================= PROFILE ================= */
+  function renderProfile() {
+    const wrap = document.getElementById('profileWrap');
+    if (state.login) {
+      wrap.innerHTML = `
+        <div class="pcard">
+          <div class="av">${state.login.name ? state.login.name[0].toUpperCase() : '👤'}</div>
+          <div><b>${state.login.name || 'Foodie User'}</b><p>+91 ${state.login.phone}</p></div>
+        </div>
+        <div class="wallet-card">
+          <div><b>BhookIt Money</b><div class="addr">5% cashback on every order</div></div>
+          <b>${fmt(state.wallet)}</b>
+        </div>
+        <div class="card" style="padding:6px 16px">
+          <div class="menu-row" onclick="toast('Wallet top-up coming soon')"><div class="ic">💰</div><div><b>Add Money</b><small>Top up BharatPay wallet</small></div></div>
+          <div class="menu-row" onclick="toast('Showing saved addresses')"><div class="ic">📮</div><div><b>Addresses</b><small>${state.addresses.length} saved</small></div></div>
+          <div class="menu-row" onclick="toast('Free delivery on orders above ₹199')"><div class="ic">🎟️</div><div><b>Offers for you</b><small>Coupons & deals</small></div></div>
+          <div class="menu-row" onclick="toast('Set to English — मराठी & हिन्दी coming soon')"><div class="ic">🌐</div><div><b>Language</b><small>English</small></div></div>
+          <div class="menu-row" onclick="logout()"><div class="ic">🚪</div><div><b>Logout</b><small>Sign out of this device</small></div></div>
+        </div>`;
+      return;
+    }
+    wrap.innerHTML = `
+      <div class="empty" style="padding:30px 0 16px"><div class="ic">🔓</div>
+        <h2>Login to manage your account</h2>
+        <p>Track orders, save addresses and earn BhookIt Money.</p>
+        <button class="btn" onclick="openOvl('ovlLogin')">Login / Sign up</button>
+      </div>
+      <div class="card"><h3>Why login?</h3>
+        <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
+          <div class="pay-opt" style="flex:1;min-width:130px"><span class="ic">🧾</span>Order tracking</div>
+          <div class="pay-opt" style="flex:1;min-width:130px"><span class="ic">📮</span>Saved addresses</div>
+          <div class="pay-opt" style="flex:1;min-width:130px"><span class="ic">💰</span>Wallet cashback</div>
+        </div>
+      </div>`;
+  }
+  function logout() { state.login = null; save(); renderProfile(); go('profile'); toast('Logged out'); }
+
+  /* ================= LOGIN / OTP ================= */
+  let otp = '';
+  function startOtp() {
+    const phone = document.getElementById('loginPhone').value.trim();
+    if (!/^[6-9]\d{9}$/.test(phone)) { toast('Enter a valid 10-digit mobile number'); return; }
+    otp = String(Math.floor(1000 + Math.random() * 9000));
+    document.getElementById('otpCode').textContent = otp;
+    document.getElementById('loginStep1').style.display = 'none';
+    document.getElementById('loginStep2').style.display = 'block';
+    toast('OTP sent to +91 ' + phone);
+    document.querySelectorAll('#ovlLogin .otp-row input')[0].focus();
+  }
+  function otpIn(el) {
+    const idx = +el.dataset.i;
+    if (el.value) {
+      const next = document.querySelectorAll('#ovlLogin .otp-row input')[idx + 1];
+      if (next) next.focus();
+    }
+  }
+  function verifyOtp() {
+    const vals = [...document.querySelectorAll('#ovlLogin .otp-row input')].map(i => i.value).join('');
+    if (vals !== otp) { toast('Incorrect OTP. Try again.'); return; }
+    state.login = { phone: document.getElementById('loginPhone').value.trim(), name: 'Foodie User' };
+    save();
+    closeOvl('ovlLogin');
+    renderProfile();
+    const btn = document.getElementById('loginBtnHeader');
+    if (btn) btn.textContent = '👤 Foodie';
+    toast('Welcome to BhookIt! 🎉');
+  }
+
+  /* ================= INIT ================= */
+  document.getElementById('loginBtnHeader').textContent = state.login ? '👤 Foodie' : '🔓 Login';
+  state.pay = state.pay || 'upi';
+  renderHome();
+  renderSearch();
+  renderOrders();
+  renderBookmarks();
+  renderProfile();
+  updateCartBar();
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
+  </script>
+</body>
+</html>
