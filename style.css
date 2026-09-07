@@ -5151,3 +5151,134 @@ html, body {
   background: #27354f;
   border-color: var(--primary);
 }
+
+/* ------------------------------------------------------------- */
+/* SMARTPHONE REFINEMENTS (<= 640px) - added for clean mobile UX  */
+/* ------------------------------------------------------------- */
+@media (max-width: 640px) {
+  /* Safety net: never allow stray horizontal scroll on phones */
+  body {
+    overflow-x: hidden !important;
+  }
+
+  /* Compact sticky header */
+  header {
+    gap: 6px !important;
+    padding: 8px 10px !important;
+  }
+
+  .logo-area {
+    flex: 0 0 auto !important;
+  }
+
+  .brand-logo-img {
+    height: 34px !important;
+    max-width: 120px !important;
+  }
+
+  .header-location-picker {
+    max-width: 124px !important;
+    padding: 4px 6px !important;
+  }
+
+  .header-location-picker .loc-sub {
+    max-width: 72px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .nav-right {
+    gap: 4px !important;
+    margin-left: auto !important;
+    max-width: 100% !important;
+  }
+
+  /* Hide low-value decorative controls on phones */
+  .notification-wrapper {
+    display: none !important;
+  }
+
+  /* Keep the theme toggle as icon-only */
+  .theme-toggle-btn span:last-child {
+    display: none !important;
+  }
+  .theme-toggle-btn {
+    padding: 6px 8px !important;
+    font-size: 15px !important;
+  }
+
+  .lang-selector {
+    max-width: 92px !important;
+    padding: 4px 6px !important;
+    font-size: 11px !important;
+  }
+
+  .wallet-nav-btn,
+  .cart-indicator-btn {
+    padding: 6px 8px !important;
+    font-size: 12px !important;
+  }
+
+  #authBtn {
+    padding: 5px 10px !important;
+    font-size: 12px !important;
+  }
+
+  /* Hero coupon pill wraps instead of overflowing */
+  .coupon-promo-pill {
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    text-align: center !important;
+  }
+
+  /* Section title rows may wrap */
+  .section-title-row {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  /* Let the search bar controls wrap to a second row */
+  .search-input-wrapper {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    padding: 10px 12px !important;
+  }
+
+  .search-input-wrapper .search-input {
+    flex: 1 1 160px !important;
+  }
+
+  .area-selector-search-btn,
+  .sort-select {
+    flex-shrink: 1 !important;
+    min-width: 0 !important;
+  }
+
+  /* VIP banner stacks cleanly on narrow screens */
+  .vip-gold-banner,
+  .vip-group-strip {
+    flex-wrap: wrap !important;
+  }
+  .btn-vip-action {
+    margin-left: 0 !important;
+  }
+}
+
+/* Densest phones: tuck wallet into icon-only */
+@media (max-width: 400px) {
+  .wallet-nav-btn span:last-child {
+    display: none !important;
+  }
+  .wallet-nav-btn {
+    padding: 6px 7px !important;
+  }
+  .lang-selector {
+    max-width: 84px !important;
+  }
+  .hero-title,
+  h1 {
+    font-size: 16px !important;
+  }
+}
