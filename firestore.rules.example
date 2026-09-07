@@ -1,0 +1,14 @@
+rules_version = '2';
+service cloud.firestore {
+ match /databases/{database}/documents {
+  function signedIn(){return request.auth != null;}
+  function userDoc(){return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;}
+  function isAdmin(){return signedIn() && userDoc().role == 'admin';}
+  function isRestaurant(){return signedIn() && userDoc().role == 'restaurant';}
+  function isDelivery(){return signedIn() && userDoc().role == 'delivery';}
+  match /users/{uid}{allow create:if signedIn()&&request.auth.uid==uid;allow read,update:if signedIn()&&(request.auth.uid==uid||isAdmin());}
+  match /restaurants/{id}{allow read:if resource.data.approved==true||isAdmin()||(isRestaurant()&&resource.data.ownerUid==request.auth.uid);allow create:if signedIn();allow update:if isAdmin()||(isRestaurant()&&resource.data.ownerUid==request.auth.uid);}
+  match /orders/{id}{allow create:if signedIn()&&request.resource.data.userId==request.auth.uid;allow read:if signedIn()&&(resource.data.userId==request.auth.uid||isAdmin()||isDelivery()||(isRestaurant()&&resource.data.restaurantOwnerUid==request.auth.uid));allow update:if isAdmin()||isDelivery()||(isRestaurant()&&resource.data.restaurantOwnerUid==request.auth.uid);}
+  match /deliveryBoys/{uid}{allow read:if signedIn();allow write:if signedIn()&&(request.auth.uid==uid||isAdmin());}
+ }
+}

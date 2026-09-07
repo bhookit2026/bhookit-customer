@@ -1,0 +1,54 @@
+﻿{
+  "name": "BhookIt â€” Multi-Restaurant Food Ordering & Delivery System",
+  "short_name": "BhookIt",
+  "description": "All-in-one multi-vendor food delivery and restaurant management platform with live GPS tracking, rider dispatch, and vendor portals.",
+  "start_url": "./customer.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0f172a",
+  "theme_color": "#ff4722",
+  "categories": ["food", "shopping", "lifestyle"],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "favicon.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Explore Restaurants",
+      "short_name": "Explore",
+      "description": "Browse nearby restaurant menus and food items",
+      "url": "./customer.html#customer",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Live Delivery Tracking",
+      "short_name": "Track",
+      "description": "Track active food courier live on map",
+      "url": "./customer.html#track",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "My Orders",
+      "short_name": "Orders",
+      "description": "View recent orders and GST receipts",
+      "url": "./customer.html#orders",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
