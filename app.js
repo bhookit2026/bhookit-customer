@@ -2052,7 +2052,7 @@ function setDeliveryScheduleMode(mode) {
 let pendingOrderForPayment = null;
 let currentRzpOrderId = null;
 let pendingUpiPayment = null;
-const BHOOKIT_UPI_VPA = 'bhookit@okhdfcbank';
+const BHOOKIT_UPI_VPA = 'bhookit@axl';
 
 async function submitOrder() {
   if (!currentCart.length) {
@@ -4901,7 +4901,7 @@ function sendGroupUpiWhatsApp(idx) {
   const perPerson = Math.round(total / groupOrderState.members.length);
   const due = groupOrderState.splitMode === 'equal' ? perPerson : m.total;
 
-  const upiLink = `upi://pay?pa=bhookit@okhdfcbank&pn=BhookIt&am=${due}&cu=INR&tn=BhookItGroupOrder`;
+  const upiLink = `upi://pay?pa=${BHOOKIT_UPI_VPA}&pn=BhookIt&am=${due}&cu=INR&tn=BhookItGroupOrder`;
   const text = encodeURIComponent(`Hi ${m.name}, your share for the BhookIt Group Order (${groupOrderState.roomCode}) is ₹${due}. Tap to pay via UPI: ${upiLink}`);
   window.open(`https://wa.me/?text=${text}`, '_blank');
 }
