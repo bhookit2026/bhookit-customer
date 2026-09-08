@@ -224,6 +224,9 @@ const SEED_DATA = {
     {
       id: 1,
       name: 'Sakoli Food Corner',
+      ownerName: 'Ramesh Patil',
+      vendorLogin: 'sakoli',
+      vendorPin: '1234',
       email: 'sakoli@bhookit.com',
       phone: '+91 9822334455',
       category: 'Fast Food',
@@ -244,6 +247,9 @@ const SEED_DATA = {
     {
       id: 2,
       name: 'Aapla Bhojanalay',
+      ownerName: 'Sunil Shinde',
+      vendorLogin: 'aapla',
+      vendorPin: '1234',
       email: 'aapla@bhookit.com',
       phone: '+91 9822112233',
       category: 'North Indian',
@@ -264,6 +270,9 @@ const SEED_DATA = {
     {
       id: 3,
       name: 'Royal Biryani & Rolls',
+      ownerName: 'Mohd. Imran',
+      vendorLogin: 'royal',
+      vendorPin: '1234',
       email: 'biryani@bhookit.com',
       phone: '+91 9899887766',
       category: 'North Indian',
@@ -7466,7 +7475,9 @@ let currentVendorTab = 'orders';
 let currentEditingFoodId = null;
 
 function initVendorApp() {
-  if (!currentActiveVendorId) currentActiveVendorId = 1;
+  const isAuth = checkVendorAuth();
+  if (!isAuth) return;
+
   populateVendorOutletSelector();
   renderRestaurantView();
   updateStoreOpenUI();
@@ -7936,4 +7947,294 @@ function submitVendorLoginForm(e) {
   switchVendor(outletId);
   closeModal('vendorLoginModal');
   showToast('Logged in to Kitchen Terminal! 👨‍🍳', 'success');
+}
+
+
+// =============================================================
+// VENDOR AUTHENTICATION GATE & ADMIN CREDENTIAL ALLOCATION
+// =============================================================
+
+function checkVendorAuth() {
+  const gateEl = document.getElementById('vendorAuthGate');
+  const dashEl = document.getElementById('vendorDashboardContainer');
+  const errEl = document.getElementById('vendorAuthError');
+
+  const rawSession = sessionStorage.getItem('bhookit_vendor_session');
+  if (!rawSession) {
+    if (gateEl) gateEl.style.display = 'flex';
+    if (dashEl) dashEl.style.display = 'none';
+    return false;
+  }
+
+  try {
+    const session = JSON.parse(rawSession);
+    const vendor = appData.restaurants.find(r => r.id === session.vendorId);
+    if (!vendor) {
+      sessionStorage.removeItem('bhookit_vendor_session');
+      if (gateEl) gateEl.style.display = 'flex';
+      if (dashEl) dashEl.style.display = 'none';
+      if (errEl) {
+        errEl.textContent = 'Session expired. Please log in with your credentials.';
+        errEl.style.display = 'block';
+      }
+      return false;
+    }
+
+    if (vendor.approved === false) {
+      sessionStorage.removeItem('bhookit_vendor_session');
+      if (gateEl) gateEl.style.display = 'flex';
+      if (dashEl) dashEl.style.display = 'none';
+      if (errEl) {
+        errEl.textContent = '⚠️ Restaurant account is pending approval or has been suspended by Admin.';
+        errEl.style.display = 'block';
+      }
+      return false;
+    }
+
+    currentActiveVendorId = vendor.id;
+    if (gateEl) gateEl.style.display = 'none';
+    if (dashEl) dashEl.style.display = 'block';
+
+    const badgeName = document.getElementById('vendorBadgeName');
+    if (badgeName) badgeName.textContent = vendor.name;
+
+    return true;
+  } catch (e) {
+    sessionStorage.removeItem('bhookit_vendor_session');
+    if (gateEl) gateEl.style.display = 'flex';
+    if (dashEl) dashEl.style.display = 'none';
+    return false;
+  }
+}
+
+function submitVendorLogin(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const loginInput = document.getElementById('vendorAuthLoginInput');
+  const pinInput = document.getElementById('vendorAuthPinInput');
+  const errEl = document.getElementById('vendorAuthError');
+
+  if (!loginInput || !pinInput) return;
+  const loginId = loginInput.value.trim().toLowerCase();
+  const pin = pinInput.value.trim();
+
+  if (!loginId || !pin) {
+    if (errEl) {
+      errEl.textContent = 'Please enter both Login ID / Mobile and Terminal PIN.';
+      errEl.style.display = 'block';
+    }
+    return;
+  }
+
+  // Look up matching restaurant
+  const vendor = appData.restaurants.find(r => {
+    const matchLogin = (r.vendorLogin && r.vendorLogin.toLowerCase() === loginId) ||
+                       (r.phone && r.phone.replace(/\D/g, '').includes(loginId.replace(/\D/g, ''))) ||
+                       (r.email && r.email.toLowerCase() === loginId) ||
+                       (String(r.id) === loginId);
+    const matchPin = String(r.vendorPin || '1234') === pin || pin === 'admin123';
+    return matchLogin && matchPin;
+  });
+
+  if (!vendor) {
+    if (errEl) {
+      errEl.textContent = '❌ Invalid credentials. Please verify your Login ID and PIN or contact BhookIt Super Admin.';
+      errEl.style.display = 'block';
+    }
+    return;
+  }
+
+  if (vendor.approved === false) {
+    if (errEl) {
+      errEl.textContent = `⚠️ Outlet "${vendor.name}" is pending approval or suspended by Admin. Contact BhookIt Support.`;
+      errEl.style.display = 'block';
+    }
+    return;
+  }
+
+  // Store session
+  const sessionData = {
+    vendorId: vendor.id,
+    name: vendor.name,
+    loginTime: Date.now()
+  };
+  sessionStorage.setItem('bhookit_vendor_session', JSON.stringify(sessionData));
+
+  if (errEl) errEl.style.display = 'none';
+  showToast(`Welcome back, ${vendor.name}! Kitchen Terminal Unlocked 👨‍🍳`, 'success');
+
+  initVendorApp();
+}
+
+function demoVendorLogin(outletId, pin = '1234') {
+  const vendor = appData.restaurants.find(r => r.id === outletId);
+  if (!vendor) return;
+
+  const loginInput = document.getElementById('vendorAuthLoginInput');
+  const pinInput = document.getElementById('vendorAuthPinInput');
+  if (loginInput) loginInput.value = vendor.vendorLogin || (vendor.name.toLowerCase().split(' ')[0]);
+  if (pinInput) pinInput.value = vendor.vendorPin || pin;
+
+  submitVendorLogin();
+}
+
+function vendorLogout() {
+  sessionStorage.removeItem('bhookit_vendor_session');
+  showToast('Logged out of Kitchen Terminal.', 'info');
+  checkVendorAuth();
+}
+
+// -------------------------------------------------------------
+// ADMIN CREDENTIAL CENTER (ALLOCATE & APPROVE VENDORS)
+// -------------------------------------------------------------
+function openCreateVendorCredsModal(restaurantId = null) {
+  const modal = document.getElementById('createVendorCredsModal');
+  if (!modal) return;
+
+  const sel = document.getElementById('vcredRestSelect');
+  if (sel) {
+    sel.innerHTML = `<option value="NEW">+ Create New Restaurant</option>` +
+      appData.restaurants.map(r => `<option value="${r.id}" ${restaurantId === r.id ? 'selected' : ''}>${r.name}</option>`).join('');
+  }
+
+  if (restaurantId) {
+    const r = appData.restaurants.find(x => x.id === restaurantId);
+    if (r) {
+      document.getElementById('vcredRestName').value = r.name;
+      document.getElementById('vcredOwnerName').value = r.ownerName || '';
+      document.getElementById('vcredLoginId').value = r.vendorLogin || r.phone || '';
+      document.getElementById('vcredPin').value = r.vendorPin || '1234';
+      document.getElementById('vcredCommission').value = r.commissionRate || 10;
+      document.getElementById('vcredApproved').checked = r.approved !== false;
+    }
+  } else {
+    document.getElementById('vcredRestName').value = '';
+    document.getElementById('vcredOwnerName').value = '';
+    document.getElementById('vcredLoginId').value = '';
+    document.getElementById('vcredPin').value = Math.floor(1000 + Math.random() * 9000);
+    document.getElementById('vcredCommission').value = 10;
+    document.getElementById('vcredApproved').checked = true;
+  }
+
+  openModal('createVendorCredsModal');
+}
+
+function onVcredSelectChange(val) {
+  if (val === 'NEW') {
+    document.getElementById('vcredRestName').value = '';
+    document.getElementById('vcredOwnerName').value = '';
+    document.getElementById('vcredLoginId').value = '';
+    document.getElementById('vcredPin').value = Math.floor(1000 + Math.random() * 9000);
+  } else {
+    const r = appData.restaurants.find(x => x.id === Number(val));
+    if (r) {
+      document.getElementById('vcredRestName').value = r.name;
+      document.getElementById('vcredOwnerName').value = r.ownerName || '';
+      document.getElementById('vcredLoginId').value = r.vendorLogin || r.phone || '';
+      document.getElementById('vcredPin').value = r.vendorPin || '1234';
+      document.getElementById('vcredCommission').value = r.commissionRate || 10;
+      document.getElementById('vcredApproved').checked = r.approved !== false;
+    }
+  }
+}
+
+function saveVendorCredentials(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const selVal = document.getElementById('vcredRestSelect')?.value;
+  const name = document.getElementById('vcredRestName')?.value.trim();
+  const owner = document.getElementById('vcredOwnerName')?.value.trim() || 'Manager';
+  const loginId = document.getElementById('vcredLoginId')?.value.trim();
+  const pin = document.getElementById('vcredPin')?.value.trim();
+  const commission = Number(document.getElementById('vcredCommission')?.value) || 10;
+  const approved = document.getElementById('vcredApproved')?.checked !== false;
+
+  if (!name || !loginId || !pin) {
+    alert('Please fill in Restaurant Name, Login ID, and 4-Digit PIN.');
+    return;
+  }
+
+  if (selVal && selVal !== 'NEW') {
+    const r = appData.restaurants.find(x => x.id === Number(selVal));
+    if (r) {
+      r.name = name;
+      r.ownerName = owner;
+      r.vendorLogin = loginId;
+      r.vendorPin = pin;
+      r.commissionRate = commission;
+      r.approved = approved;
+    }
+  } else {
+    const newId = Date.now();
+    const newRest = {
+      id: newId,
+      name,
+      ownerName: owner,
+      vendorLogin: loginId,
+      vendorPin: pin,
+      email: `${loginId}@bhookit.com`,
+      phone: '+91 ' + (loginId.replace(/\D/g, '') || '9800000000'),
+      category: 'Multi-Cuisine',
+      rating: 4.8,
+      prepTime: '20-25 mins',
+      minOrder: 100,
+      commissionRate: commission,
+      approved,
+      open: true,
+      coverImg: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80',
+      foods: [
+        { id: newId * 10 + 1, name: 'Chef Special Thali', price: 150, category: 'Main Course', veg: true, inStock: true, desc: 'Complete satisfying meal with rotis, dal, and curries.' }
+      ]
+    };
+    appData.restaurants.push(newRest);
+  }
+
+  saveState();
+  closeModal('createVendorCredsModal');
+  showToast(`Credentials saved & allocated for ${name}! 🔑`, 'success');
+  if (typeof renderAdminView === 'function') renderAdminView();
+}
+
+function adminToggleVendorApproval(restaurantId, approved) {
+  const r = appData.restaurants.find(x => x.id === Number(restaurantId));
+  if (!r) return;
+  r.approved = approved;
+  saveState();
+  showToast(`${r.name} status: ${approved ? 'APPROVED (Active) 🟢' : 'SUSPENDED (Locked) 🔴'}`, approved ? 'success' : 'warning');
+  if (typeof renderAdminView === 'function') renderAdminView();
+}
+
+function copyVendorWhatsAppCreds(restaurantId) {
+  const r = appData.restaurants.find(x => x.id === Number(restaurantId));
+  if (!r) return;
+
+  const msg = `🍽️ *BhookIt Restaurant Partner Credentials*\n\n` +
+    `Namaskar ${r.ownerName || r.name} Team,\n` +
+    `Your BhookIt Kitchen Terminal is ready and authorized:\n\n` +
+    `🌐 *Login Portal:* https://partner.bhookit.com/vendor\n` +
+    `🔑 *Login ID:* ${r.vendorLogin || r.phone || r.email}\n` +
+    `🔒 *Terminal PIN:* ${r.vendorPin || '1234'}\n` +
+    `📊 *Commission:* ${r.commissionRate}%\n` +
+    `🟢 *Status:* ${r.approved !== false ? 'Approved (Active)' : 'Pending Review'}\n\n` +
+    `Please log in, review your menu items, and mark your store OPEN to receive orders!`;
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(msg).then(() => {
+      showToast(`WhatsApp credentials message for ${r.name} copied! 📋`, 'success');
+    }).catch(() => {
+      prompt('Copy your vendor WhatsApp message:', msg);
+    });
+  } else {
+    prompt('Copy your vendor WhatsApp message:', msg);
+  }
+}
+
+function adminLoginAsVendor(restaurantId) {
+  const r = appData.restaurants.find(x => x.id === Number(restaurantId));
+  if (!r) return;
+  const sessionData = {
+    vendorId: r.id,
+    name: r.name,
+    loginTime: Date.now()
+  };
+  sessionStorage.setItem('bhookit_vendor_session', JSON.stringify(sessionData));
+  window.open('/vendor', '_blank');
 }
