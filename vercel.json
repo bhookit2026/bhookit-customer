@@ -22,8 +22,7 @@
   "services": {
     "bhookit-node": {
       "root": ".",
-      "entrypoint": "server.js",
-      "framework": null
+      "entrypoint": "server.js"
     }
   }
 }
