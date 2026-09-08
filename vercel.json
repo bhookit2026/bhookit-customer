@@ -1,11 +1,6 @@
 {
   "version": 2,
-  "framework": null,
-  "cleanUrls": true,
-  "trailingSlash": false,
-  "rewrites": [
-    { "source": "/", "destination": "/customer.html" }
-  ],
+  "cleanUrls": false,
   "headers": [
     {
       "source": "/(.*)",
@@ -14,5 +9,21 @@
         { "key": "X-Frame-Options", "value": "SAMEORIGIN" }
       ]
     }
-  ]
+  ],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": {
+        "type": "service",
+        "service": "bhookit-node"
+      }
+    }
+  ],
+  "services": {
+    "bhookit-node": {
+      "root": ".",
+      "entrypoint": "server.js",
+      "framework": null
+    }
+  }
 }

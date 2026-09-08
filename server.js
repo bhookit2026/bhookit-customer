@@ -59,7 +59,9 @@ function sendJson(res, statusCode, data) {
 // In-memory backend database for verification
 const serverOrders = [];
 
-const server = http.createServer(async (req, res) => {
+const server = http.createServer(handleRequest);
+
+async function handleRequest(req, res) {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     res.writeHead(204, {
@@ -181,6 +183,7 @@ const server = http.createServer(async (req, res) => {
   // -----------------------------------------------------------
   // STATIC FILE SERVING
   // -----------------------------------------------------------
+  // Public root → Customer Web App; staff use /index.html directly
   let filePath = path.join(__dirname, pathname === '/' ? 'customer.html' : pathname);
   const ext = path.extname(filePath);
   const contentType = MIME_TYPES[ext] || 'application/octet-stream';
@@ -199,8 +202,11 @@ const server = http.createServer(async (req, res) => {
       res.end(content);
     }
   });
-});
+}
 
 server.listen(PORT, () => {
   console.log(`BhookIt V1 Server & REST API running at http://localhost:${PORT}/`);
 });
+
+// Vercel serverless entrypoint (also supports Render's standalone mode above)
+module.exports = handleRequest;
