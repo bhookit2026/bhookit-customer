@@ -4,6 +4,22 @@
   "cleanUrls": false,
   "rewrites": [
     {
+      "source": "/vendor",
+      "destination": "/vendor.html"
+    },
+    {
+      "source": "/rider",
+      "destination": "/rider.html"
+    },
+    {
+      "source": "/admin",
+      "destination": "/admin.html"
+    },
+    {
+      "source": "/partner",
+      "destination": "/partner.html"
+    },
+    {
       "source": "/",
       "destination": "/customer.html"
     }

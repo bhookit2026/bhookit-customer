@@ -4,50 +4,68 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#ff4722">
-  <title>BhookIt — Order Food Online | Fast Delivery to Your Doorstep</title>
-  <meta name="description" content="Order from the best restaurants in Sakoli and nearby areas. Fresh food, lightning-fast delivery, live order tracking, and exclusive deals — only on BhookIt.">
-  <meta name="keywords" content="food delivery, order food online, Sakoli food, BhookIt, restaurant delivery, online food order">
-  <meta property="og:title" content="BhookIt — Good Food, Faster To You">
-  <meta property="og:description" content="Order from top restaurants in your city. Fast delivery, live tracking, UPI payment.">
-  <meta property="og:image" content="bhookit-logo.png">
+  <title>BhookIt Delivery — Rider & Courier Dispatch Partner Portal</title>
+  <meta name="description" content="Delivery partner app for live order pickup, GPS route navigation, proof of delivery and instant daily earnings.">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="style.css">
-  <script>
-    // Subdomain helper: If opened on partner.bhookit.com at root, redirect to partner hub
-    if (window.location.hostname.startsWith('partner.') && (window.location.pathname === '/' || window.location.pathname === '')) {
-      window.location.replace('/partner');
+  <style>
+    /* Standalone Portal Specialized Accents */
+    .portal-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
     }
-  </script>
+    .badge-vendor { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .badge-rider { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+    .badge-admin { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .badge-hub { background: #f3e8ff; color: #6b21a8; border: 1px solid #e9d5ff; }
+    .portal-quick-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    .portal-quick-link:hover {
+      background: var(--bg-surface-alt, #f1f5f9);
+      color: var(--primary);
+    }
+  </style>
 </head>
 <body>
-  <!-- ==========================================
-       BHOOKIT CUSTOMER APP — PUBLIC FACING
-       ========================================== -->
-
-  <!-- Main Navigation Header (Customer Only) -->
+  <!-- Header: Delivery Partner Dedicated Header -->
   <header>
-    <div class="logo-area" onclick="show('customer')" title="BhookIt - Good Food Faster To You">
-      <img src="bhookit-logo.png" alt="BhookIt - Good Food Faster To You" class="brand-logo-img">
+    <div class="logo-area" onclick="location.href='/rider'" style="cursor: pointer;" title="BhookIt Delivery Hero">
+      <img src="bhookit-logo.png" alt="BhookIt Rider" class="brand-logo-img">
+      <span class="portal-badge badge-rider">🛵 Delivery Hero</span>
     </div>
-    <!-- Delivery Area & City Selector -->
-    <div class="header-location-picker" id="headerLocationBtn" onclick="openLocationModal()" title="Click to Change Delivery Area or City">
-      <span class="loc-pin">📍</span>
-      <div class="loc-text-col">
-        <span class="loc-title">Deliver to <span class="loc-arrow">▼</span></span>
-        <span class="loc-sub" id="currentSelectedAreaLabel">Sakoli (Main Market Road)</span>
-      </div>
+
+    <!-- Duty Status Switcher -->
+    <div style="display: flex; align-items: center; gap: 10px; background: var(--bg-surface-alt, #f8fafc); padding: 5px 14px; border-radius: 999px; border: 1px solid var(--border-color, #e2e8f0);">
+      <span style="font-size: 13px; font-weight: 700; color: #059669;">● Duty Active</span>
+      <button class="btn-secondary" onclick="toggleRiderDuty()" style="padding: 2px 8px; font-size: 11px; margin: 0;">Toggle Duty</button>
     </div>
-    <!-- Customer Navigation -->
+
     <nav class="nav-center">
-      <button class="nav-item-btn active" id="navCustomer" onclick="show('customer')">🍔 Explore Food</button>
-      <button class="nav-item-btn" id="navOrders" onclick="show('orders')">📦 My Orders</button>
-      <button class="nav-item-btn" id="navTrack" onclick="show('track')">📍 Live Track</button>
+      <button class="nav-item-btn active" onclick="show('delivery')">🛵 Active Orders</button>
+      <button class="nav-item-btn" onclick="openPodModal('FB-MOCK')">📸 POD Verification</button>
+      <button class="nav-item-btn" onclick="openRiderSosModal()" style="background: rgba(220, 38, 38, 0.1); color: #dc2626; border: 1px solid rgba(220, 38, 38, 0.2);">🚨 SOS Help</button>
     </nav>
+
     <div class="nav-right">
-      <!-- Dark / Light Theme Button -->
+      <!-- Sound & Theme -->
+      <button id="audioToggleBtn" class="role-pill" onclick="toggleSystemAudio()" style="margin: 0;">🔊 Sound: ON</button>
       <button id="themeToggleBtnNav" class="theme-toggle-btn" onclick="toggleTheme()" title="Switch Theme">
         <span>🌙</span>
         <span>Dark</span>
@@ -57,411 +75,112 @@
         <option value="mr">🇮🇳 मराठी</option>
         <option value="hi">🇮🇳 हिन्दी</option>
       </select>
-      <!-- Notification Bell -->
-      <div class="notification-wrapper">
-        <button class="notification-btn" onclick="toggleNotificationDrawer()" title="Activity Updates">
-          <span>🔔</span>
-          <span class="notif-badge" id="notifBadge">3</span>
-        </button>
-        <div id="notificationDrawer" class="notification-drawer hidden">
-          <div class="notif-header">
-            <span style="font-weight: 700; font-size: 13px;">🔔 Activity Updates</span>
-            <button class="btn-secondary" onclick="markAllNotificationsRead()" style="padding: 2px 8px; font-size: 11px;">Clear All</button>
-          </div>
-          <div id="notificationList" class="notif-list"></div>
-        </div>
-      </div>
-      <!-- Weather & Surge Pill -->
-      <button id="weatherSurgePill" class="weather-surge-pill" onclick="toggleSimulatedWeather()" title="Weather conditions affect delivery">
-        <span id="weatherSurgeIcon">☀️</span>
-        <span id="weatherSurgeLabel">Weather: Clear (₹10 Surge)</span>
-      </button>
-      <!-- Lucky Spin -->
-      <button class="role-pill" onclick="openGamificationModal()" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); color: #fff; border-color: #ec4899;">🎰 Spin & Win</button>
-      <!-- Loyalty Wallet -->
-      <button class="wallet-nav-btn" onclick="openWalletModal()" title="BhookIt Loyalty Wallet">
-        <span>💳</span>
-        <span>₹<b id="navWalletBalance">250</b></span>
-      </button>
-      <!-- Cart Button -->
-      <button class="cart-indicator-btn" onclick="show('cart')">
-        <span>🛒</span>
-        <span id="txtCartLabel">Cart</span>
-        <span class="cart-count-badge" id="cartCountBadge">0</span>
-      </button>
-      <!-- User Profile -->
+
+      <!-- Rider Profile -->
       <div class="user-profile-badge" id="userProfileArea">
-        <span id="userAvatar">👤</span>
-        <span id="userLabel">Guest User</span>
+        <span>🛵</span>
+        <span id="userLabel">Rider: Rajesh Patil (ID #R-402)</span>
       </div>
-      <button class="btn-secondary" id="authBtn" onclick="openAuth()" style="padding: 6px 12px; font-size: 12px;">Login</button>
+      <button class="btn-secondary" onclick="location.href='/partner'" style="padding: 5px 10px; font-size: 12px;" title="Switch to Partner Hub">Hub ➔</button>
     </div>
   </header>
 
   <main class="container">
-    <!-- PWA Install Banner -->
-    <div id="pwaBanner" class="pwa-install-banner hidden">
-      <div style="display: flex; align-items: center; gap: 12px;">
-        <img src="icon-192.png" style="width: 44px; height: 44px; border-radius: 12px; box-shadow: var(--shadow-sm); object-fit: cover;" alt="BhookIt App">
-        <div>
-          <div style="font-weight: 700; font-size: 14px;">Install BhookIt App on your Phone 📱</div>
-          <div style="font-size: 12px; opacity: 0.85;">Order faster, browse menus offline, and get live GPS courier updates!</div>
-        </div>
-      </div>
-      <div style="display: flex; gap: 8px;">
-        <button class="btn-primary" onclick="triggerPwaInstall()" style="margin: 0; padding: 6px 14px; font-size: 12px;">📲 Install App</button>
-        <button class="btn-secondary" onclick="dismissPwaBanner()" style="padding: 6px 10px; font-size: 12px; color: #fff; border-color: rgba(255,255,255,0.2);">✕</button>
-      </div>
-    </div>
-
-    <!-- 1. CUSTOMER PORTAL -->
-    <section id="customer" class="panel">
-      <!-- Promotional Hero Banner -->
-      <div class="hero-banner">
-        <div class="hero-content">
-          <span class="hero-badge">⚡ Instant 30-Min Delivery</span>
-          <h1 class="hero-title">Hungry? Order from the best restaurants nearby.</h1>
-          <p class="hero-desc">Discover top-rated cuisines, fast local delivery, and live route tracking right to your doorstep.</p>
-          <div class="coupon-promo-pill">
-            <span>🎉 Use coupon code</span>
-            <span class="coupon-code-tag">BHOOKIT20</span>
-            <span>for 20% OFF (Min ₹200)</span>
-          </div>
-        </div>
-      </div>
-      <!-- VIP Gold Club & Group Ordering Strip -->
-      <div class="vip-group-strip">
-        <div class="vip-gold-banner" onclick="openMembershipModal()">
-          <div class="vip-banner-left">
-            <span class="vip-crown-icon">👑</span>
-            <div>
-              <div class="vip-banner-title">BhookIt VIP Gold Club <span class="vip-tag-gold" id="vipStatusTag">₹99/mo</span></div>
-              <div class="vip-banner-desc">Unlimited ₹0 Free Delivery on orders &gt; ₹199 &amp; 15% Instant Cashback</div>
-            </div>
-          </div>
-          <button class="btn-vip-action" id="btnVipBannerAction" onclick="event.stopPropagation(); openMembershipModal(); setTimeout(() => document.querySelector('.vip-perks-grid').scrollIntoView({behavior:'smooth', block:'start'}), 150);">Explore Perks ➔</button>
-        </div>
-        <button class="btn-group-order-trigger" onclick="openGroupOrderModal()">
-          <span style="font-size: 22px;">👥</span>
-          <div style="text-align: left;">
-            <div style="font-weight: 800; font-size: 13px;">Order with Friends</div>
-            <div style="font-size: 11px; opacity: 0.85;">Split bill &amp; shared party cart</div>
-          </div>
-        </button>
-      </div>
-      <!-- Search & Category Filters -->
-      <div class="search-filter-card">
-        <div class="search-input-wrapper">
-          <span>🔍</span>
-          <input type="text" id="foodSearchInput" class="search-input" placeholder="Search for dishes, restaurants, or cuisines (e.g. Pizza, Thali, Biryani)...">
-          
-          <button type="button" id="btnVoiceSearch" class="voice-search-btn" title="Search by Voice">
-            🎙️
-          </button>
-          
-          <!-- Delivery Area Quick Selector Button -->
-          <button type="button" class="area-selector-search-btn" onclick="openLocationModal()" title="Change Delivery Area or City">
-            <span>📍</span>
-            <span id="searchAreaLabel">Sakoli (Market)</span>
-            <span style="font-size: 10px; color: var(--primary);">▾</span>
-          </button>
-          <!-- Voice Search Microphone Button -->
-          <button id="btnVoiceSearch" class="voice-search-btn" onclick="toggleVoiceSearch()" title="Voice Search: Speak food craving in Marathi or English">
-            <span id="voiceSearchIcon">🎙️</span>
-          </button>
-          <!-- Pure Veg Filter Toggle -->
-          <button id="pureVegFilterBtn" class="pure-veg-toggle" onclick="togglePureVegFilter()" title="Filter Pure Vegetarian Dishes Only">
-            <span class="veg-indicator" style="width: 12px; height: 12px;"></span>
-            <span id="txtPureVegLabel">Pure Veg</span>
-          </button>
-          <!-- Sort Dropdown -->
-          <select id="foodSortSelect" class="sort-select" onchange="applySorting(this.value)">
-            <option value="default">⚡ Featured</option>
-            <option value="rating">⭐ Highest Rated</option>
-            <option value="prepTime">🕒 Fastest Delivery</option>
-            <option value="priceLow">💵 Price: Low to High</option>
-            <option value="priceHigh">💎 Price: High to Low</option>
-          </select>
-          <button class="btn-secondary" onclick="resetFilters()" style="padding: 6px 12px; font-size: 12px;">Clear</button>
-        </div>
-        <div class="category-strip" id="categoryStrip">
-          <button class="category-pill active" onclick="filterCategory('All')">✨ All Items</button>
-          <button class="category-pill" id="favCategoryPill" onclick="filterCategory('Favorites')">❤️ Favorites (<span id="favCountBadge">0</span>)</button>
-          <button class="category-pill" onclick="filterCategory('Fast Food')">🍔 Fast Food</button>
-          <button class="category-pill" onclick="filterCategory('North Indian')">🍛 North Indian</button>
-          <button class="category-pill" onclick="filterCategory('South Indian')">🥞 South Indian</button>
-          <button class="category-pill" onclick="filterCategory('Pizza & Burger')">🍕 Pizza & Italian</button>
-          <button class="category-pill" onclick="filterCategory('Chinese')">🍜 Chinese & Momos</button>
-          <button class="category-pill" onclick="filterCategory('Desserts')">🍰 Desserts & Shakes</button>
-        </div>
-      </div>
-      <!-- Value Combos & BOGO Deals Carousel -->
-      <div class="combos-section" id="combosSection">
-        <div class="section-title-row" style="margin-bottom: 10px;">
+    <!-- 6. DELIVERY RIDER PARTNER PORTAL -->
+    <section id="delivery" class="panel">
+      <div class="dashboard-card" style="background: linear-gradient(135deg, #065f46, #047857); color: #fff;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
           <div>
-            <h2 class="section-title" style="margin: 0; font-size: 18px;">🔥 Value Combos &amp; BOGO Deals</h2>
-            <p style="font-size: 12px; color: var(--text-muted); margin: 2px 0 0 0;">Curated meals, 1+1 offers &amp; family feast savings</p>
+            <h2 style="font-family: var(--font-heading); font-size: 24px;">🚴 Delivery Partner App</h2>
+            <p style="opacity: 0.85; font-size: 14px;">View dispatch pool, navigate pickup &amp; drops, and track daily payout.</p>
           </div>
-          <span class="section-badge" style="background: #fef2f2; color: #dc2626; border-color: #fca5a5;">⚡ Limited Time Deals</span>
-        </div>
-        <div class="combos-carousel" id="combosCarousel">
-          <!-- Injected dynamically -->
-        </div>
-      </div>
-      <!-- Restaurant Listings -->
-      <div class="section-title-row">
-        <h2 class="section-title">Featured Restaurants</h2>
-        <span class="section-badge" id="restaurantCountBadge">Showing all stores</span>
-      </div>
-      <div class="restaurant-grid" id="restaurantGrid">
-        <!-- Rendered dynamically -->
-      </div>
-    </section>
-
-    <!-- 2. CART & CHECKOUT PANEL -->
-    <section id="cart" class="panel hidden">
-      <div class="section-title-row">
-        <h2 class="section-title">🛒 Checkout & Order Placement</h2>
-        <button class="btn-secondary" onclick="show('customer')">← Back to Menu</button>
-      </div>
-      <div class="checkout-layout">
-        <!-- Left: Cart Items -->
-        <div class="cart-items-card">
-          <h3 style="font-family: var(--font-heading); margin-bottom: 16px; font-size: 18px;">Items in Your Bag</h3>
-          <div id="cartItemsList">
-            <!-- Dynamically injected cart items -->
-          </div>
-        </div>
-        <!-- Right: Delivery Details & Bill Summary -->
-        <div class="order-summary-card">
-          <h3 style="font-family: var(--font-heading); margin-bottom: 14px; font-size: 18px;">Delivery Details</h3>
-          
-          <label style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Customer Name</label>
-          <input type="text" id="custName" class="input-field" placeholder="Enter your full name">
-          <label style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Contact Phone</label>
-          <input type="tel" id="custPhone" class="input-field" placeholder="10-digit mobile number">
-          <!-- Service Mode: Doorstep Delivery vs Dine-In Table QR -->
-          <div style="margin-bottom: 14px;">
-            <label style="font-size: 12px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 6px;">Dining Preference</label>
-            <div style="display: flex; gap: 8px;">
-              <button type="button" class="category-pill active" id="btnModeDelivery" onclick="setServiceMode('delivery')">🛵 Doorstep Delivery</button>
-              <button type="button" class="category-pill" id="btnModeDineIn" onclick="setServiceMode('dinein')">🍽️ Dine-In (Table QR)</button>
-            </div>
-            <div id="dineInTableBox" class="hidden" style="margin-top: 8px; background: #fefce8; border: 1px solid #fde047; padding: 10px; border-radius: var(--radius-sm);">
-              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-                <span style="font-weight: 700; font-size: 12px; color: #854d0e;">🍽️ Select Your Table</span>
-                <span style="font-size: 11px; background: #16a34a; color: #fff; padding: 2px 6px; border-radius: 4px; font-weight: 700;">₹0 Delivery Fee</span>
-              </div>
-              <select id="dineInTableSelect" class="input-field" style="margin: 0;">
-                <option value="Table #01 (AC Family Hall)">Table #01 (AC Family Hall)</option>
-                <option value="Table #02 (Window Garden View)">Table #02 (Window Garden View)</option>
-                <option value="Table #03 (Terrace Rooftop)">Table #03 (Terrace Rooftop)</option>
-                <option value="Table #04 (Central Dining Hall)">Table #04 (Central Dining Hall)</option>
-                <option value="Table #05 (VIP Lounge Corner)">Table #05 (VIP Lounge Corner)</option>
-              </select>
-            </div>
-          </div>
-          <!-- Delivery Timing Selector (Now vs Scheduled) -->
-          <div style="margin-bottom: 12px;" id="deliveryScheduleContainer">
-            <label style="font-size: 12px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 6px;">Delivery Slot / Schedule</label>
-            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-              <button type="button" class="category-pill active" id="btnDeliverNow" onclick="setDeliveryScheduleMode('now')">⚡ Deliver Now (~30 mins)</button>
-              <button type="button" class="category-pill" id="btnDeliverLater" onclick="setDeliveryScheduleMode('later')">📅 Schedule for Later</button>
-            </div>
-            <div id="scheduleTimePickerBox" class="hidden" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #f8fafc; padding: 10px; border-radius: var(--radius-sm); border: 1px dashed var(--border);">
-              <div>
-                <label style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Delivery Date</label>
-                <input type="date" id="scheduleDateInput" class="input-field" style="margin: 0;">
-              </div>
-              <div>
-                <label style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Time Window</label>
-                <select id="scheduleSlotInput" class="input-field" style="margin: 0;">
-                  <option value="12:30 PM - 01:00 PM">12:30 PM - 01:00 PM (Lunch)</option>
-                  <option value="01:30 PM - 02:00 PM">01:30 PM - 02:00 PM (Lunch)</option>
-                  <option value="07:30 PM - 08:00 PM">07:30 PM - 08:00 PM (Dinner)</option>
-                  <option value="08:30 PM - 09:00 PM">08:30 PM - 09:00 PM (Dinner)</option>
-                  <option value="09:30 PM - 10:00 PM">09:30 PM - 10:00 PM (Late Night)</option>
-                </select>
-              </div>
-            </div>
-          </div>
-          <div id="addressSectionBox">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-              <label style="font-size: 12px; font-weight: 600; color: var(--text-muted); margin: 0;">Delivery Destination</label>
-              <button class="btn-secondary" onclick="openAddressModal()" style="padding: 2px 8px; font-size: 11px;">+ Add New Address</button>
-            </div>
-            <div id="savedAddressesContainer" class="address-grid">
-              <!-- Injected dynamically -->
-            </div>
-          </div>
-          <textarea id="custAddress" class="input-field" style="min-height: 60px;" placeholder="Flat / House No, Street, Landmark, Area"></textarea>
-          <label style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Payment Method</label>
-          <select id="paymentMethod" class="input-field">
-            <option value="UPI">⚡ UPI / Online Instant (GooglePay, PhonePe, Paytm)</option>
-            <option value="COD">💵 Cash on Delivery (COD)</option>
-            <option value="CARD">💳 Credit / Debit Card</option>
-          </select>
-          <!-- Wallet Balance Redemption Box -->
-          <div class="wallet-redeem-container" id="walletRedeemBox">
-            <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; margin: 0; width: 100%;">
-              <div style="display: flex; align-items: center; gap: 10px;">
-                <input type="checkbox" id="redeemWalletCheck" onchange="toggleWalletRedemption()" style="width: 18px; height: 18px; cursor: pointer;">
-                <div>
-                  <div style="font-weight: 700; font-size: 13px; color: var(--text-main);">💳 Redeem Wallet Cash</div>
-                  <div style="font-size: 11px; color: var(--text-muted);">Available balance: ₹<b id="cartWalletBalance">250</b></div>
-                </div>
-              </div>
-              <span id="walletAppliedTag" class="badge" style="background: #ecfdf5; color: #059669; display: none;">Applied</span>
-            </label>
-          </div>
-          <!-- Delivery Partner Tipping Section -->
-          <div style="background: #fafaf9; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 12px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-              <span style="font-weight: 800; font-size: 13px; color: var(--text-main);">❤️ Tip Your Delivery Partner</span>
-              <span style="font-size: 11px; color: #16a34a; font-weight: 700;">100% goes to courier</span>
-            </div>
-            <p style="font-size: 11px; color: var(--text-muted); margin: 0 0 10px 0;">
-              Show appreciation for your driver who brings your warm food safely.
-            </p>
-            <div class="tip-chips-grid">
-              <button type="button" class="tip-chip selected" onclick="selectDriverTip(0, this)">No Tip</button>
-              <button type="button" class="tip-chip" onclick="selectDriverTip(20, this)">👏 ₹20</button>
-              <button type="button" class="tip-chip" onclick="selectDriverTip(30, this)">⭐ ₹30</button>
-              <button type="button" class="tip-chip" onclick="selectDriverTip(50, this)">❤️ ₹50</button>
-            </div>
-          </div>
-          <!-- Coupon code input -->
-          <div class="coupon-input-group">
-            <input type="text" id="couponInput" class="coupon-input" placeholder="Promo Code (try BHOOKIT20 or JB10)">
-            <button class="btn-apply-coupon" onclick="applyCouponCode()">Apply</button>
-          </div>
-          <div id="couponMessage" style="font-size: 12px; margin-top: -8px; margin-bottom: 12px;"></div>
-          <!-- Surge & Weather Alert Banner -->
-          <div id="cartSurgeAlert" class="surge-alert-box hidden">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span style="font-size: 20px;" id="cartSurgeIcon">🌧️</span>
-              <div>
-                <div style="font-weight: 800; font-size: 12px; color: #9a3412;" id="cartSurgeTitle">Inclement Weather Delivery Surge Active</div>
-                <div style="font-size: 11px; color: #c2410c;" id="cartSurgeDesc">100% of the ₹25 surge fee goes directly to your brave delivery partner.</div>
-              </div>
-            </div>
-          </div>
-          <!-- Bill breakdown -->
-          <div style="background: #f8fafc; padding: 14px; border-radius: var(--radius-sm); margin-top: 8px;">
-            <div class="summary-line">
-              <span>Item Subtotal:</span>
-              <span>₹<b id="billSubtotal">0</b></span>
-            </div>
-            <div class="summary-line">
-              <span>Delivery Charges:</span>
-              <span>₹<b id="billDeliveryFee">0</b></span>
-            </div>
-            <div class="summary-line" id="billSurgeRow" style="color: #ea580c; display: none;">
-              <span id="billSurgeLabel">🌧️ Weather / Peak Surge:</span>
-              <span>+₹<b id="billSurgeFee">0</b></span>
-            </div>
-            <div class="summary-line" id="billTipRow" style="color: #0284c7; display: none;">
-              <span>Delivery Partner Tip:</span>
-              <span>+₹<b id="billDriverTip">0</b></span>
-            </div>
-            <div class="summary-line">
-              <span>GST & Restaurant Taxes (5%):</span>
-              <span>₹<b id="billTaxes">0</b></span>
-            </div>
-            <div class="summary-line" style="color: var(--accent);">
-              <span>Coupon Discount:</span>
-              <span>-₹<b id="billDiscount">0</b></span>
-            </div>
-            <div class="summary-line" style="color: #059669;" id="billWalletRow">
-              <span>Wallet Cash Redeemed:</span>
-              <span>-₹<b id="billWalletDeduction">0</b></span>
-            </div>
-            <div class="summary-line total">
-              <span>To Pay:</span>
-              <span style="color: var(--primary);">₹<span id="billGrandTotal">0</span></span>
-            </div>
-          </div>
-          <div style="margin-top: 18px;">
-            <button class="btn-primary" onclick="submitOrder()">Place Order Now 🚀</button>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span class="badge" id="riderStatusBadge" style="background: #a7f3d0; color: #065f46; font-size: 13px;">🟢 On Duty / Available</span>
+            <button class="btn-accent" onclick="toggleRiderDuty()">Switch to Off Duty</button>
           </div>
         </div>
       </div>
+      <!-- Rider Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-card-title">Today's Deliveries</span>
+          <span class="stat-card-value" id="riderDeliveriesCount">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-card-title">Rider Earnings (₹40/drop)</span>
+          <span class="stat-card-value" style="color: var(--accent);" id="riderEarnings">₹0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-card-title">Customer Tips</span>
+          <span class="stat-card-value" style="color: var(--primary);" id="riderTips">₹0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-card-title">Rider Rating</span>
+          <span class="stat-card-value">⭐ 4.9</span>
+        </div>
+      </div>
+      <!-- Available Orders to Accept -->
+      <div class="dashboard-card">
+        <div class="dashboard-card-title">
+          <span>🛵 Available Delivery Requests (Sakoli Sector)</span>
+          <span class="badge" id="riderPoolCountBadge">0 available</span>
+        </div>
+        <div id="riderAvailableOrders">
+          <!-- Dynamically injected -->
+        </div>
+      </div>
+      <!-- Active Assigned Delivery & Route Simulator -->
+      <div class="dashboard-card">
+        <div class="dashboard-card-title">
+          <span>📦 Your Current Active Delivery</span>
+        </div>
+        <div id="riderActiveDelivery">
+          <p style="color: var(--text-muted); font-size: 14px;">No active order assigned. Accept a delivery task from the pool above.</p>
+        </div>
+      </div>
+      <!-- AI Multi-Stop Corridor Batching Engine -->
+      <div class="dashboard-card" style="border-left: 4px solid #10b981;">
+        <div class="dashboard-card-title">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 20px;">🤖</span>
+            <span>AI Multi-Stop Batch Dispatch (Combined Corridors)</span>
+          </div>
+          <span class="badge" style="background: #dcfce7; color: #166534;">🌱 Saves 4.2 km &amp; 18 Mins</span>
+        </div>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">
+          Our AI routing engine groups neighboring pickups and drops to maximize rider payouts and eliminate empty return trips.
+        </p>
+        <div id="riderBatchDeliveryContainer">
+          <!-- Dynamically populated batch route -->
+        </div>
+      </div>
+      <!-- Rider Emergency SOS & Breakdown Switchboard -->
+      <div class="dashboard-card" style="border-left: 4px solid #ef4444; background: #fffaf0;">
+        <div class="dashboard-card-title">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 20px;">🚨</span>
+            <span style="color: #991b1b; font-weight: 800;">Rider Emergency SOS &amp; Breakdown Switchboard</span>
+          </div>
+          <span class="badge" style="background: #fee2e2; color: #b91c1c;">Instant Auto-Reassign</span>
+        </div>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">
+          Facing a vehicle puncture, engine breakdown, or road obstacle? Broadcast an SOS beacon. Our dispatch AI will immediately transfer your active delivery to the closest backup courier in Sakoli.
+        </p>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+          <button class="btn-rider-sos" onclick="openRiderSosModal()">
+            🚨 Broadcast Emergency SOS / Vehicle Breakdown
+          </button>
+          <span style="font-size: 12px; color: #b45309;">Backup Couriers on standby: <b>Amol Deshmukh</b> (MH36-BE-1209), <b>Pooja Raut</b> (MH36-CK-8832)</span>
+        </div>
+        <div id="riderSosActiveBanner" class="sos-alert-banner hidden" style="margin-top: 14px;">
+          <!-- Injected dynamically on distress broadcast -->
+        </div>
+      </div>
     </section>
-
-    <!-- 3. CUSTOMER ORDER HISTORY & RESERVATIONS -->
-    <section id="orders" class="panel hidden">
-      <div class="section-title-row">
-        <h2 class="section-title">📦 Your Orders & Reservations</h2>
-        <button class="btn-secondary" onclick="show('customer')">Order New Food</button>
-      </div>
-      <!-- Subtabs for Orders vs Table Bookings -->
-      <div class="order-subtabs">
-        <button class="order-subtab active" id="tabDeliveryOrders" onclick="switchOrderTab('delivery')">
-          <span>🛵 Food Delivery Orders</span>
-        </button>
-        <button class="order-subtab" id="tabTableBookings" onclick="switchOrderTab('tables')">
-          <span>🍽️ Table Reservations (<span id="tbCountBadge">0</span>)</span>
-        </button>
-      </div>
-      <div id="customerOrdersContainer">
-        <!-- Rendered dynamically -->
-      </div>
-      <div id="customerTableBookingsContainer" class="hidden">
-        <!-- Rendered dynamically -->
-      </div>
-    </section>
-
-    <!-- 4. LIVE ORDER TRACKING WITH SIMULATED ROUTE MAP -->
-    <section id="track" class="panel hidden">
-      <div class="section-title-row">
-        <h2 class="section-title">📍 Live Delivery Tracking</h2>
-        <button class="btn-secondary" onclick="show('orders')">← View All Orders</button>
-      </div>
-      <div id="activeTrackingCard" class="order-card">
-        <!-- Dynamically injected active order tracking -->
-      </div>
-    </section>
-    <!-- App Footer with Partner Portal Links -->
-    <footer class="app-footer" style="margin-top: 50px; padding: 28px 16px; border-top: 1px solid var(--border-color); text-align: center; font-size: 13px; color: var(--text-muted);">
-      <p style="font-weight: 600; margin-bottom: 8px;">© 2026 BhookIt — Fast Local Food Delivery</p>
-      <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; font-size: 12px;">
-        <a href="/vendor" style="color: var(--text-muted); text-decoration: none;">🏪 Restaurant Partner Portal</a>
-        <span>•</span>
-        <a href="/rider" style="color: var(--text-muted); text-decoration: none;">🛵 Delivery Hero Portal</a>
-        <span>•</span>
-        <a href="/partner" style="color: var(--text-muted); text-decoration: none;">🤝 Partner Hub</a>
-      </div>
-    </footer>
+    <!-- 7. SUPER ADMIN EXECUTIVE COMMAND CENTER -->
   </main>
 
-  <!-- Mobile Bottom Navigation (Customer Only) -->
-  <div class="mobile-nav">
-    <button class="mobile-nav-btn active" id="mobileNavFood" onclick="show('customer')">
-      <span class="mobile-nav-icon">🍽️</span>
-      <span>Food</span>
-    </button>
-    <button class="mobile-nav-btn" id="mobileNavOrders" onclick="show('orders')">
-      <span class="mobile-nav-icon">📦</span>
-      <span>Orders</span>
-    </button>
-    <button class="mobile-nav-btn" id="mobileNavCart" onclick="show('cart')">
-      <span class="mobile-nav-icon">🛒</span>
-      <span>Cart (<b id="mobileCartCount">0</b>)</span>
-    </button>
-    <button class="mobile-nav-btn" id="mobileNavTrack" onclick="show('track')">
-      <span class="mobile-nav-icon">📍</span>
-      <span>Track</span>
-    </button>
-    <button class="mobile-nav-btn" id="mobileNavProfile" onclick="openAuth()">
-      <span class="mobile-nav-icon">👤</span>
-      <span>Profile</span>
-    </button>
-  </div>
-
-  <!-- ==========================================
-       ALL CUSTOMER MODALS
-       ========================================== -->
-<!-- MODAL: Food Item Customization (Add-ons) -->
+  <!-- MODAL: Food Item Customization (Add-ons) -->
   <div id="foodCustomizerModal" class="modal-overlay hidden">
     <div class="modal-content">
       <button class="modal-close-btn" onclick="closeModal('foodCustomizerModal')">✕</button>
@@ -1925,12 +1644,29 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <!-- Firebase Compat Scripts -->
 
+  
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="app.js"></script>
   <script src="translations.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Ensure the standalone portal is active
+      if (typeof show === 'function') {
+        show('delivery');
+      }
+      if ('delivery' === 'restaurant' && typeof quickRole === 'function') {
+        quickRole('restaurant', 1);
+      } else if ('delivery' === 'delivery' && typeof quickRole === 'function') {
+        quickRole('delivery');
+      } else if ('delivery' === 'admin' && typeof quickRole === 'function') {
+        quickRole('admin');
+      }
+    });
+  </script>
 </body>
 </html>

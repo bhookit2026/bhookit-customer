@@ -181,10 +181,25 @@ async function handleRequest(req, res) {
   }
 
   // -----------------------------------------------------------
-  // STATIC FILE SERVING
+  // STATIC FILE SERVING & STANDALONE PORTAL ROUTING
   // -----------------------------------------------------------
-  // Public root → Customer Web App; staff use /index.html directly
-  let filePath = path.join(__dirname, pathname === '/' ? 'customer.html' : pathname);
+  const host = (req.headers.host || '').toLowerCase();
+  const isPartnerDomain = host.startsWith('partner.');
+
+  let targetFile = pathname;
+  if (pathname === '/') {
+    targetFile = isPartnerDomain ? 'partner.html' : 'customer.html';
+  } else if (pathname === '/vendor' || pathname === '/vendor/') {
+    targetFile = 'vendor.html';
+  } else if (pathname === '/rider' || pathname === '/rider/') {
+    targetFile = 'rider.html';
+  } else if (pathname === '/admin' || pathname === '/admin/') {
+    targetFile = 'admin.html';
+  } else if (pathname === '/partner' || pathname === '/partner/') {
+    targetFile = 'partner.html';
+  }
+
+  let filePath = path.join(__dirname, targetFile);
   const ext = path.extname(filePath);
   const contentType = MIME_TYPES[ext] || 'application/octet-stream';
 
@@ -204,9 +219,11 @@ async function handleRequest(req, res) {
   });
 }
 
-server.listen(PORT, () => {
-  console.log(`BhookIt V1 Server & REST API running at http://localhost:${PORT}/`);
-});
+if (require.main === module) {
+  server.listen(PORT, () => {
+    console.log(`BhookIt V1 Server & REST API running at http://localhost:${PORT}/`);
+  });
+}
 
 // Vercel serverless entrypoint (also supports Render's standalone mode above)
 module.exports = handleRequest;
