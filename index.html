@@ -4,42 +4,35 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#ff4722">
-  <title>BhookIt V1 — Multi-Restaurant Food Ordering & Management System</title>
-  <meta name="description" content="All-in-one multi-vendor food delivery and restaurant management platform with live order tracking, rider dispatch, and vendor portals.">
+  <title>BhookIt — Order Food Online | Fast Delivery to Your Doorstep</title>
+  <meta name="description" content="Order from the best restaurants in Sakoli and nearby areas. Fresh food, lightning-fast delivery, live order tracking, and exclusive deals — only on BhookIt.">
+  <meta name="keywords" content="food delivery, order food online, Sakoli food, BhookIt, restaurant delivery, online food order">
+  <meta property="og:title" content="BhookIt — Good Food, Faster To You">
+  <meta property="og:description" content="Order from top restaurants in your city. Fast delivery, live tracking, UPI payment.">
+  <meta property="og:image" content="bhookit-logo.png">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="style.css">
+  <script>
+    // Subdomain helper: If opened on partner.bhookit.com at root, redirect to partner hub
+    if (window.location.hostname.startsWith('partner.') && (window.location.pathname === '/' || window.location.pathname === '')) {
+      window.location.replace('/partner');
+    }
+  </script>
 </head>
 <body>
-  <!-- Top Developer / Demo Role Switcher Bar -->
-  <div class="role-bar">
-    <div class="role-bar-left">
-      <span>🚀 BhookIt V1 System</span>
-      <span class="role-badge" id="systemModeTag">Interactive Demo Mode</span>
-    </div>
-    <div class="role-pills">
-      <span style="opacity: 0.7; font-size: 11px; margin-right: 4px;">Switch View:</span>
-      <button class="role-pill active" onclick="quickRole('customer')">👤 Customer App</button>
-      <button class="role-pill" onclick="quickRole('restaurant', 1)">🏪 Sakoli Corner (Vendor)</button>
-      <button class="role-pill" onclick="quickRole('restaurant', 2)">🏪 Aapla Bhojanalay (Vendor)</button>
-      <button class="role-pill" onclick="quickRole('delivery')">🛵 Delivery Partner</button>
-      <button class="role-pill" onclick="quickRole('admin')">🛡️ Super Admin</button>
-      <button class="role-pill" onclick="openPosModal()" style="background: #4f46e5; color: #fff; border-color: #4f46e5;">📠 Restaurant POS</button>
-      <button class="role-pill" onclick="openKdsModal()" style="background: #ea580c; color: #fff; border-color: #ea580c;">👨‍🍳 Kitchen KDS</button>
-      <button class="role-pill" onclick="openGamificationModal()" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); color: #fff; border-color: #ec4899;">🎰 Lucky Spin</button>
-      <button id="audioToggleBtn" class="role-pill" onclick="toggleSystemAudio()" style="margin-left: 8px;">🔊 Sound: ON</button>
-      <button id="themeToggleBtn" class="role-pill" onclick="toggleTheme()" style="margin-left: 6px;">🌙 Dark</button>
-      <button id="pwaInstallPill" class="role-pill" onclick="triggerPwaInstall()" style="display: none; background: #05a760; color: #fff; border-color: #05a760;">📱 Install App</button>
-    </div>
-  </div>
-  <!-- Main Navigation Header -->
+  <!-- ==========================================
+       BHOOKIT CUSTOMER APP — PUBLIC FACING
+       ========================================== -->
+
+  <!-- Main Navigation Header (Customer Only) -->
   <header>
     <div class="logo-area" onclick="show('customer')" title="BhookIt - Good Food Faster To You">
       <img src="bhookit-logo.png" alt="BhookIt - Good Food Faster To You" class="brand-logo-img">
     </div>
-    <!-- Swiggy/Zomato Style Delivery Area & City Selector -->
+    <!-- Delivery Area & City Selector -->
     <div class="header-location-picker" id="headerLocationBtn" onclick="openLocationModal()" title="Click to Change Delivery Area or City">
       <span class="loc-pin">📍</span>
       <div class="loc-text-col">
@@ -47,17 +40,15 @@
         <span class="loc-sub" id="currentSelectedAreaLabel">Sakoli (Main Market Road)</span>
       </div>
     </div>
+    <!-- Customer Navigation -->
     <nav class="nav-center">
       <button class="nav-item-btn active" id="navCustomer" onclick="show('customer')">🍔 Explore Food</button>
-      <button class="nav-item-btn" id="navOrders" onclick="show('orders')">🛒 My Orders</button>
+      <button class="nav-item-btn" id="navOrders" onclick="show('orders')">📦 My Orders</button>
       <button class="nav-item-btn" id="navTrack" onclick="show('track')">📍 Live Track</button>
-      <button class="nav-item-btn" id="navRestaurant" onclick="show('restaurant')">🏪 Vendor Portal</button>
-      <button class="nav-item-btn" id="navDelivery" onclick="show('delivery')">🛵 Rider App</button>
-      <button class="nav-item-btn" id="navAdmin" onclick="show('admin')">🛡️ Admin Center</button>
     </nav>
     <div class="nav-right">
       <!-- Dark / Light Theme Button -->
-      <button id="themeToggleBtnNav" class="theme-toggle-btn" onclick="toggleTheme()" title="Switch Theme (Dark/Light)">
+      <button id="themeToggleBtnNav" class="theme-toggle-btn" onclick="toggleTheme()" title="Switch Theme">
         <span>🌙</span>
         <span>Dark</span>
       </button>
@@ -66,7 +57,7 @@
         <option value="mr">🇮🇳 मराठी</option>
         <option value="hi">🇮🇳 हिन्दी</option>
       </select>
-      <!-- Activity & Push Notification Bell -->
+      <!-- Notification Bell -->
       <div class="notification-wrapper">
         <button class="notification-btn" onclick="toggleNotificationDrawer()" title="Activity Updates">
           <span>🔔</span>
@@ -77,31 +68,28 @@
             <span style="font-weight: 700; font-size: 13px;">🔔 Activity Updates</span>
             <button class="btn-secondary" onclick="markAllNotificationsRead()" style="padding: 2px 8px; font-size: 11px;">Clear All</button>
           </div>
-          <div id="notificationList" class="notif-list">
-            <!-- Dynamic notification list -->
-          </div>
+          <div id="notificationList" class="notif-list"></div>
         </div>
       </div>
-      <!-- Simulated Weather & Surge Pricing Pill -->
-      <button id="weatherSurgePill" class="weather-surge-pill" onclick="toggleSimulatedWeather()" title="Click to toggle between Normal and Rainy / Peak Surge conditions">
+      <!-- Weather & Surge Pill -->
+      <button id="weatherSurgePill" class="weather-surge-pill" onclick="toggleSimulatedWeather()" title="Weather conditions affect delivery">
         <span id="weatherSurgeIcon">☀️</span>
         <span id="weatherSurgeLabel">Weather: Clear (₹10 Surge)</span>
       </button>
-      <!-- Daily Lucky Rewards / Spin Badge -->
-      <button class="role-pill" onclick="openGamificationModal()" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); color: #fff; border-color: #ec4899;">🎰 Lucky Spin</button>
-        <span>🎁</span>
-        <span class="spin-nav-text">Spin &amp; Win</span>
-      </button>
-      <!-- Loyalty Wallet Badge -->
+      <!-- Lucky Spin -->
+      <button class="role-pill" onclick="openGamificationModal()" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); color: #fff; border-color: #ec4899;">🎰 Spin & Win</button>
+      <!-- Loyalty Wallet -->
       <button class="wallet-nav-btn" onclick="openWalletModal()" title="BhookIt Loyalty Wallet">
         <span>💳</span>
         <span>₹<b id="navWalletBalance">250</b></span>
       </button>
+      <!-- Cart Button -->
       <button class="cart-indicator-btn" onclick="show('cart')">
         <span>🛒</span>
         <span id="txtCartLabel">Cart</span>
         <span class="cart-count-badge" id="cartCountBadge">0</span>
       </button>
+      <!-- User Profile -->
       <div class="user-profile-badge" id="userProfileArea">
         <span id="userAvatar">👤</span>
         <span id="userLabel">Guest User</span>
@@ -109,6 +97,7 @@
       <button class="btn-secondary" id="authBtn" onclick="openAuth()" style="padding: 6px 12px; font-size: 12px;">Login</button>
     </div>
   </header>
+
   <main class="container">
     <!-- PWA Install Banner -->
     <div id="pwaBanner" class="pwa-install-banner hidden">
@@ -124,6 +113,7 @@
         <button class="btn-secondary" onclick="dismissPwaBanner()" style="padding: 6px 10px; font-size: 12px; color: #fff; border-color: rgba(255,255,255,0.2);">✕</button>
       </div>
     </div>
+
     <!-- 1. CUSTOMER PORTAL -->
     <section id="customer" class="panel">
       <!-- Promotional Hero Banner -->
@@ -227,6 +217,7 @@
         <!-- Rendered dynamically -->
       </div>
     </section>
+
     <!-- 2. CART & CHECKOUT PANEL -->
     <section id="cart" class="panel hidden">
       <div class="section-title-row">
@@ -396,6 +387,7 @@
         </div>
       </div>
     </section>
+
     <!-- 3. CUSTOMER ORDER HISTORY & RESERVATIONS -->
     <section id="orders" class="panel hidden">
       <div class="section-title-row">
@@ -418,6 +410,7 @@
         <!-- Rendered dynamically -->
       </div>
     </section>
+
     <!-- 4. LIVE ORDER TRACKING WITH SIMULATED ROUTE MAP -->
     <section id="track" class="panel hidden">
       <div class="section-title-row">
@@ -428,533 +421,41 @@
         <!-- Dynamically injected active order tracking -->
       </div>
     </section>
-    <!-- 5. RESTAURANT PARTNER VENDOR PORTAL -->
-    <section id="restaurant" class="panel hidden">
-      <div class="dashboard-card" style="background: linear-gradient(135deg, #1e293b, #334155); color: #fff;">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-          <div>
-            <h2 style="font-family: var(--font-heading); font-size: 24px;">🏪 BhookIt Vendor Terminal</h2>
-            <p style="opacity: 0.8; font-size: 14px;">Manage kitchen orders, menus, stock status, and earnings.</p>
-          </div>
-          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-            <select id="vendorSelect" class="input-field" style="margin: 0; width: auto; background: #fff; color: #000;" onchange="switchVendor(this.value)">
-              <!-- Options injected dynamically -->
-            </select>
-            <button id="storeStatusToggleBtn" class="btn-accent" onclick="toggleStoreOpen()">🟢 Open for Orders</button>
-      <button class="role-pill" onclick="openPosModal()" style="background: #4f46e5; color: #fff; border-color: #4f46e5;">📠 Restaurant POS</button>
-      <button class="role-pill" onclick="openKdsModal()" style="background: #ea580c; color: #fff; border-color: #ea580c;">👨‍🍳 Kitchen KDS</button>
-            <button class="btn-export-csv" onclick="exportOrdersCSV(currentActiveVendorId)">📥 Export Orders (CSV)</button>
-            <button class="btn-secondary" onclick="openZReportModal()" style="margin: 0; padding: 8px 14px; background: #1e1b4b; color: #fff; border-color: #4338ca;">🌙 Nightly Z-Report</button>
-          </div>
-        </div>
-      </div>
-      <!-- Restaurant Metrics -->
-      <div class="stats-grid">
-        <div class="stat-card">
-          <span class="stat-card-title">Active Orders</span>
-          <span class="stat-card-value" id="vendorActiveOrders">0</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-card-title">Today's Gross Sales</span>
-          <span class="stat-card-value" id="vendorTodayGross">₹0</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-card-title">Platform Commission (10%)</span>
-          <span class="stat-card-value" style="color: var(--danger);" id="vendorCommission">₹0</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-card-title">Net Payout Due</span>
-          <span class="stat-card-value" style="color: var(--accent);" id="vendorNetPayout">₹0</span>
-        </div>
-      </div>
-      <!-- Real-time Dine-In Waiter Buzzers -->
-      <div id="vendorWaiterCallAlerts" class="hidden" style="margin-bottom: 16px;">
-        <!-- Injected dynamically with active table buzzers -->
-      </div>
-      <!-- Live Incoming Orders Terminal -->
-      <div class="dashboard-card">
-        <div class="dashboard-card-title">
-          <span>🔔 Incoming & Preparing Kitchen Orders</span>
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <button id="voiceAlertToggleBtn" class="btn-secondary" onclick="toggleVoiceAlerts()" style="padding: 4px 10px; font-size: 12px;">🔊 Voice: ON</button>
-            <button class="btn-secondary" onclick="testVoiceAlert()" style="padding: 4px 8px; font-size: 11px;">Test Voice</button>
-            <span class="badge" id="vendorLiveCountBadge">Real-time synced</span>
-          </div>
-        </div>
-        <div id="vendorOrdersList">
-          <!-- Dynamically injected -->
-        </div>
-      </div>
-      <!-- Menu Management -->
-      <div class="dashboard-card">
-        <div class="dashboard-card-title">
-          <span>📋 Menu Items & Stock Availability</span>
-          <button class="btn-secondary" onclick="openAddMenuModal()">+ Add New Food Item</button>
-        </div>
-        <div id="vendorMenuList">
-          <!-- Dynamically injected -->
-        </div>
-      </div>
-      <!-- Dine-In Table Reservations & Seating Management -->
-      <div class="dashboard-card">
-        <div class="dashboard-card-title">
-          <span>🍽️ Dine-In Table Reservations</span>
-          <span class="badge" id="vendorTbBadge" style="background: #e0f2fe; color: #0284c7;">0 Bookings</span>
-        </div>
-        <div id="vendorTableBookingsList">
-          <!-- Dynamically injected -->
-        </div>
-      </div>
-      <!-- Kitchen Revenue & Performance Analytics Chart -->
-      <div class="dashboard-card">
-        <div class="dashboard-card-title">
-          <span>📊 Kitchen Revenue &amp; Peak Ordering Trends</span>
-          <div style="display: flex; gap: 6px;">
-            <button class="btn-secondary" onclick="renderVendorAnalytics('7days')" style="padding: 4px 8px; font-size: 11px;">7 Days</button>
-            <button class="btn-secondary" onclick="renderVendorAnalytics('30days')" style="padding: 4px 8px; font-size: 11px;">Monthly</button>
-          </div>
-        </div>
-        <div id="vendorAnalyticsBox" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 10px;">
-          <!-- Dynamically injected charts -->
-        </div>
-      </div>
-      <!-- Raw Material Inventory & Auto-Depletion Tracker -->
-      <div class="dashboard-card">
-        <div class="dashboard-card-title">
-          <span>🌾 Kitchen Raw Material &amp; Supplies Inventory</span>
-          <button class="btn-secondary" onclick="restockAllIngredients()">⚡ Restock All Supplies</button>
-        </div>
-        <div id="vendorInventoryList" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 10px;">
-          <!-- Dynamically populated inventory cards -->
-        </div>
-      </div>
-      <!-- Kitchen Audio Alert Matrix & Voice Customizer -->
-      <div class="dashboard-card" style="border-left: 4px solid #8b5cf6;">
-        <div class="dashboard-card-title">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 20px;">🔊</span>
-            <span>Kitchen Audio Alert Matrix &amp; Chef Voice Customizer</span>
-          </div>
-          <span class="badge" style="background: #ede9fe; color: #6d28d9;">Web Audio Synthesis</span>
-        </div>
-        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
-          Personalize kitchen bell tones and voice announcements so cooks and counter staff immediately hear high-priority orders.
-        </p>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px;">
-          <div>
-            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Kitchen Chime Alert Tone</label>
-            <select id="kitchenChimeToneSelect" class="input-field" onchange="setKitchenChimeTone(this.value)">
-              <option value="modern_chime">🎵 Modern Harmonic Arpeggio (Default)</option>
-              <option value="classic_bell">🔔 Classic Service Counter Bell</option>
-              <option value="rush_siren">🚨 High-Priority Rush Siren</option>
-              <option value="pleasant_harp">🎶 Pleasant Ambient Harp</option>
-            </select>
-          </div>
-          <div>
-            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Speech Synthesis Voice Rate</label>
-            <select id="kitchenVoiceSpeedSelect" class="input-field" onchange="setKitchenVoiceSpeed(this.value)">
-              <option value="0.9">0.9x (Deliberate &amp; Clear)</option>
-              <option value="1.0" selected>1.0x (Standard Speed)</option>
-              <option value="1.2">1.2x (Fast Kitchen Pace)</option>
-            </select>
-          </div>
-        </div>
-        <div style="margin-top: 10px; display: flex; gap: 10px;">
-          <button class="btn-secondary" onclick="testKitchenChimeTone()">🔔 Play Sound Tone</button>
-          <button class="btn-accent" onclick="testKitchenVoiceAnnouncement()">🗣️ Test Voice Announcement</button>
-        </div>
-      </div>
-    </section>
-    <!-- 6. DELIVERY RIDER PARTNER PORTAL -->
-    <section id="delivery" class="panel hidden">
-      <div class="dashboard-card" style="background: linear-gradient(135deg, #065f46, #047857); color: #fff;">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-          <div>
-            <h2 style="font-family: var(--font-heading); font-size: 24px;">🚴 Delivery Partner App</h2>
-            <p style="opacity: 0.85; font-size: 14px;">View dispatch pool, navigate pickup &amp; drops, and track daily payout.</p>
-          </div>
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <span class="badge" id="riderStatusBadge" style="background: #a7f3d0; color: #065f46; font-size: 13px;">🟢 On Duty / Available</span>
-            <button class="btn-accent" onclick="toggleRiderDuty()">Switch to Off Duty</button>
-          </div>
-        </div>
-      </div>
-      <!-- Rider Stats -->
-      <div class="stats-grid">
-        <div class="stat-card">
-          <span class="stat-card-title">Today's Deliveries</span>
-          <span class="stat-card-value" id="riderDeliveriesCount">0</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-card-title">Rider Earnings (₹40/drop)</span>
-          <span class="stat-card-value" style="color: var(--accent);" id="riderEarnings">₹0</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-card-title">Customer Tips</span>
-          <span class="stat-card-value" style="color: var(--primary);" id="riderTips">₹0</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-card-title">Rider Rating</span>
-          <span class="stat-card-value">⭐ 4.9</span>
-        </div>
-      </div>
-      <!-- Available Orders to Accept -->
-      <div class="dashboard-card">
-        <div class="dashboard-card-title">
-          <span>🛵 Available Delivery Requests (Sakoli Sector)</span>
-          <span class="badge" id="riderPoolCountBadge">0 available</span>
-        </div>
-        <div id="riderAvailableOrders">
-          <!-- Dynamically injected -->
-        </div>
-      </div>
-      <!-- Active Assigned Delivery & Route Simulator -->
-      <div class="dashboard-card">
-        <div class="dashboard-card-title">
-          <span>📦 Your Current Active Delivery</span>
-        </div>
-        <div id="riderActiveDelivery">
-          <p style="color: var(--text-muted); font-size: 14px;">No active order assigned. Accept a delivery task from the pool above.</p>
-        </div>
-      </div>
-      <!-- AI Multi-Stop Corridor Batching Engine -->
-      <div class="dashboard-card" style="border-left: 4px solid #10b981;">
-        <div class="dashboard-card-title">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 20px;">🤖</span>
-            <span>AI Multi-Stop Batch Dispatch (Combined Corridors)</span>
-          </div>
-          <span class="badge" style="background: #dcfce7; color: #166534;">🌱 Saves 4.2 km &amp; 18 Mins</span>
-        </div>
-        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">
-          Our AI routing engine groups neighboring pickups and drops to maximize rider payouts and eliminate empty return trips.
-        </p>
-        <div id="riderBatchDeliveryContainer">
-          <!-- Dynamically populated batch route -->
-        </div>
-      </div>
-      <!-- Rider Emergency SOS & Breakdown Switchboard -->
-      <div class="dashboard-card" style="border-left: 4px solid #ef4444; background: #fffaf0;">
-        <div class="dashboard-card-title">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 20px;">🚨</span>
-            <span style="color: #991b1b; font-weight: 800;">Rider Emergency SOS &amp; Breakdown Switchboard</span>
-          </div>
-          <span class="badge" style="background: #fee2e2; color: #b91c1c;">Instant Auto-Reassign</span>
-        </div>
-        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">
-          Facing a vehicle puncture, engine breakdown, or road obstacle? Broadcast an SOS beacon. Our dispatch AI will immediately transfer your active delivery to the closest backup courier in Sakoli.
-        </p>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-          <button class="btn-rider-sos" onclick="openRiderSosModal()">
-            🚨 Broadcast Emergency SOS / Vehicle Breakdown
-          </button>
-          <span style="font-size: 12px; color: #b45309;">Backup Couriers on standby: <b>Amol Deshmukh</b> (MH36-BE-1209), <b>Pooja Raut</b> (MH36-CK-8832)</span>
-        </div>
-        <div id="riderSosActiveBanner" class="sos-alert-banner hidden" style="margin-top: 14px;">
-          <!-- Injected dynamically on distress broadcast -->
-        </div>
-      </div>
-    </section>
-    <!-- 7. SUPER ADMIN EXECUTIVE COMMAND CENTER -->
-    <section id="admin" class="panel hidden">
-      <div class="dashboard-card" style="background: linear-gradient(135deg, #18181b, #27272a); color: #fff;">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-          <div>
-            <h2 style="font-family: var(--font-heading); font-size: 24px;">👑 Super Admin Executive Center</h2>
-            <p style="opacity: 0.8; font-size: 14px;">Platform analytics, restaurant onboarding, fleet dispatch, and commissions.</p>
-          </div>
-          <div style="display: flex; gap: 8px;">
-            <button class="btn-primary" onclick="triggerAdminDataSync()" style="margin: 0; padding: 8px 14px;">🔄 Refresh Realtime Data</button>
-            <button class="btn-secondary" onclick="exportPlatformAuditLog()" style="padding: 8px 14px; color: #fff; border-color: rgba(255,255,255,0.3);">📋 System Audit</button>
-          </div>
-        </div>
-      </div>
-      <!-- Executive KPIs -->
-      <div class="stats-grid">
-        <div class="stat-card">
-          <span class="stat-card-title">Total GMV (Gross Sales)</span>
-          <span class="stat-card-value" style="color: var(--primary);" id="adminKpiGMV">₹0</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-card-title">Net Platform Commission</span>
-          <span class="stat-card-value" style="color: var(--accent);" id="adminKpiCommission">₹0</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-card-title">Total Orders</span>
-          <span class="stat-card-value" id="adminKpiOrders">0</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-card-title">Partner Restaurants</span>
-          <span class="stat-card-value" id="adminKpiRestaurants">0</span>
-        </div>
-      </div>
-      <!-- Pending Restaurant Approvals & Vendor Management -->
-      <div class="dashboard-card">
-        <div class="dashboard-card-title" style="display: flex; justify-content: space-between; align-items: center;">
-          <span>🍽️ Restaurant Partner Management &amp; KYC</span>
-          <button class="btn-secondary" onclick="openInvitePartnerModal()" style="padding: 4px 12px; font-size: 11px;">+ Invite Partner</button>
-        </div>
-        <div id="adminRestaurantsTable">
-          <!-- Injected dynamically -->
-        </div>
-      </div>
-      <!-- Delivery Cities & Geofenced Service Zones Management (Admin Controlled) -->
-      <div class="dashboard-card" style="border-left: 4px solid #10b981;">
-        <div class="dashboard-card-title">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 20px;">📍</span>
-            <span>Delivery Cities &amp; Geofenced Service Zones Manager</span>
-          </div>
-          <button class="btn-primary" onclick="openAdminAddZoneModal()" style="margin: 0; padding: 6px 14px; font-size: 13px;">
-            + Add New Delivery Area 📍
-          </button>
-        </div>
-        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
-          Manually configure operating cities, municipal ward boundaries, ETA time slots, and zone delivery fees. All additions instantly sync with customer location selector.
-        </p>
-        <!-- Cities Filter Bar -->
-        <div style="display: flex; gap: 8px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 4px;" id="adminZoneCityFilterRow">
-          <!-- Populated dynamically -->
-        </div>
-        <div id="adminDeliveryZonesTable" class="table-responsive">
-          <!-- Injected dynamically -->
-        </div>
-      </div>
-      <!-- Dynamic Surge & Weather Dispatch Switchboard -->
-      <div class="dashboard-card" style="border-left: 4px solid #ea580c;">
-        <div class="dashboard-card-title">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 20px;">⚡</span>
-            <span>Dynamic Surge Pricing &amp; Inclement Weather Switchboard</span>
-          </div>
-          <span class="badge" id="adminSurgeStatusBadge" style="background: #ffedd5; color: #c2410c;">Normal Pricing (1.0x)</span>
-        </div>
-        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">
-          Control platform-wide demand multipliers and driver weather incentives. Changes reflect instantly across all customer checkout sessions.
-        </p>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px;">
-          <!-- Monsoon / Rain Surge Toggle -->
-          <div style="background: var(--bg); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 14px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-              <span style="font-weight: 800; font-size: 13px;">🌧️ Monsoon / Heavy Rain Surge</span>
-              <input type="checkbox" id="toggleRainSurge" onchange="toggleSurgeSetting('rainSurge', this.checked)" style="width: 18px; height: 18px; cursor: pointer;">
-            </div>
-            <div style="font-size: 12px; color: var(--text-muted);">Adds flat +₹25 rain fee. 100% credited to delivery rider payout.</div>
-          </div>
-          <!-- Peak Rush Demand Multiplier -->
-          <div style="background: var(--bg); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 14px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-              <span style="font-weight: 800; font-size: 13px;">⚡ Peak Dinner Rush Surge</span>
-              <input type="checkbox" id="togglePeakSurge" onchange="toggleSurgeSetting('peakSurge', this.checked)" style="width: 18px; height: 18px; cursor: pointer;">
-            </div>
-            <div style="font-size: 12px; color: var(--text-muted);">Applies 1.25x surge on delivery charges due to high order volume.</div>
-          </div>
-          <!-- Late Night Surcharge -->
-          <div style="background: var(--bg); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 14px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-              <span style="font-weight: 800; font-size: 13px;">🌙 Late-Night Delivery Fee</span>
-              <input type="checkbox" id="toggleLateNightSurge" onchange="toggleSurgeSetting('lateNightSurge', this.checked)" style="width: 18px; height: 18px; cursor: pointer;">
-            </div>
-            <div style="font-size: 12px; color: var(--text-muted);">Adds flat +₹20 night fee for orders placed after 11:00 PM.</div>
-          </div>
-        </div>
-      </div>
-      <!-- Sakoli Delivery Zone Geo-Demand Heatmap & Fleet Telemetry -->
-      <div class="dashboard-card">
-        <div class="dashboard-card-title">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 20px;">🗺️</span>
-            <span>Sakoli City Sector Demand Heatmap &amp; Real-Time Fleet Telemetry</span>
-          </div>
-          <button class="btn-secondary" onclick="refreshDemandHeatmap()">🔄 Refresh Heatmap</button>
-        </div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-top: 10px;" class="heatmap-telemetry-grid">
-          <!-- SVG Heatmap Container -->
-          <div style="background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; position: relative;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-              <span style="font-size: 12px; font-weight: 800; color: var(--text-main);">📍 Sector Demand Density</span>
-              <div style="display: flex; gap: 6px; font-size: 10px; font-weight: 700;">
-                <span style="background: #fee2e2; color: #b91c1c; padding: 2px 6px; border-radius: 4px;">🔥 High (Surge)</span>
-                <span style="background: #fef3c7; color: #b45309; padding: 2px 6px; border-radius: 4px;">⚡ Moderate</span>
-                <span style="background: #dcfce7; color: #15803d; padding: 2px 6px; border-radius: 4px;">🟢 Normal</span>
-              </div>
-            </div>
-            <div id="sakoliHeatmapSvgContainer" style="width: 100%; height: 220px; overflow: hidden; border-radius: var(--radius-sm); background: #0f172a;">
-              <!-- Dynamically populated SVG Heatmap -->
-            </div>
-          </div>
-          <!-- Fleet Real-Time Battery & Speed Telemetry -->
-          <div style="background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px;">
-            <span style="font-size: 12px; font-weight: 800; color: var(--text-main); display: block; margin-bottom: 8px;">🛵 Rider Fleet Diagnostics &amp; GPS Telemetry</span>
-            <div id="adminFleetTelemetryList">
-              <!-- Dynamically populated rider cards -->
-            </div>
-          </div>
-        </div>
-      </div>
-      <!-- Live Rider Fleet Telemetry & Radar Map -->
-      <div class="dashboard-card">
-        <div class="dashboard-card-title">
-          <span>🛵 Live Delivery Fleet Radar &amp; Telemetry</span>
-          <button class="btn-secondary" onclick="simulateFleetMovement()">🔄 Refresh Fleet GPS</button>
-        </div>
-        <div id="adminFleetMap" style="height: 280px; width: 100%; border-radius: var(--radius-md); border: 1.5px solid var(--border); overflow: hidden; margin-bottom: 14px; position: relative; z-index: 1;"></div>
-        <div id="adminFleetCards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px;">
-          <!-- Injected dynamically -->
-        </div>
-      </div>
-      <!-- Live Dispatch & Rider Assignment Console -->
-      <div class="dashboard-card">
-        <div class="dashboard-card-title">
-          <span>🚴 Rider Dispatch Console (Unassigned Ready Orders)</span>
-          <button class="btn-secondary" onclick="autoDispatchOrders()">⚡ 1-Click Auto Dispatch</button>
-        </div>
-        <div id="adminDispatchList">
-          <!-- Injected dynamically -->
-        </div>
-      </div>
-      <!-- Financial Settlements Ledger -->
-      <div class="dashboard-card">
-        <div class="dashboard-card-title">
-          <span>💰 Restaurant Financial Settlements</span>
-        </div>
-        <div id="adminSettlementLedger">
-          <!-- Injected dynamically -->
-        </div>
-      </div>
-      <!-- Global Coupons & Campaigns -->
-      <div class="dashboard-card">
-        <div class="dashboard-card-title">
-          <span>🎟️ Promo Codes &amp; Marketing Discounts</span>
-          <button class="btn-secondary" onclick="openAddCouponModal()">+ Create New Coupon</button>
-        </div>
-        <div id="adminCouponList">
-          <!-- Injected dynamically -->
-        </div>
-      </div>
-      <!-- Customer Disputes & Automated Refunds Console -->
-      <div class="dashboard-card">
-        <div class="dashboard-card-title">
-          <span>⚖️ Customer Dispute &amp; Instant Refund Desk</span>
-          <span class="badge" id="adminDisputeBadge" style="background: #fee2e2; color: #b91c1c;">0 Pending Issues</span>
-        </div>
-        <div id="adminDisputesList">
-          <!-- Injected dynamically -->
-        </div>
-      </div>
-      <!-- Platform Accounting & Reports CSV Exporter -->
-      <div class="dashboard-card" style="border-left: 4px solid #0284c7;">
-        <div class="dashboard-card-title">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 20px;">📥</span>
-            <span>Platform Accounting &amp; Ledger Exports (CSV)</span>
-          </div>
-          <span class="badge" style="background: #e0f2fe; color: #0369a1;">Live Financial Reporting</span>
-        </div>
-        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">
-          Generate and download instant accounting spreadsheets for audit, tax filing, and partner settlements.
-        </p>
-        <div class="csv-export-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;">
-          <div style="background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px;">
-            <div style="font-weight: 800; font-size: 13px; margin-bottom: 4px;">📦 Orders &amp; Sales Ledger</div>
-            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px;">Complete breakdown of subtotals, GST taxes, surge fees, and tips.</div>
-            <button class="btn-secondary" onclick="exportOrdersCSV()" style="width: 100%; font-weight: 700;">📥 Download Orders CSV</button>
-          </div>
-          <div style="background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px;">
-            <div style="font-weight: 800; font-size: 13px; margin-bottom: 4px;">💰 Vendor Financials &amp; Payouts</div>
-            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px;">Net payouts, platform commission cut, and gross restaurant sales.</div>
-            <button class="btn-secondary" onclick="exportSettlementsCSV()" style="width: 100%; font-weight: 700;">📥 Download Settlements CSV</button>
-          </div>
-          <div style="background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px;">
-            <div style="font-weight: 800; font-size: 13px; margin-bottom: 4px;">🛵 Fleet Telemetry &amp; Trips</div>
-            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px;">Rider delivery completions, daily earnings, and tip totals.</div>
-            <button class="btn-secondary" onclick="exportFleetCSV()" style="width: 100%; font-weight: 700;">📥 Download Fleet CSV</button>
-          </div>
-        </div>
-      </div>
-      <!-- Firebase Cloud Connection & Configuration -->
-      <div class="dashboard-card">
-        <div class="dashboard-card-title">
-          <span>☁️ Firebase Cloud Sync &amp; Rules</span>
-          <span id="cloudStatusBadge" class="badge">Local Storage Active</span>
-        </div>
-        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
-          Configure your Firebase credentials in <code>firebase-config.js</code> to enable real-time multi-device synchronization across Firestore and Firebase Authentication.
-        </p>
-        <div class="action-btn-group">
-          <button class="btn-secondary" onclick="connectFirebase()">Connect / Re-sync Firebase</button>
-          <button class="btn-secondary" onclick="downloadFirestoreRules()">Download Firestore Rules</button>
-        </div>
-      </div>
-    </section>
-    <!-- PARTNER REGISTRATION PANEL -->
-    <section id="partnerRegistration" class="panel hidden">
-      <div class="dashboard-card">
-        <h2 style="margin:0 0 16px 0; font-weight:800;">Become a Restaurant Partner</h2>
-        <p style="font-size:12px; color:var(--text-muted); margin-bottom: 24px;">Register your restaurant, upload KYC documents, and start receiving orders from BhookIt within 24 hours.</p>
-        <form onsubmit="submitPartnerRegistration(event)" style="display:flex; flex-direction:column; gap:16px;">
-          <div>
-            <label style="font-size:12px; font-weight:700;">Restaurant Name</label>
-            <input type="text" id="prName" class="search-input" required placeholder="e.g. Sakoli Fast Food">
-          </div>
-          <div>
-            <label style="font-size:12px; font-weight:700;">Email Address</label>
-            <input type="email" id="prEmail" class="search-input" required placeholder="contact@restaurant.com">
-          </div>
-          <div>
-            <label style="font-size:12px; font-weight:700;">Phone Number</label>
-            <input type="text" id="prPhone" class="search-input" required placeholder="10-digit mobile number">
-          </div>
-          <div>
-            <label style="font-size:12px; font-weight:700;">FSSAI License No</label>
-            <input type="text" id="prFssai" class="search-input" required placeholder="14-digit FSSAI number">
-          </div>
-          <div>
-            <label style="font-size:12px; font-weight:700;">GSTIN (Optional)</label>
-            <input type="text" id="prGst" class="search-input" placeholder="15-digit GST Number">
-          </div>
-          <div>
-            <label style="font-size:12px; font-weight:700;">Primary Category</label>
-            <input type="text" id="prCategory" class="search-input" required placeholder="e.g. Fast Food, Indian, Chinese">
-          </div>
-          <div>
-            <label style="font-size:12px; font-weight:700;">Restaurant Address</label>
-            <textarea id="prAddress" class="search-input" rows="3" required placeholder="Complete address..."></textarea>
-          </div>
-          <button type="submit" class="btn-primary" style="padding:12px; margin-top: 8px;">Submit Registration</button>
-        </form>
-      </div>
-    </section>
+    <!-- App Footer -->
+    <footer class="app-footer" style="margin-top: 50px; padding: 28px 16px; border-top: 1px solid var(--border-color); text-align: center; font-size: 13px; color: var(--text-muted);">
+      <p style="font-weight: 600; margin-bottom: 4px;">© 2026 BhookIt — Fast Local Food Delivery</p>
+      <p style="font-size: 12px; opacity: 0.8;">Good Food, Faster To You • Sakoli & Nearby Areas</p>
+    </footer>
   </main>
-  <!-- Mobile Bottom Sticky Navigation -->
+
+  <!-- Mobile Bottom Navigation (Customer Only) -->
   <div class="mobile-nav">
-    <button class="mobile-nav-btn active" onclick="show('customer')">
+    <button class="mobile-nav-btn active" id="mobileNavFood" onclick="show('customer')">
       <span class="mobile-nav-icon">🍽️</span>
       <span>Food</span>
     </button>
-    <button class="mobile-nav-btn" onclick="show('orders')">
+    <button class="mobile-nav-btn" id="mobileNavOrders" onclick="show('orders')">
       <span class="mobile-nav-icon">📦</span>
       <span>Orders</span>
     </button>
-    <button class="mobile-nav-btn" onclick="show('cart')">
+    <button class="mobile-nav-btn" id="mobileNavCart" onclick="show('cart')">
       <span class="mobile-nav-icon">🛒</span>
       <span>Cart (<b id="mobileCartCount">0</b>)</span>
     </button>
-    <button class="mobile-nav-btn" onclick="show('restaurant')">
-      <span class="mobile-nav-icon">🏪</span>
-      <span>Vendor</span>
+    <button class="mobile-nav-btn" id="mobileNavTrack" onclick="show('track')">
+      <span class="mobile-nav-icon">📍</span>
+      <span>Track</span>
     </button>
-    <button class="mobile-nav-btn" onclick="show('delivery')">
-      <span class="mobile-nav-icon">🚴</span>
-      <span>Rider</span>
-    </button>
-    <button class="mobile-nav-btn" onclick="show('admin')">
-      <span class="mobile-nav-icon">👑</span>
-      <span>Admin</span>
+    <button class="mobile-nav-btn" id="mobileNavProfile" onclick="openAuth()">
+      <span class="mobile-nav-icon">👤</span>
+      <span>Profile</span>
     </button>
   </div>
-  <!-- MODAL: Food Item Customization (Add-ons) -->
+
+  <!-- ==========================================
+       ALL CUSTOMER MODALS
+       ========================================== -->
+<!-- MODAL: Food Item Customization (Add-ons) -->
   <div id="foodCustomizerModal" class="modal-overlay hidden">
     <div class="modal-content">
       <button class="modal-close-btn" onclick="closeModal('foodCustomizerModal')">✕</button>
@@ -2417,36 +1918,13 @@
   <!-- Leaflet Interactive Maps -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <!-- Firebase Compat Scripts -->
+
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-  <!-- INVITE PARTNER MODAL -->
-  <div id="invitePartnerModal" class="modal-backdrop hidden">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h2>Invite Restaurant Partner</h2>
-        <button class="btn-close-modal" onclick="closeModal('invitePartnerModal')">✕</button>
-      </div>
-      <div style="padding: 16px;">
-        <label style="font-size:12px; font-weight:700;">Partner Email Address</label>
-        <input type="email" id="inviteEmail" class="search-input" placeholder="e.g. owner@restaurant.com" style="margin-top:8px; margin-bottom: 16px;">
-        <button class="btn-primary" onclick="sendInvite()" style="width:100%; padding:10px;">Send Invitation Link</button>
-      </div>
-    </div>
-  </div>
-  <!-- MOCK NOTIFICATION MODAL -->
-  <div id="mockNotificationModal" class="modal-backdrop hidden" style="z-index: 9999;">
-    <div class="modal-card" style="border: 2px solid #10b981; padding: 0;">
-      <div class="modal-header" style="background:#dcfce7; border-bottom: 1px solid #10b981; border-radius: 8px 8px 0 0;">
-        <h2 style="color:#065f46; font-size: 16px;">📱 Notification Sent</h2>
-        <button class="btn-close-modal" onclick="closeModal('mockNotificationModal')" style="color:#065f46;">✕</button>
-      </div>
-      <div style="padding: 20px;" id="mockNotificationContent">
-        <!-- Injected -->
-      </div>
-    </div>
-  </div>
   <script src="firebase-config.js"></script>
   <script src="app.js"></script>
+  <script src="translations.js"></script>
 </body>
 </html>
