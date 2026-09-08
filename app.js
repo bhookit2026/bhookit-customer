@@ -161,7 +161,7 @@ function setLanguage(lang) {
   const langSel = document.getElementById('langSelect');
   if (langSel) langSel.value = lang;
   applyLanguageTranslations();
-  showToast(`Language set to ${lang === 'mr' ? 'à¤®à¤°à¤¾à¤ à¥€' : lang === 'hi' ? 'à¤¹à¤¿à¤‚à¤¦à¥€' : 'English'}`, 'info');
+  showToast(`Language set to ${lang === 'mr' ? 'मराठी' : lang === 'hi' ? 'हिंदी' : 'English'}`, 'info');
 }
 
 function applyLanguageTranslations() {
@@ -211,7 +211,7 @@ const SEED_DATA = {
     phone: '9876543210',
     address: '',
     savedAddresses: [
-      { id: 'addr_work', type: 'Work', label: 'ðŸ¢ Office', address: 'Cabin 14, Commercial Complex, Station Road, Sakoli', isDefault: false }
+      { id: 'addr_work', type: 'Work', label: '🏢 Office', address: 'Cabin 14, Commercial Complex, Station Road, Sakoli', isDefault: false }
     ]
   },
   notifications: [
@@ -393,7 +393,7 @@ if (appData) {
     }
     if (!appData.currentUser.savedAddresses || !appData.currentUser.savedAddresses.length) {
       appData.currentUser.savedAddresses = [
-        { id: 'addr_work', type: 'Work', label: 'ðŸ¢ Office', address: 'Cabin 14, Commercial Complex, Station Road, Sakoli', isDefault: false }
+        { id: 'addr_work', type: 'Work', label: '🏢 Office', address: 'Cabin 14, Commercial Complex, Station Road, Sakoli', isDefault: false }
       ];
     }
     if (typeof appData.currentUser.walletBalance !== 'number') {
@@ -402,7 +402,7 @@ if (appData) {
     if (!appData.currentUser.walletLedger || !appData.currentUser.walletLedger.length) {
       appData.currentUser.walletLedger = [
         { id: 'tx_1', type: 'credit', title: '🎉 Welcome Loyalty Bonus', amount: 200, date: '01-Sep-2026' },
-        { id: 'tx_2', type: 'credit', title: 'ðŸŽ App Sign-up Reward', amount: 50, date: '05-Sep-2026' }
+        { id: 'tx_2', type: 'credit', title: '🎁 App Sign-up Reward', amount: 50, date: '05-Sep-2026' }
       ];
     }
     if (!Array.isArray(appData.currentUser.favorites)) {
@@ -431,10 +431,10 @@ if (appData) {
     appData.inventory = [
       { id: 'inv_1', name: 'Fresh Burger Buns', unit: 'Pcs', stock: 45, max: 100, lowThreshold: 20, icon: '🍔', cost: 12 },
       { id: 'inv_2', name: 'Mozzarella & Cheddar Cheese', unit: 'Kg', stock: 8.5, max: 20, lowThreshold: 4, icon: '🧀', cost: 420 },
-      { id: 'inv_3', name: 'Fresh Malai Paneer', unit: 'Kg', stock: 12, max: 25, lowThreshold: 5, icon: 'ðŸ§ˆ', cost: 360 },
-      { id: 'inv_4', name: 'Royal Basmati Biryani Rice', unit: 'Kg', stock: 28, max: 50, lowThreshold: 10, icon: 'ðŸš', cost: 110 },
+      { id: 'inv_3', name: 'Fresh Malai Paneer', unit: 'Kg', stock: 12, max: 25, lowThreshold: 5, icon: '🧈', cost: 360 },
+      { id: 'inv_4', name: 'Royal Basmati Biryani Rice', unit: 'Kg', stock: 28, max: 50, lowThreshold: 10, icon: '🍚', cost: 110 },
       { id: 'inv_5', name: 'Food Grade Eco Meal Boxes', unit: 'Units', stock: 85, max: 150, lowThreshold: 30, icon: '📦', cost: 8 },
-      { id: 'inv_6', name: 'Refined Cooking Oil & Ghee', unit: 'Liters', stock: 14, max: 30, lowThreshold: 6, icon: 'ðŸ›¢ï¸', cost: 140 }
+      { id: 'inv_6', name: 'Refined Cooking Oil & Ghee', unit: 'Liters', stock: 14, max: 30, lowThreshold: 6, icon: '🛢️', cost: 140 }
     ];
   }
   if (!Array.isArray(appData.disputes)) {
@@ -663,9 +663,9 @@ function testKitchenChimeTone() {
 
 function testKitchenVoiceAnnouncement() {
   const sample = currentLanguage === 'mr' 
-    ? 'à¤²à¤•à¥à¤· à¤¦à¥à¤¯à¤¾ à¤¸à¥à¤µà¤¯à¤‚à¤ªà¤¾à¤•à¤˜à¤°! à¤Ÿà¥‡à¤¬à¤² à¤•à¥à¤°à¤®à¤¾à¤‚à¤• à¥ª à¤¸à¤¾à¤ à¥€ à¤¨à¤µà¥€à¤¨ à¤‘à¤°à¥à¤¡à¤° à¤ªà¥à¤°à¤¾à¤ªà¥à¤¤ à¤à¤¾à¤²à¥€.' 
+    ? 'लक्ष द्या स्वयंपाकघर! टेबल क्रमांक ४ साठी नवीन ऑर्डर प्राप्त झाली.' 
     : currentLanguage === 'hi' 
-    ? 'à¤§à¥à¤¯à¤¾à¤¨ à¤¦à¥‡à¤‚ à¤°à¤¸à¥‹à¤ˆ! à¤Ÿà¥‡à¤¬à¤² à¤¨à¤‚à¤¬à¤° à¥ª à¤•à¥‡ à¤²à¤¿à¤ à¤¨à¤¯à¤¾ à¤‘à¤°à¥à¤¡à¤° à¤ªà¥à¤°à¤¾à¤ªà¥à¤¤ à¤¹à¥à¤†à¥¤' 
+    ? 'ध्यान दें रसोई! टेबल नंबर ४ के लिए नया ऑर्डर प्राप्त हुआ।' 
     : 'Attention Kitchen! New priority order received for 3 items.';
   speakVoiceAlert(sample);
 }
@@ -696,8 +696,8 @@ function sendKitchenWhatsApp(orderId) {
   if (!order) return;
 
   const itemList = order.items.map(i => `• ${i.qty}x ${i.name} ${i.addons ? `[${i.addons.join(', ')}]` : ''}`).join('%0A');
-  const message = `ðŸ‘¨â€ðŸ³ *KITCHEN TICKET - NEW ORDER ALERT*%0A%0A` +
-    `ðŸ›Žï¸ *Order #${order.id}* for ${order.restaurantName}%0A` +
+  const message = `👨‍🍳 *KITCHEN TICKET - NEW ORDER ALERT*%0A%0A` +
+    `🛎️ *Order #${order.id}* for ${order.restaurantName}%0A` +
     `⏰ *Received:* ${new Date(order.createdAt).toLocaleTimeString()}%0A%0A` +
     `📋 *Kitchen Items Checklist:*%0A${itemList}%0A%0A` +
     `👤 *Customer:* ${order.customer.name} (${order.customer.phone})%0A` +
@@ -713,12 +713,12 @@ function sendRiderWhatsApp(orderId) {
 
   const message = `🛵 *BHOOKIT DISPATCH - DELIVERY TASK*%0A%0A` +
     `📦 *Order #${order.id}*%0A` +
-    `ðŸª *Pickup Store:* ${order.restaurantName}%0A` +
+    `🏪 *Pickup Store:* ${order.restaurantName}%0A` +
     `📍 *Drop Destination:* ${order.customer.address}%0A` +
     `👤 *Customer:* ${order.customer.name}%0A` +
     `📞 *Phone:* ${order.customer.phone}%0A` +
     `💵 *Collect Cash:* ${order.payment === 'COD' ? `₹${order.total}` : '₹0 (Prepaid Online)'}%0A%0A` +
-    `🗑ºï¸ *Navigation:* https://maps.google.com/?q=${encodeURIComponent(order.customer.address)}`;
+    `🗑ºï️ *Navigation:* https://maps.google.com/?q=${encodeURIComponent(order.customer.address)}`;
 
   window.open(`https://wa.me/?text=${message}`, '_blank');
 }
@@ -733,7 +733,7 @@ function sendSettlementWhatsApp(restaurantId) {
   const payable = gross - comm;
 
   const message = `💰 *BHOOKIT SETTLEMENT STATEMENT*%0A%0A` +
-    `ðŸª *Restaurant Partner:* ${rest.name}%0A` +
+    `🏪 *Restaurant Partner:* ${rest.name}%0A` +
     `📅 *Statement Date:* ${new Date().toLocaleDateString()}%0A%0A` +
     `📈 *Total Gross Orders:* ₹${gross}%0A` +
     `📉 *Platform Commission (${rest.commissionRate}%):* -₹${comm}%0A` +
@@ -751,7 +751,7 @@ function showToast(message, type = 'info') {
   if (!container) return;
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
-  toast.innerHTML = `<span>${type === 'success' ? '✅' : type === 'warning' ? 'âš ï¸' : 'â„¹ï¸'}</span> <span>${message}</span>`;
+  toast.innerHTML = `<span>${type === 'success' ? '✅' : type === 'warning' ? '⚠️' : 'ℹ️'}</span> <span>${message}</span>`;
   container.appendChild(toast);
   setTimeout(() => {
     toast.remove();
@@ -1036,16 +1036,16 @@ function toggleTheme() {
   document.documentElement.setAttribute('data-theme', next);
   localStorage.setItem('bhookit_theme', next);
   updateThemeButton(next);
-  showToast(`Switched to ${next === 'dark' ? '🌙 Dark Mode' : 'â˜€ï¸ Light Mode'}`, 'info');
+  showToast(`Switched to ${next === 'dark' ? '🌙 Dark Mode' : '☀️ Light Mode'}`, 'info');
   playSound('chime');
 }
 
 function updateThemeButton(theme) {
   const btn = document.getElementById('themeToggleBtn');
-  if (btn) btn.textContent = theme === 'dark' ? 'â˜€ï¸ Light' : '🌙 Dark';
+  if (btn) btn.textContent = theme === 'dark' ? '☀️ Light' : '🌙 Dark';
   const btnNav = document.getElementById('themeToggleBtnNav');
   if (btnNav) {
-    btnNav.innerHTML = theme === 'dark' ? '<span>â˜€ï¸</span> <span>Light</span>' : '<span>🌙</span> <span>Dark</span>';
+    btnNav.innerHTML = theme === 'dark' ? '<span>☀️</span> <span>Light</span>' : '<span>🌙</span> <span>Dark</span>';
   }
 }
 
@@ -1115,7 +1115,7 @@ function saveNewAddress() {
   }
 
   const fullAddr = `${flat ? flat + ', ' : ''}${street}`;
-  const icon = selectedNewAddressType === 'Home' ? 'ðŸ ' : selectedNewAddressType === 'Work' ? 'ðŸ¢' : '📍';
+  const icon = selectedNewAddressType === 'Home' ? '🏠' : selectedNewAddressType === 'Work' ? '🏢' : '📍';
   const newEntry = {
     id: 'addr_' + Date.now(),
     type: selectedNewAddressType,
@@ -1235,7 +1235,7 @@ function handleSupportQuery(topic) {
     botReply = `Assigned rider: *${activeOrder?.deliveryBoy || 'Vikram Rider'}* (📞 ${activeOrder?.riderPhone || '+91 9988771122'}). Tap "WhatsApp Receipt" to connect directly.`;
   } else if (topic === 'kitchen') {
     userText = 'Please inform the kitchen: make it mild spicy.';
-    botReply = `Your special kitchen request for ${activeOrder?.restaurantName || 'the kitchen'} has been recorded: "Mild spice & hygienic packaging". ðŸ‘¨â€ðŸ³`;
+    botReply = `Your special kitchen request for ${activeOrder?.restaurantName || 'the kitchen'} has been recorded: "Mild spice & hygienic packaging". 👨‍🍳`;
   } else if (topic === 'bill') {
     userText = 'Can I get my GST Tax Invoice?';
     botReply = `Yes! Click the 📄 "GST Invoice" button on your order card to view or print the official tax invoice with HSN and GST breakdowns.`;
@@ -1287,7 +1287,7 @@ function verifyRiderDeliveryOtp(orderId) {
   }
 
   if (enteredOtp !== order.deliveryOtp) {
-    showToast('âŒ Invalid OTP! Please check the code displayed on customer screen.', 'danger');
+    showToast('❌ Invalid OTP! Please check the code displayed on customer screen.', 'danger');
     return;
   }
 
@@ -1484,7 +1484,7 @@ function renderCustomerView() {
             <div class="restaurant-meta" style="margin-bottom: 6px;">
               <span>⏱️  ${r.prepTime}</span>
               <span>•</span>
-              <span>ðŸ·ï¸ ${r.category}</span>
+              <span>🏷️ ${r.category}</span>
               <span>•</span>
               <span>Min ₹${r.minOrder}</span>
             </div>
@@ -1708,7 +1708,7 @@ function renderCartView() {
       <div class="cart-vendor-group">
         <div class="cart-vendor-header">
           <div style="display: flex; align-items: center; gap: 6px;">
-            <span>ðŸª ${group.name}</span>
+            <span>🏪 ${group.name}</span>
             ${isMultiVendor ? `<span class="badge" style="background:#e0f2fe; color:#0369a1; font-size:10px;">Multi-Vendor Hub</span>` : ''}
           </div>
           <span style="font-size: 11px; color: var(--text-muted);">${group.items.length} ${group.items.length === 1 ? 'Item' : 'Items'}</span>
@@ -1720,12 +1720,12 @@ function renderCartView() {
               <span class="cart-item-addons">${item.addons.join(' • ')}</span>
               ${item.allergies && item.allergies.length ? `
                 <div style="margin-top: 2px;">
-                  <span style="font-size: 10px; font-weight: 700; color: #b91c1c; background: #fee2e2; padding: 1px 6px; border-radius: 4px;">âš ï¸ ${item.allergies.join(', ')}</span>
+                  <span style="font-size: 10px; font-weight: 700; color: #b91c1c; background: #fee2e2; padding: 1px 6px; border-radius: 4px;">⚠️ ${item.allergies.join(', ')}</span>
                 </div>
               ` : ''}
               ${item.chefNotes ? `
                 <div style="font-size: 11px; color: var(--text-muted); font-style: italic; margin-top: 2px;">
-                  ðŸ‘¨â€ðŸ³ Note: "${item.chefNotes}"
+                  👨‍🍳 Note: "${item.chefNotes}"
                 </div>
               ` : ''}
               <span style="font-weight: 700; font-size: 13px; margin-top: 4px; color: var(--text-main);">₹${item.price} each</span>
@@ -1860,7 +1860,7 @@ function selectDriverTip(amt, btnEl) {
   playSound('chime');
   updateBillTotals();
   if (amt > 0) {
-    showToast(`ðŸ‘ Added ₹${amt} tip for your delivery courier!`, 'success');
+    showToast(`👏 Added ₹${amt} tip for your delivery courier!`, 'success');
   }
 }
 
@@ -1884,7 +1884,7 @@ function setServiceMode(mode) {
   playSound('chime');
   updateBillTotals();
   if (mode === 'dinein') {
-    showToast('ðŸ½ï¸ Dine-In Table Mode Active: Delivery Fee Waived (₹0)!', 'success');
+    showToast('🍽️ Dine-In Table Mode Active: Delivery Fee Waived (₹0)!', 'success');
   } else {
     showToast('🛵 Doorstep Delivery Mode Selected', 'info');
   }
@@ -1966,7 +1966,7 @@ function updateBillTotals() {
       const title = document.getElementById('cartSurgeTitle');
       const desc = document.getElementById('cartSurgeDesc');
       if (surge.rainSurge) {
-        if (icon) icon.textContent = 'ðŸŒ§ï¸';
+        if (icon) icon.textContent = '🌧️';
         if (title) title.textContent = 'Inclement Weather Delivery Surge (+₹25)';
         if (desc) desc.textContent = '100% of the ₹25 rain incentive goes straight to your delivery courier.';
       } else if (surge.peakSurge) {
@@ -2005,7 +2005,7 @@ function applyCouponCode() {
   if (!coupon) {
     appliedDiscount = 0;
     appliedCouponCode = '';
-    if (msgEl) msgEl.innerHTML = '<span style="color:var(--danger)">âŒ Invalid coupon code.</span>';
+    if (msgEl) msgEl.innerHTML = '<span style="color:var(--danger)">❌ Invalid coupon code.</span>';
     updateBillTotals();
     return;
   }
@@ -2013,7 +2013,7 @@ function applyCouponCode() {
   if (subtotal < coupon.min) {
     appliedDiscount = 0;
     appliedCouponCode = '';
-    if (msgEl) msgEl.innerHTML = `<span style="color:var(--warning)">âš ï¸ Minimum spend of ₹${coupon.min} required for this coupon.</span>`;
+    if (msgEl) msgEl.innerHTML = `<span style="color:var(--warning)">⚠️ Minimum spend of ₹${coupon.min} required for this coupon.</span>`;
     updateBillTotals();
     return;
   }
@@ -2159,7 +2159,7 @@ async function submitOrder() {
     appData.currentUser.walletLedger.unshift({
       id: 'tx_' + Date.now(),
       type: 'debit',
-      title: `ðŸ›ï¸ Order #${newOrder.id} Payment`,
+      title: `🛍️ Order #${newOrder.id} Payment`,
       amount: walletDeduction,
       date: new Date().toLocaleDateString('en-IN')
     });
@@ -2351,7 +2351,7 @@ async function processGatewayPayment(isSuccess) {
     setTimeout(() => {
       procState.classList.add('hidden');
       actionArea.classList.remove('hidden');
-      alert('âŒ Payment Failed: Issuing bank declined transaction. Please retry or choose Cash on Delivery.');
+      alert('❌ Payment Failed: Issuing bank declined transaction. Please retry or choose Cash on Delivery.');
       showToast('Payment Simulation Failed (Test Scenario)', 'warning');
     }, 1200);
     return;
@@ -2430,7 +2430,7 @@ function finalizeOrderPlacement(newOrder) {
 
   updateCartBadge();
   playSound('chime');
-  pushNotification('ðŸ›ï¸', `Order #${newOrder.id} confirmed! Estimated arrival in 30 mins.`);
+  pushNotification('🛍️', `Order #${newOrder.id} confirmed! Estimated arrival in 30 mins.`);
   showToast(`${t('orderPlacedSuccess')} ${newOrder.id} (${newOrder.payment} • ${newOrder.paymentStatus})`, 'success');
   currentTrackedOrderId = newOrder.id;
   show('track');
@@ -2562,7 +2562,7 @@ function confirmTableReservation() {
 
   closeModal('tableBookingModal');
   playSound('delivered');
-  pushNotification('ðŸ½ï¸', `Table reserved at ${rest.name} on ${date} (${selectedTbTimeSlot})!`);
+  pushNotification('🍽️', `Table reserved at ${rest.name} on ${date} (${selectedTbTimeSlot})!`);
   showToast(`🎉 Dine-in table reservation confirmed! Booking ID: ${bookingId}`, 'success');
 
   // Open the confirmation pass
@@ -2621,7 +2621,7 @@ function renderCustomerTableBookings() {
   if (!myBookings.length) {
     container.innerHTML = `
       <div class="dashboard-card" style="text-align: center; padding: 40px 20px;">
-        <div style="font-size: 44px; margin-bottom: 8px;">ðŸ½ï¸</div>
+        <div style="font-size: 44px; margin-bottom: 8px;">🍽️</div>
         <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 6px;">No Table Reservations</h3>
         <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">Skip the waiting line! Reserve a table in advance at any partner restaurant.</p>
         <button class="btn-primary" onclick="show('customer')" style="width: auto; padding: 8px 18px;">Find Restaurants</button>
@@ -2649,7 +2649,7 @@ function renderCustomerTableBookings() {
 
       <div style="display: flex; gap: 8px; justify-content: flex-end; align-items: center; border-top: 1px solid var(--border); padding-top: 10px;">
         <button class="btn-secondary" onclick="openTablePass('${b.id}')" style="padding: 6px 12px; font-size: 12px;">
-          ðŸŽŸï¸ View Table Pass
+          🎟️ View Table Pass
         </button>
         ${b.status === 'Confirmed' ? `
           <button class="btn-secondary" onclick="cancelTableBooking('${b.id}')" style="padding: 6px 12px; font-size: 12px; color: var(--danger); border-color: var(--danger);">
@@ -2693,7 +2693,7 @@ function renderVendorTableBookings() {
       </div>
       <div class="action-btn-group">
         ${b.status === 'Confirmed' ? `
-          <button class="btn-accent" onclick="setTableBookingStatus('${b.id}', 'Seated')">Mark Guests Seated ðŸ½ï¸</button>
+          <button class="btn-accent" onclick="setTableBookingStatus('${b.id}', 'Seated')">Mark Guests Seated 🍽️</button>
           <button class="btn-secondary" onclick="setTableBookingStatus('${b.id}', 'Completed')">Mark Completed</button>
           <button class="btn-secondary" onclick="setTableBookingStatus('${b.id}', 'Cancelled')" style="color:var(--danger); border-color:var(--danger);">Decline / Cancel</button>
         ` : b.status === 'Seated' ? `
@@ -2742,7 +2742,7 @@ function renderOrdersView() {
         <div>
           <h3 style="font-size: 16px; font-weight: 700;">
             ${o.restaurantName}
-            ${o.serviceMode === 'dinein' ? `<span class="dine-in-badge" style="margin-left:6px;">ðŸ½ï¸ ${o.tableNumber || 'Table #01'}</span>` : ''}
+            ${o.serviceMode === 'dinein' ? `<span class="dine-in-badge" style="margin-left:6px;">🍽️ ${o.tableNumber || 'Table #01'}</span>` : ''}
             ${o.scheduleMode === 'later' && o.scheduledSlot ? `<span class="scheduled-slot-badge" style="margin-left:6px;">📅 ${o.scheduledSlot.date} (${o.scheduledSlot.slot})</span>` : ''}
           </h3>
           <span style="font-size: 12px; color: var(--text-muted);">Order #${o.id} • ${new Date(o.createdAt).toLocaleString()}</span>
@@ -2756,7 +2756,7 @@ function renderOrdersView() {
 
       ${o.status !== 'Delivered' && o.status !== 'Cancelled' && o.serviceMode !== 'dinein' ? `
         <div style="margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; background: #fffbeb; border: 1.5px dashed #f59e0b; padding: 6px 12px; border-radius: 8px;">
-          <span style="font-size: 12px; font-weight: 700; color: #b45309;">ðŸ” Share OTP with Delivery Partner:</span>
+          <span style="font-size: 12px; font-weight: 700; color: #b45309;">🔐 Share OTP with Delivery Partner:</span>
           <span style="font-size: 16px; font-weight: 900; letter-spacing: 2.5px; color: #d97706; background: #fff; padding: 2px 8px; border-radius: 4px; border: 1px solid #fde68a;">${o.deliveryOtp || '4829'}</span>
         </div>
       ` : ''}
@@ -2773,9 +2773,9 @@ function renderOrdersView() {
           <button class="btn-secondary" onclick="showGSTInvoice('${o.id}')">📄 GST Invoice</button>
           ${o.status === 'Delivered' ? `
             ${o.dispute ? `
-              <span style="font-size: 11px; font-weight: 700; color: #dc2626; background: #fee2e2; border: 1px solid #fca5a5; padding: 4px 8px; border-radius: 4px;">âš–ï¸ ${o.dispute.status}</span>
+              <span style="font-size: 11px; font-weight: 700; color: #dc2626; background: #fee2e2; border: 1px solid #fca5a5; padding: 4px 8px; border-radius: 4px;">⚖️ ${o.dispute.status}</span>
             ` : `
-              <button class="btn-report-issue" onclick="openDisputeModal('${o.id}')">âš ï¸ Report Issue / Refund</button>
+              <button class="btn-report-issue" onclick="openDisputeModal('${o.id}')">⚠️ Report Issue / Refund</button>
             `}
             ${o.review ? `
               <span style="font-size: 12px; font-weight: 700; color: #d97706; background: #fef3c7; border: 1px solid #fde68a; padding: 4px 8px; border-radius: 4px;">⭐ Rated ${o.review.foodRating}⭐ (Food) • ${o.review.riderRating}⭐ (Rider)</span>
@@ -2829,7 +2829,7 @@ function cancelOrder(orderId) {
   playSound('classic_bell');
   speakVoiceAlert(`Attention ${order.restaurantName}! Order #${order.id} has been cancelled by customer.`);
 
-  pushNotification('âŒ', `Order #${order.id} cancelled.${refundAmt > 0 ? ` ₹${refundAmt} refunded instantly to your BhookIt Wallet!` : ''}`);
+  pushNotification('❌', `Order #${order.id} cancelled.${refundAmt > 0 ? ` ₹${refundAmt} refunded instantly to your BhookIt Wallet!` : ''}`);
   saveState();
 
   showToast(`Order #${order.id} cancelled. ${refundAmt > 0 ? `₹${refundAmt} credited to wallet!` : ''} Supplies restored.`, 'warning');
@@ -2899,11 +2899,11 @@ function renderTrackingView() {
     <!-- Live Leaflet Real-World Interactive Road Map -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
       <span style="font-size: 13px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
-        <span>🗑ºï¸</span> Real-World Live Navigation (OpenStreetMap)
+        <span>🗑ºï️</span> Real-World Live Navigation (OpenStreetMap)
       </span>
       <div style="display: flex; gap: 6px;">
         <button class="btn-accent" onclick="startLiveRiderSimulation('${order.id}')" id="btnSimulateRide" style="padding: 5px 12px; font-size: 12px;">
-          â–¶ï¸ Simulate Rider Trip
+          ▶️ Simulate Rider Trip
         </button>
         <button class="btn-secondary" onclick="recenterTrackingMap()" style="padding: 5px 10px; font-size: 12px;">
           🎯 Fit Route
@@ -2931,7 +2931,7 @@ function renderTrackingView() {
 
     ${order.status !== 'Delivered' && order.status !== 'Cancelled' ? `
       <div class="delivery-otp-badge" style="margin-top: 14px;">
-        <span style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #b45309;">ðŸ” 4-Digit Delivery Confirmation OTP</span>
+        <span style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #b45309;">🔐 4-Digit Delivery Confirmation OTP</span>
         <span style="font-size: 24px; font-weight: 900; letter-spacing: 4px; color: #d97706; margin: 4px 0;">${order.deliveryOtp || '4829'}</span>
         <span style="font-size: 12px; color: #92400e;">Please share this secure code with ${order.deliveryBoy || 'Vikram Rider'} upon doorstep arrival.</span>
       </div>
@@ -2988,7 +2988,7 @@ function initLeafletTrackingMap(order) {
   // Custom Icon Helpers
   const restIcon = L.divIcon({
     className: 'custom-map-icon',
-    html: '<div class="map-icon-bubble rest" title="Restaurant">ðŸª</div>',
+    html: '<div class="map-icon-bubble rest" title="Restaurant">🏪</div>',
     iconSize: [38, 38],
     iconAnchor: [19, 19]
   });
@@ -3166,7 +3166,7 @@ function renderRestaurantView() {
             <div>
               <b>Order #${o.id}</b> 
               ${o.isMultiVendorHub ? '<span class="badge" style="background:#e0f2fe; color:#0369a1; font-size:10px;">Multi-Vendor Hub</span>' : ''}
-              ${o.serviceMode === 'dinein' ? `<span class="dine-in-badge" style="margin-left:4px;">ðŸ½ï¸ ${o.tableNumber || 'Table #01'}</span>` : ''}
+              ${o.serviceMode === 'dinein' ? `<span class="dine-in-badge" style="margin-left:4px;">🍽️ ${o.tableNumber || 'Table #01'}</span>` : ''}
               ${o.scheduleMode === 'later' && o.scheduledSlot ? `<span class="scheduled-slot-badge" style="margin-left:4px;">📅 Slot: ${o.scheduledSlot.date} (${o.scheduledSlot.slot})</span>` : ''}
               • <span style="color:var(--text-muted); font-size:12px;">${o.customer.name} (${o.customer.phone})</span>
             </div>
@@ -3183,8 +3183,8 @@ function renderRestaurantView() {
             ${vendorItems.map(i => `
               <div style="margin-bottom: 2px;">
                 <b>${i.qty}x</b> ${i.name} ${i.addons && i.addons.length ? `<span style="color:var(--text-muted); font-size:12px;">(${i.addons.join(', ')})</span>` : ''}
-                ${i.allergies && i.allergies.length ? `<span style="font-size: 10px; font-weight: 700; color: #b91c1c; background: #fee2e2; padding: 1px 6px; border-radius: 4px; margin-left: 4px;">âš ï¸ ${i.allergies.join(', ')}</span>` : ''}
-                ${i.chefNotes ? `<span style="font-size: 11px; color: #ea580c; font-style: italic; margin-left: 6px;">ðŸ‘¨â€ðŸ³ "${i.chefNotes}"</span>` : ''}
+                ${i.allergies && i.allergies.length ? `<span style="font-size: 10px; font-weight: 700; color: #b91c1c; background: #fee2e2; padding: 1px 6px; border-radius: 4px; margin-left: 4px;">⚠️ ${i.allergies.join(', ')}</span>` : ''}
+                ${i.chefNotes ? `<span style="font-size: 11px; color: #ea580c; font-style: italic; margin-left: 6px;">👨‍🍳 "${i.chefNotes}"</span>` : ''}
               </div>
             `).join('')}
           </div>
@@ -3339,7 +3339,7 @@ function renderDeliveryView() {
       </div>
 
       <div style="font-size: 13px; margin: 8px 0;">
-        <div>ðŸª <b>Pickup:</b> ${o.restaurantName}</div>
+        <div>🏪 <b>Pickup:</b> ${o.restaurantName}</div>
         <div>📍 <b>Dropoff:</b> ${o.customer.name} • ${o.customer.address}</div>
         <div>📞 <b>Customer Phone:</b> ${o.customer.phone}</div>
       </div>
@@ -3349,7 +3349,7 @@ function renderDeliveryView() {
         ${o.deliveryBoy === currentRider.name && o.status === 'Ready' ? `<button class="btn-accent" onclick="riderPickUpOrder('${o.id}')">Confirm Food Picked Up</button>` : ''}
         ${o.deliveryBoy === currentRider.name && o.status === 'Out for Delivery' ? `
           <div style="width: 100%; background: #f0fdf4; border: 1.5px dashed #86efac; padding: 10px 14px; border-radius: 8px; margin: 8px 0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
-            <span style="font-size: 12px; font-weight: 700; color: #166534;">ðŸ” Enter Customer's 4-Digit OTP:</span>
+            <span style="font-size: 12px; font-weight: 700; color: #166534;">🔐 Enter Customer's 4-Digit OTP:</span>
             <div style="display: flex; gap: 6px;">
               <input type="text" id="riderOtpInput_${o.id}" maxlength="4" placeholder="4 digits" class="input-field" style="margin: 0; width: 100px; padding: 4px 8px; text-align: center; font-weight: 800; letter-spacing: 2px;">
               <button class="btn-primary" onclick="verifyRiderDeliveryOtp('${o.id}')" style="margin: 0; padding: 6px 12px; font-size: 12px;">Verify & Complete 📦</button>
@@ -3461,7 +3461,7 @@ function renderAdminView() {
       dispatchList.innerHTML = unassigned.map(o => `
         <div class="food-row" style="margin-bottom: 8px;">
           <div>
-            <b>#${o.id}</b> • ${o.restaurantName} â†’ ${o.customer.address} (₹${o.total})
+            <b>#${o.id}</b> • ${o.restaurantName} → ${o.customer.address} (₹${o.total})
           </div>
           <div style="display: flex; gap: 8px;">
             <select id="riderSelect_${o.id}" class="input-field" style="margin:0; width:auto; padding:4px 8px; font-size:12px;">
@@ -3775,10 +3775,10 @@ function shareOrderWhatsApp(orderId) {
   const trackingUrl = `${window.location.origin}${window.location.pathname}?track=${order.id}`;
   const text = encodeURIComponent(
     `🍔 *BhookIt Order Confirmation #${order.id}*\n` +
-    `ðŸª *Restaurant:* ${order.restaurantName}\n` +
+    `🏪 *Restaurant:* ${order.restaurantName}\n` +
     `📦 *Items:* ${order.items.map(i => `${i.qty}x ${i.name}`).join(', ')}\n` +
     `💰 *Total Paid:* ₹${order.total} (${order.payment})\n` +
-    `ðŸ” *Delivery OTP:* ${order.deliveryOtp || '4829'}\n` +
+    `🔐 *Delivery OTP:* ${order.deliveryOtp || '4829'}\n` +
     `📍 *Live Tracking URL:* ${trackingUrl}\n\n` +
     `_Thank you for ordering with BhookIt!_`
   );
@@ -3967,7 +3967,7 @@ function printPosKot() {
   const table = posOrderType === 'Dine-In' ? (document.getElementById('posTableSelect')?.value || 'Table 1') : posOrderType;
   const rest = appData.restaurants.find(r => r.id === currentPosVendorId) || appData.restaurants[0];
   playSound('delivered');
-  showToast(`ðŸ‘¨â€ðŸ³ Kitchen Order Ticket (KOT) printed for ${table} at ${rest.name}!`, 'success');
+  showToast(`👨‍🍳 Kitchen Order Ticket (KOT) printed for ${table} at ${rest.name}!`, 'success');
   speakVoiceAlert(`Kitchen order ticket printed for ${table}.`);
 }
 
@@ -4341,11 +4341,11 @@ function submitOrderReview() {
     appData.currentUser.walletLedger.unshift({
       id: 'tx_' + Date.now(),
       type: 'credit',
-      title: `ðŸŽ Review Bonus (Order #${order.id})`,
+      title: `🎁 Review Bonus (Order #${order.id})`,
       amount: bonus,
       date: new Date().toLocaleDateString('en-IN')
     });
-    pushNotification('ðŸŽ', `₹20 Bonus credited for reviewing Order #${order.id}!`);
+    pushNotification('🎁', `₹20 Bonus credited for reviewing Order #${order.id}!`);
   }
 
   saveState();
@@ -4400,9 +4400,9 @@ function toggleFoodieBot() {
 
   if (isHidden && foodieBotHistory.length === 0) {
     const greeting = currentLanguage === 'mr' ?
-      'à¤¨à¤®à¤¸à¥à¤•à¤¾à¤°! à¤®à¥€ à¤†à¤¹à¥‡ FoodieBot AI 🤖. à¤†à¤œ à¤•à¤¾à¤¯ à¤–à¤¾à¤¯à¤²à¤¾ à¤†à¤µà¤¡à¥‡à¤²? à¤¶à¤¾à¤•à¤¾à¤¹à¤¾à¤°à¥€ à¤¥à¤¾à¤³à¥€, à¤ªà¤¿à¤à¥à¤à¤¾, à¤•à¤¿à¤‚à¤µà¤¾ à¤¬à¤¿à¤°à¥à¤¯à¤¾à¤£à¥€?' :
+      'नमस्कार! मी आहे FoodieBot AI 🤖. आज काय खायला आवडेल? शाकाहारी थाळी, पिझ्झा, किंवा बिर्याणी?' :
       currentLanguage === 'hi' ?
-      'à¤¨à¤®à¤¸à¥à¤¤à¥‡! à¤®à¥ˆà¤‚ à¤¹à¥‚à¤ FoodieBot AI 🤖. à¤†à¤œ à¤•à¥à¤¯à¤¾ à¤–à¤¾à¤¨à¥‡ à¤•à¤¾ à¤®à¤¨ à¤¹à¥ˆ? à¤µà¥‡à¤œ à¤¥à¤¾à¤²à¥€, à¤ªà¤¿à¤œà¥à¤œà¤¾, à¤¯à¤¾ à¤¬à¤¿à¤°à¤¯à¤¾à¤¨à¥€?' :
+      'नमस्ते! मैं हूँ FoodieBot AI 🤖. आज क्या खाने का मन है? वेज थाली, पिज्जा, या बिरयानी?' :
       'Hello there! I am FoodieBot AI 🤖. What are you craving today? I can recommend top dishes, check order ETA, or help with your cart!';
     addBotMessage(greeting);
   }
@@ -4522,7 +4522,7 @@ function sendFoodieBotMessage() {
     }
 
     // 3. Dietary: Vegetarian intent
-    if (lower.includes('veg') || lower.includes('paneer') || lower.includes('salad') || lower.includes('à¤¶à¤¾à¤•à¤¾à¤¹à¤¾à¤°à¥€')) {
+    if (lower.includes('veg') || lower.includes('paneer') || lower.includes('salad') || lower.includes('शाकाहारी')) {
       const vegDishes = [];
       appData.restaurants.forEach(r => {
         r.foods.filter(f => f.veg).forEach(f => {
@@ -5014,7 +5014,7 @@ function renderKdsTicketsHtml(orders, stage) {
 
     let actionBtnHtml = '';
     if (stage === 'new') {
-      actionBtnHtml = `<button class="btn-kds-bump start" onclick="bumpKdsOrder('${o.id}', 'Preparing')">ðŸ³ Start Cooking</button>`;
+      actionBtnHtml = `<button class="btn-kds-bump start" onclick="bumpKdsOrder('${o.id}', 'Preparing')">🍳 Start Cooking</button>`;
     } else if (stage === 'prep') {
       actionBtnHtml = `<button class="btn-kds-bump ready" onclick="bumpKdsOrder('${o.id}', 'Ready')">✅ Mark Ready for Pickup</button>`;
     } else if (stage === 'ready') {
@@ -5279,11 +5279,11 @@ function claimLuckyReward() {
     appData.currentUser.walletLedger.unshift({
       id: 'tx_' + Date.now(),
       type: 'credit',
-      title: `ðŸŽ ${pendingWonPrize.title}`,
+      title: `🎁 ${pendingWonPrize.title}`,
       amount: pendingWonPrize.value,
       date: new Date().toLocaleDateString('en-IN')
     });
-    pushNotification('ðŸŽ', `₹${pendingWonPrize.value} won from Daily Lucky Wheel credited to your wallet!`);
+    pushNotification('🎁', `₹${pendingWonPrize.value} won from Daily Lucky Wheel credited to your wallet!`);
     showToast(`💰 ₹${pendingWonPrize.value} credited to your BhookIt Wallet!`, 'success');
   } else if (pendingWonPrize.type === 'vip') {
     if (appData.currentUser) {
@@ -5377,7 +5377,7 @@ function confirmInstantRefund() {
   appData.currentUser.walletLedger.unshift({
     id: 'tx_' + Date.now(),
     type: 'credit',
-    title: `âš ï¸ Instant Refund: Order #${order.id} (${selectedDisputeReasonText})`,
+    title: `⚠️ Instant Refund: Order #${order.id} (${selectedDisputeReasonText})`,
     amount: refundAmount,
     date: new Date().toLocaleDateString('en-IN')
   });
@@ -5405,7 +5405,7 @@ function confirmInstantRefund() {
     timestamp: new Date().toISOString()
   });
 
-  pushNotification('âš ï¸', `₹${refundAmount} has been credited to your BhookIt wallet for Order #${order.id}.`);
+  pushNotification('⚠️', `₹${refundAmount} has been credited to your BhookIt wallet for Order #${order.id}.`);
   saveState();
   updateWalletUI();
   playSound('chime');
@@ -5456,10 +5456,10 @@ function renderAdminDisputes() {
 const DEFAULT_INVENTORY = [
   { id: 'inv_1', name: 'Fresh Burger Buns', unit: 'Pcs', stock: 45, max: 100, lowThreshold: 20, icon: '🍔', cost: 12 },
   { id: 'inv_2', name: 'Mozzarella & Cheddar Cheese', unit: 'Kg', stock: 8.5, max: 20, lowThreshold: 4, icon: '🧀', cost: 420 },
-  { id: 'inv_3', name: 'Fresh Malai Paneer', unit: 'Kg', stock: 12, max: 25, lowThreshold: 5, icon: 'ðŸ§ˆ', cost: 360 },
-  { id: 'inv_4', name: 'Royal Basmati Biryani Rice', unit: 'Kg', stock: 28, max: 50, lowThreshold: 10, icon: 'ðŸš', cost: 110 },
+  { id: 'inv_3', name: 'Fresh Malai Paneer', unit: 'Kg', stock: 12, max: 25, lowThreshold: 5, icon: '🧈', cost: 360 },
+  { id: 'inv_4', name: 'Royal Basmati Biryani Rice', unit: 'Kg', stock: 28, max: 50, lowThreshold: 10, icon: '🍚', cost: 110 },
   { id: 'inv_5', name: 'Food Grade Eco Meal Boxes', unit: 'Units', stock: 85, max: 150, lowThreshold: 30, icon: '📦', cost: 8 },
-  { id: 'inv_6', name: 'Refined Cooking Oil & Ghee', unit: 'Liters', stock: 14, max: 30, lowThreshold: 6, icon: 'ðŸ›¢ï¸', cost: 140 }
+  { id: 'inv_6', name: 'Refined Cooking Oil & Ghee', unit: 'Liters', stock: 14, max: 30, lowThreshold: 6, icon: '🛢️', cost: 140 }
 ];
 
 function renderVendorInventory() {
@@ -5570,7 +5570,7 @@ function depleteInventoryForOrder(order) {
   // Check for critical thresholds
   appData.inventory.forEach(inv => {
     if (inv.stock <= inv.lowThreshold) {
-      pushNotification('âš ï¸', `Kitchen Inventory Alert: ${inv.name} is running low (${inv.stock} ${inv.unit} left)!`);
+      pushNotification('⚠️', `Kitchen Inventory Alert: ${inv.name} is running low (${inv.stock} ${inv.unit} left)!`);
     }
   });
 
@@ -5637,7 +5637,7 @@ function updateWeatherPillUI() {
 
   if (isRain) {
     pill.classList.add('rain-mode');
-    if (icon) icon.textContent = 'ðŸŒ§ï¸';
+    if (icon) icon.textContent = '🌧️';
     if (label) label.textContent = 'Heavy Rain (+₹25 Surge)';
   } else if (isPeak) {
     pill.classList.remove('rain-mode');
@@ -5649,7 +5649,7 @@ function updateWeatherPillUI() {
     if (label) label.textContent = 'Night Shift (+₹20)';
   } else {
     pill.classList.remove('rain-mode');
-    if (icon) icon.textContent = 'â˜€ï¸';
+    if (icon) icon.textContent = '☀️';
     if (label) label.textContent = 'Weather: Clear (₹0 Surge)';
   }
 }
@@ -5666,10 +5666,10 @@ function toggleSimulatedWeather() {
 
   if (appData.surgeSettings.rainSurge) {
     playSound('chime');
-    showToast('ðŸŒ§ï¸ Monsoon Rain simulation active! ₹25 driver incentive surge added.', 'warning');
+    showToast('🌧️ Monsoon Rain simulation active! ₹25 driver incentive surge added.', 'warning');
   } else {
     playSound('chime');
-    showToast('â˜€ï¸ Clear weather restored. Normal delivery pricing active.', 'success');
+    showToast('☀️ Clear weather restored. Normal delivery pricing active.', 'success');
   }
 }
 
@@ -5684,7 +5684,7 @@ function toggleSurgeSetting(key, isChecked) {
   renderAdminSurgeSwitchboard();
 
   const names = {
-    rainSurge: 'ðŸŒ§ï¸ Heavy Rain Surge (+₹25)',
+    rainSurge: '🌧️ Heavy Rain Surge (+₹25)',
     peakSurge: '⚡ Dinner Peak Rush (1.25x)',
     lateNightSurge: '🌙 Late Night Delivery (+₹20)'
   };
@@ -5769,7 +5769,7 @@ function renderRiderBatchMode() {
             badgeText = 'Upcoming';
           }
 
-          const icon = wp.type === 'pickup' ? 'ðŸª' : '📍';
+          const icon = wp.type === 'pickup' ? '🏪' : '📍';
           return `
             <div class="batch-waypoint ${stateClass}">
               <div class="batch-waypoint-dot">${idx < currentStep ? '✓' : idx + 1}</div>
@@ -5991,7 +5991,7 @@ function openWhatsAppBotModal(orderId) {
         💵 <b>Total Paid:</b> ₹${order.total} (${order.payment})<br>
         📍 <b>Delivery To:</b> ${order.customer.address}<br>
         🛵 <b>Assigned Courier:</b> ${riderName}<br>
-        ðŸ” <b>Delivery PIN / OTP:</b> <span style="background:#dcfce7; color:#166534; font-weight:800; padding:1px 6px; border-radius:4px;">${order.deliveryOtp || '5821'}</span>
+        🔐 <b>Delivery PIN / OTP:</b> <span style="background:#dcfce7; color:#166534; font-weight:800; padding:1px 6px; border-radius:4px;">${order.deliveryOtp || '5821'}</span>
         <div class="wa-time">${timeStr} ✓✓</div>
       </div>
 
@@ -6007,8 +6007,8 @@ function openWhatsAppBotModal(orderId) {
       <button class="wa-reply-btn" onclick="sendWhatsAppQuickReply('track', '${order.id}')">📍 Track Courier Live</button>
       <button class="wa-reply-btn" onclick="sendWhatsAppQuickReply('invoice', '${order.id}')">🧾 View GST Invoice</button>
       <button class="wa-reply-btn" onclick="sendWhatsAppQuickReply('call', '${order.id}')">📞 Call ${riderName.split(' ')[0]}</button>
-      <button class="wa-reply-btn" onclick="sendWhatsAppQuickReply('dispute', '${order.id}')">âš ï¸ Report Issue / Refund</button>
-      <button class="wa-reply-btn" onclick="sendWhatsAppQuickReply('external', '${order.id}')">â†—ï¸ Open Web WhatsApp</button>
+      <button class="wa-reply-btn" onclick="sendWhatsAppQuickReply('dispute', '${order.id}')">⚠️ Report Issue / Refund</button>
+      <button class="wa-reply-btn" onclick="sendWhatsAppQuickReply('external', '${order.id}')">↗️ Open Web WhatsApp</button>
     `;
   }
 
@@ -6029,7 +6029,7 @@ function sendWhatsAppQuickReply(action, orderId) {
   if (action === 'track') userText = 'Where is my delivery right now? 📍';
   else if (action === 'invoice') userText = 'Please send my official GST tax invoice 🧾';
   else if (action === 'call') userText = 'Can I call my delivery courier? 📞';
-  else if (action === 'dispute') userText = 'I need to report an issue with my food order âš ï¸';
+  else if (action === 'dispute') userText = 'I need to report an issue with my food order ⚠️';
   else if (action === 'external') userText = 'Share this receipt to my personal WhatsApp 📲';
 
   // Append User message bubble
@@ -6344,7 +6344,7 @@ function openZReportModal(vendorId = currentActiveVendorId) {
         <div class="z-line"><span>💵 Cash Collections:</span><span>₹${cashTotal.toFixed(2)}</span></div>
         <div class="z-line"><span>⚡ UPI & Dynamic QR:</span><span>₹${upiTotal.toFixed(2)}</span></div>
         <div class="z-line"><span>💳 POS Card Swipes:</span><span>₹${cardTotal.toFixed(2)}</span></div>
-        <div class="z-line"><span>ðŸ›ï¸ BhookIt Wallet:</span><span>₹${walletTotal.toFixed(2)}</span></div>
+        <div class="z-line"><span>🛍️ BhookIt Wallet:</span><span>₹${walletTotal.toFixed(2)}</span></div>
       </div>
 
       <div style="border-top: 1px dashed #64748b; padding-top: 8px; margin-bottom: 10px;">
@@ -6403,7 +6403,7 @@ function toggleVoiceSearch() {
     if (speechRecognitionInstance) speechRecognitionInstance.stop();
     isVoiceRecording = false;
     if (btn) btn.classList.remove('recording');
-    if (icon) icon.textContent = 'ðŸŽ™ï¸';
+    if (icon) icon.textContent = '🎙️';
     showToast('Voice search ended', 'info');
     return;
   }
@@ -6419,7 +6419,7 @@ function toggleVoiceSearch() {
       if (btn) btn.classList.add('recording');
       if (icon) icon.textContent = '🔴';
       playSound('chime');
-      showToast('ðŸŽ™ï¸ Listening... Speak dish craving in Marathi or English!', 'info');
+      showToast('🎙️ Listening... Speak dish craving in Marathi or English!', 'info');
     };
 
     speechRecognitionInstance.onresult = (event) => {
@@ -6429,7 +6429,7 @@ function toggleVoiceSearch() {
         renderCustomerView();
       }
       playSound('delivered');
-      showToast(`🗑£ï¸ Heard: "${transcript}"`, 'success');
+      showToast(`🗑£ï️ Heard: "${transcript}"`, 'success');
       speakVoiceAlert(`Searching for ${transcript}`);
     };
 
@@ -6437,14 +6437,14 @@ function toggleVoiceSearch() {
       console.warn('Speech recognition error/fallback:', err);
       isVoiceRecording = false;
       if (btn) btn.classList.remove('recording');
-      if (icon) icon.textContent = 'ðŸŽ™ï¸';
+      if (icon) icon.textContent = '🎙️';
       showVoiceFallbackModal();
     };
 
     speechRecognitionInstance.onend = () => {
       isVoiceRecording = false;
       if (btn) btn.classList.remove('recording');
-      if (icon) icon.textContent = 'ðŸŽ™ï¸';
+      if (icon) icon.textContent = '🎙️';
     };
 
     speechRecognitionInstance.start();
@@ -6456,13 +6456,13 @@ function toggleVoiceSearch() {
 
 function showVoiceFallbackModal() {
   const samples = [
-    'à¤®à¤¿à¤¸à¤³ à¤ªà¤¾à¤µ (Misal Pav)',
-    'à¤µà¥à¤¹à¥‡à¤œ à¤¸à¥à¤ªà¥‡à¤¶à¤² à¤¥à¤¾à¤³à¥€ (Special Veg Thali)',
-    'à¤ªà¤¨à¥€à¤° à¤¬à¤Ÿà¤° à¤®à¤¸à¤¾à¤²à¤¾ (Paneer Butter Masala)',
-    'à¤šà¥€à¤œ à¤®à¤¾à¤°à¥à¤—à¤°à¥€à¤Ÿà¤¾ à¤ªà¤¿à¤à¥à¤à¤¾ (Cheese Margherita Pizza)',
-    'à¤¦à¤® à¤¬à¤¿à¤°à¥à¤¯à¤¾à¤£à¥€ (Dum Biryani)'
+    'मिसळ पाव (Misal Pav)',
+    'व्हेज स्पेशल थाळी (Special Veg Thali)',
+    'पनीर बटर मसाला (Paneer Butter Masala)',
+    'चीज मार्गरीटा पिझ्झा (Cheese Margherita Pizza)',
+    'दम बिर्याणी (Dum Biryani)'
   ];
-  const choice = prompt(`ðŸŽ™ï¸ Voice Recognition:\nChoose or enter your food craving to search:\n\n1. ${samples[0]}\n2. ${samples[1]}\n3. ${samples[2]}\n4. ${samples[3]}\n5. ${samples[4]}\n\nEnter dish name:`, 'à¤®à¤¿à¤¸à¤³ à¤ªà¤¾à¤µ');
+  const choice = prompt(`🎙️ Voice Recognition:\nChoose or enter your food craving to search:\n\n1. ${samples[0]}\n2. ${samples[1]}\n3. ${samples[2]}\n4. ${samples[3]}\n5. ${samples[4]}\n\nEnter dish name:`, 'मिसळ पाव');
   if (choice) {
     const searchInput = document.getElementById('foodSearchInput');
     if (searchInput) {
@@ -6470,7 +6470,7 @@ function showVoiceFallbackModal() {
       renderCustomerView();
     }
     playSound('chime');
-    showToast(`ðŸŽ™ï¸ Voice Search Applied: "${choice}"`, 'success');
+    showToast(`🎙️ Voice Search Applied: "${choice}"`, 'success');
   }
 }
 
@@ -6637,7 +6637,7 @@ function renderVendorWaiterAlerts() {
         ${vendorWaiterAlerts.map(a => `
           <div class="vendor-waiter-alert-card">
             <div style="display: flex; align-items: center; gap: 10px;">
-              <span style="font-size: 22px;">ðŸ›Žï¸</span>
+              <span style="font-size: 22px;">🛎️</span>
               <div>
                 <div style="font-weight: 800; font-size: 13px;">${a.table}</div>
                 <div style="font-size: 12px; opacity: 0.9;">Requested: <b>${a.service}</b> (${a.time})</div>
@@ -6865,7 +6865,7 @@ function renderAdminDeliveryZones(cityFilter = null) {
             <td style="text-align: right;">
               <div style="display: flex; gap: 6px; justify-content: flex-end;">
                 <button type="button" class="btn-secondary" onclick="openAdminEditZoneModal('${z.id}')" style="padding: 4px 8px; font-size: 11px;">✏️ Edit</button>
-                <button type="button" class="btn-danger" onclick="deleteAdminDeliveryZone('${z.id}')" style="padding: 4px 8px; font-size: 11px;">🗑‘ï¸ Delete</button>
+                <button type="button" class="btn-danger" onclick="deleteAdminDeliveryZone('${z.id}')" style="padding: 4px 8px; font-size: 11px;">🗑‘ï️ Delete</button>
               </div>
             </td>
           </tr>

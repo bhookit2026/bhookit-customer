@@ -99,7 +99,7 @@ for (let i = 0; i < lines.length; i++) {
         lines[i] = '        <span id="weatherSurgeLabel">Weather: Clear (₹10 Surge)</span>';
     }
     else if (lines[i].includes('Explore Perks')) {
-        // Simple replace for the âž” or other broken bytes
+        // Simple replace for the ➔ or other broken bytes
         lines[i] = lines[i].replace(/Explore Perks.*?"/, 'Explore Perks ➔"');
     }
 }
