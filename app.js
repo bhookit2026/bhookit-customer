@@ -3711,11 +3711,10 @@ function openModal(modalId) {
   const m = document.getElementById(modalId);
   if (m) {
     m.classList.remove('hidden');
-    // Scroll the modal content to top for better UX
-    const modalCard = m.querySelector('.modal-card');
+    document.body.style.overflow = 'hidden';
+    const modalCard = m.querySelector('.modal-card, .kds-modal-card');
     if (modalCard) {
       modalCard.scrollTop = 0;
-      modalCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }
 }
@@ -3723,6 +3722,14 @@ function openModal(modalId) {
 function closeModal(modalId) {
   const m = document.getElementById(modalId);
   if (m) m.classList.add('hidden');
+  const anyOpen = document.querySelector('.modal-backdrop:not(.hidden), .modal-overlay:not(.hidden)');
+  if (!anyOpen) {
+    document.body.style.overflow = '';
+  }
+  if (modalId === 'kdsModal' && kdsClockInterval) {
+    clearInterval(kdsClockInterval);
+    kdsClockInterval = null;
+  }
 }
 
 function openAuth() {
@@ -4990,6 +4997,9 @@ let kdsSoundActive = true;
 let kdsClockInterval = null;
 
 function openKdsModal() {
+  if (typeof currentActiveVendorId !== 'undefined' && currentActiveVendorId) {
+    currentKdsVendorId = currentActiveVendorId;
+  }
   const sel = document.getElementById('kdsVendorSelect');
   if (sel) {
     sel.innerHTML = appData.restaurants.map(r => `
@@ -5026,7 +5036,8 @@ function toggleKdsSound() {
 }
 
 function renderKdsBoard() {
-  const vendorOrders = appData.orders.filter(o => o.restaurantId === currentKdsVendorId);
+  const currentVendor = appData.restaurants.find(r => r.id === currentKdsVendorId) || appData.restaurants[0];
+  const vendorOrders = appData.orders.filter(o => o.restaurantId === currentKdsVendorId || o.restaurantName === currentVendor?.name || (o.isMultiVendorHub && o.items && o.items.some(i => i.restaurantId === currentKdsVendorId)));
 
   const newOrders = vendorOrders.filter(o => o.status === 'New' || o.status === 'Pending');
   const prepOrders = vendorOrders.filter(o => o.status === 'Accepted' || o.status === 'Preparing');
@@ -5100,7 +5111,7 @@ function renderKdsTicketsHtml(orders, stage) {
 }
 
 function bumpKdsOrder(orderId, nextStatus) {
-  const order = appData.orders.find(o => o.id === orderId);
+  const order = appData.orders.find(o => String(o.id) === String(orderId));
   if (!order) return;
 
   order.status = nextStatus;
@@ -5121,7 +5132,8 @@ function bumpKdsOrder(orderId, nextStatus) {
   saveState();
   if (kdsSoundActive) playSound('delivered');
   renderKdsBoard();
-  renderVendorOrders();
+  if (typeof renderRestaurantView === 'function') renderRestaurantView();
+  if (typeof renderVendorOrderHistory === 'function') renderVendorOrderHistory(currentKdsVendorId);
   renderTrackingView();
   renderOrdersView();
 }
