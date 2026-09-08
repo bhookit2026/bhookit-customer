@@ -1,0 +1,9 @@
+# Exclude files/dirs not needed on Vercel
+.vercel
+node_modules
+.git
+.gitignore
+render.yaml
+*.md
+functions/
+_diag*.html
