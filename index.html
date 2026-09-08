@@ -32,13 +32,24 @@
     <div class="logo-area" onclick="show('customer')" title="BhookIt - Good Food Faster To You">
       <img src="bhookit-logo.png" alt="BhookIt - Good Food Faster To You" class="brand-logo-img">
     </div>
-    <!-- Delivery Area & City Selector -->
-    <div class="header-location-picker" id="headerLocationBtn" onclick="openLocationModal()" title="Click to Change Delivery Area or City">
-      <span class="loc-pin">📍</span>
-      <div class="loc-text-col">
-        <span class="loc-title">Deliver to <span class="loc-arrow">▼</span></span>
-        <span class="loc-sub" id="currentSelectedAreaLabel">Sakoli (Main Market Road)</span>
+    <!-- Delivery Area & City Selector + Spin & Win + Search Button -->
+    <div class="header-location-group" style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+      <div class="header-location-picker" id="headerLocationBtn" onclick="openLocationModal()" title="Click to Change Delivery Area or City">
+        <span class="loc-pin">📍</span>
+        <div class="loc-text-col">
+          <span class="loc-title">Deliver to <span class="loc-arrow">▼</span></span>
+          <span class="loc-sub" id="currentSelectedAreaLabel">Sakoli (Main Market Road)</span>
+        </div>
       </div>
+      <!-- Spin & Win Moved Beside Location -->
+      <button class="role-pill header-spin-pill" onclick="openGamificationModal()" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); color: #fff; border-color: #ec4899; padding: 6px 12px; font-size: 11px; font-weight: 700; white-space: nowrap; border-radius: 999px; box-shadow: var(--shadow-sm); cursor: pointer; display: flex; align-items: center; gap: 4px;" title="Daily Lucky Rewards">
+        <span>🎰</span>
+        <span>Spin &amp; Win</span>
+      </button>
+      <!-- Quick Search Button in Header -->
+      <button class="header-search-icon-btn" onclick="focusSearchInput()" title="Search Dishes & Restaurants" style="background: var(--bg-surface-alt, #f1f5f9); border: 1.5px solid var(--border-color, #e2e8f0); color: var(--text-color); border-radius: 999px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; flex-shrink: 0;">
+        🔍
+      </button>
     </div>
     <!-- Customer Navigation -->
     <nav class="nav-center">
@@ -76,8 +87,7 @@
         <span id="weatherSurgeIcon">☀️</span>
         <span id="weatherSurgeLabel">Weather: Clear (₹10 Surge)</span>
       </button>
-      <!-- Lucky Spin -->
-      <button class="role-pill" onclick="openGamificationModal()" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); color: #fff; border-color: #ec4899;">🎰 Spin & Win</button>
+
       <!-- Loyalty Wallet -->
       <button class="wallet-nav-btn" onclick="openWalletModal()" title="BhookIt Loyalty Wallet">
         <span>💳</span>
@@ -429,29 +439,7 @@
     </footer>
   </main>
 
-  <!-- Mobile Bottom Navigation (Customer Only) -->
-  <div class="mobile-nav">
-    <button class="mobile-nav-btn active" id="mobileNavFood" onclick="show('customer')">
-      <span class="mobile-nav-icon">🍽️</span>
-      <span>Food</span>
-    </button>
-    <button class="mobile-nav-btn" id="mobileNavOrders" onclick="show('orders')">
-      <span class="mobile-nav-icon">📦</span>
-      <span>Orders</span>
-    </button>
-    <button class="mobile-nav-btn" id="mobileNavCart" onclick="show('cart')">
-      <span class="mobile-nav-icon">🛒</span>
-      <span>Cart (<b id="mobileCartCount">0</b>)</span>
-    </button>
-    <button class="mobile-nav-btn" id="mobileNavTrack" onclick="show('track')">
-      <span class="mobile-nav-icon">📍</span>
-      <span>Track</span>
-    </button>
-    <button class="mobile-nav-btn" id="mobileNavProfile" onclick="openAuth()">
-      <span class="mobile-nav-icon">👤</span>
-      <span>Profile</span>
-    </button>
-  </div>
+  
 
   <!-- ==========================================
        ALL CUSTOMER MODALS
@@ -1896,22 +1884,22 @@
       <span class="mobile-nav-icon">🍽️</span>
       <span>Explore</span>
     </button>
+    <button class="mobile-nav-btn" id="mobNavSearch" onclick="focusSearchInput()">
+      <span class="mobile-nav-icon">🔍</span>
+      <span>Search</span>
+    </button>
     <button class="mobile-nav-btn" id="mobNavOrders" onclick="show('orders')">
       <span class="mobile-nav-icon">📦</span>
       <span>Orders</span>
-    </button>
-    <button class="mobile-nav-btn" id="mobNavTrack" onclick="show('track')">
-      <span class="mobile-nav-icon">📍</span>
-      <span>Track</span>
-    </button>
-    <button class="mobile-nav-btn" id="mobNavRestaurant" onclick="show('restaurant')">
-      <span class="mobile-nav-icon">🏪</span>
-      <span>Vendor</span>
     </button>
     <button class="mobile-nav-btn" id="mobNavCart" onclick="show('cart')" style="position: relative;">
       <span class="mobile-nav-icon">🛒</span>
       <span>Cart</span>
       <span class="cart-count-badge" id="mobCartCountBadge" style="position: absolute; top: 0; right: 14px; font-size: 10px; min-width: 16px; height: 16px; padding: 1px 4px; line-height: 14px;">0</span>
+    </button>
+    <button class="mobile-nav-btn" id="mobNavAuthBtn" onclick="openAuth()">
+      <span class="mobile-nav-icon" id="mobNavAuthIcon">👤</span>
+      <span id="mobNavAuthText">Account</span>
     </button>
   </nav>
   <!-- Toast Notification Area -->

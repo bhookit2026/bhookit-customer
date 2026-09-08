@@ -3741,14 +3741,49 @@ function userSignupAction() {
 function updateUserBadge() {
   const label = document.getElementById('userLabel');
   const btn = document.getElementById('authBtn');
-  if (label) label.textContent = appData.currentUser ? appData.currentUser.name : t('guest');
+  const mobText = document.getElementById('mobNavAuthText');
+  const mobIcon = document.getElementById('mobNavAuthIcon');
+  const mobBtn = document.getElementById('mobNavAuthBtn');
+  
+  const isUser = !!appData.currentUser;
+  const userName = isUser ? (appData.currentUser.name || 'User') : (typeof t === 'function' ? t('guest') : 'Guest');
+  
+  if (label) label.textContent = userName;
   if (btn) {
-    btn.textContent = appData.currentUser ? t('logout') : t('login');
-    btn.onclick = appData.currentUser ? () => {
+    btn.textContent = isUser ? (typeof t === 'function' ? t('logout') : 'Logout') : (typeof t === 'function' ? t('login') : 'Login');
+    btn.onclick = isUser ? () => {
       appData.currentUser = null;
+      if (typeof saveState === 'function') saveState();
       updateUserBadge();
-      showToast('Logged out.', 'info');
+      showToast('Logged out successfully.', 'info');
     } : openAuth;
+  }
+  if (mobText) {
+    mobText.textContent = isUser ? 'Logout' : 'Account';
+  }
+  if (mobIcon) {
+    mobIcon.textContent = isUser ? '🚪' : '👤';
+  }
+  if (mobBtn) {
+    mobBtn.onclick = isUser ? () => {
+      if (confirm('Do you want to log out from BhookIt?')) {
+        appData.currentUser = null;
+        if (typeof saveState === 'function') saveState();
+        updateUserBadge();
+        showToast('Logged out successfully.', 'info');
+      }
+    } : openAuth;
+  }
+}
+
+function focusSearchInput() {
+  if (typeof show === 'function') show('customer');
+  const searchInput = document.getElementById('foodSearchInput');
+  if (searchInput) {
+    searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => {
+      searchInput.focus();
+    }, 250);
   }
 }
 

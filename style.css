@@ -4886,11 +4886,42 @@ html, body {
     margin-left: auto;
   }
 
-  /* Hide bulky auxiliary buttons in header on compact screens */
   #weatherSurgePill,
   .lucky-spin-nav-btn,
   .user-profile-badge {
     display: none !important;
+  }
+
+  .header-location-group {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    flex-wrap: nowrap !important;
+    margin-left: auto !important;
+  }
+
+  .header-spin-pill {
+    padding: 4px 8px !important;
+    font-size: 11px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .header-search-icon-btn {
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 13px !important;
+    flex-shrink: 0 !important;
+  }
+
+  #authBtn {
+    background: var(--primary) !important;
+    color: #fff !important;
+    font-weight: 700 !important;
+    border-radius: 999px !important;
+    padding: 4px 10px !important;
+    font-size: 11px !important;
+    border: none !important;
+    flex-shrink: 0 !important;
   }
 
   .cart-indicator-btn,
