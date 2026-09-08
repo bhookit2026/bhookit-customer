@@ -186,6 +186,7 @@ function applyLanguageTranslations() {
   if (searchInput) searchInput.placeholder = t('searchPlaceholder');
 
   renderCustomerView();
+  updatePaymentMethodsUI();
 }
 
 // -------------------------------------------------------------
@@ -2064,6 +2065,10 @@ async function submitOrder() {
   const phone = document.getElementById('custPhone')?.value.trim() || appData.currentUser?.phone || '9876543210';
   const address = document.getElementById('custAddress')?.value.trim() || appData.currentUser?.address || '';
   let payment = document.getElementById('paymentMethod')?.value || 'UPI';
+  if (payment === 'COD' && appData.paymentSettings && appData.paymentSettings.codEnabled === false) {
+    alert('⚠️ Cash on Delivery (COD) is currently disabled by Admin. Please select UPI or Cards.');
+    return;
+  }
 
   const subtotal = currentCart.reduce((s, i) => s + (i.price * i.qty), 0);
   const isVip = appData.currentUser && appData.currentUser.isVip;
@@ -7348,4 +7353,86 @@ function showMockNotification(type, to, message, link) {
   }
   
   openModal('mockNotificationModal');
+}
+
+// -------------------------------------------------------------
+// PAYMENT SETTINGS & COD ADMIN SWITCH
+// -------------------------------------------------------------
+function updatePaymentMethodsUI() {
+  if (!appData.paymentSettings) {
+    appData.paymentSettings = { codEnabled: true };
+  }
+  const codAllowed = appData.paymentSettings.codEnabled !== false;
+
+  // Customer view elements
+  const codOpt = document.getElementById('optPaymentCod');
+  const paySelect = document.getElementById('paymentMethod');
+  const warning = document.getElementById('codDisabledWarning');
+  const customerBadge = document.getElementById('codBadgeCustomer');
+
+  if (codOpt) {
+    if (codAllowed) {
+      codOpt.disabled = false;
+      codOpt.textContent = '💵 Cash on Delivery (COD)';
+      if (warning) warning.style.display = 'none';
+      if (customerBadge) {
+        customerBadge.textContent = 'COD Available 🟢';
+        customerBadge.style.background = '#dcfce7';
+        customerBadge.style.color = '#15803d';
+      }
+    } else {
+      codOpt.disabled = true;
+      codOpt.textContent = '💵 Cash on Delivery (Disabled by Admin)';
+      if (paySelect && paySelect.value === 'COD') {
+        paySelect.value = 'UPI';
+      }
+      if (warning) warning.style.display = 'block';
+      if (customerBadge) {
+        customerBadge.textContent = 'COD Paused 🔴';
+        customerBadge.style.background = '#fee2e2';
+        customerBadge.style.color = '#991b1b';
+      }
+    }
+  }
+
+  // Admin view elements
+  const adminToggle = document.getElementById('toggleCodPayment');
+  const adminBadge = document.getElementById('adminCodStatusBadge');
+  const adminHint = document.getElementById('adminCodHintText');
+
+  if (adminToggle) {
+    adminToggle.checked = codAllowed;
+  }
+  if (adminBadge) {
+    adminBadge.textContent = codAllowed ? 'COD: Enabled 🟢' : 'COD: Disabled 🔴';
+    adminBadge.style.background = codAllowed ? '#dcfce7' : '#fee2e2';
+    adminBadge.style.color = codAllowed ? '#15803d' : '#991b1b';
+  }
+  if (adminHint) {
+    adminHint.textContent = codAllowed ? '● Status: Active & Available for customers' : '● Status: Disabled by Admin (Online Payments Only)';
+    adminHint.style.color = codAllowed ? '#10b981' : '#ef4444';
+  }
+}
+
+function toggleCodPaymentSetting(enabled) {
+  if (!appData.paymentSettings) {
+    appData.paymentSettings = { codEnabled: true };
+  }
+  appData.paymentSettings.codEnabled = !!enabled;
+  saveState();
+  updatePaymentMethodsUI();
+  showToast(enabled ? '✅ Cash on Delivery (COD) enabled for customers.' : '⚠️ Cash on Delivery (COD) disabled platform-wide.', enabled ? 'success' : 'warning');
+}
+
+function handlePaymentMethodChange(method) {
+  const warning = document.getElementById('codDisabledWarning');
+  const codAllowed = appData.paymentSettings ? appData.paymentSettings.codEnabled !== false : true;
+  if (method === 'COD' && !codAllowed) {
+    if (warning) warning.style.display = 'block';
+    const paySelect = document.getElementById('paymentMethod');
+    if (paySelect) paySelect.value = 'UPI';
+    showToast('Cash on Delivery is currently disabled by admin.', 'warning');
+  } else {
+    if (warning && codAllowed) warning.style.display = 'none';
+  }
 }

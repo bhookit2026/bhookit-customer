@@ -305,12 +305,18 @@
             </div>
           </div>
           <textarea id="custAddress" class="input-field" style="min-height: 60px;" placeholder="Flat / House No, Street, Landmark, Area"></textarea>
-          <label style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Payment Method</label>
-          <select id="paymentMethod" class="input-field">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <label style="font-size: 12px; font-weight: 600; color: var(--text-muted); margin: 0;">Payment Method</label>
+            <span id="codBadgeCustomer" style="font-size: 11px; font-weight: 700; color: #15803d; background: #dcfce7; padding: 2px 8px; border-radius: 999px;">COD Available 🟢</span>
+          </div>
+          <select id="paymentMethod" class="input-field" onchange="handlePaymentMethodChange(this.value)">
             <option value="UPI">⚡ UPI / Online Instant (GooglePay, PhonePe, Paytm)</option>
-            <option value="COD">💵 Cash on Delivery (COD)</option>
+            <option value="COD" id="optPaymentCod">💵 Cash on Delivery (COD)</option>
             <option value="CARD">💳 Credit / Debit Card</option>
           </select>
+          <div id="codDisabledWarning" style="display: none; background: #fef2f2; border: 1px solid #fee2e2; color: #991b1b; border-radius: var(--radius-sm); padding: 8px 12px; font-size: 12px; margin-top: 6px;">
+            ⚠️ <b>Cash on Delivery (COD) is temporarily disabled by Admin.</b> Please choose online payment via UPI, GooglePay, PhonePe, or Cards.
+          </div>
           <!-- Wallet Balance Redemption Box -->
           <div class="wallet-redeem-container" id="walletRedeemBox">
             <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; margin: 0; width: 100%;">

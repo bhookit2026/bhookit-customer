@@ -148,6 +148,46 @@
           <!-- Injected dynamically -->
         </div>
       </div>
+      <!-- Payment Gateways & Cash on Delivery (COD) Controls -->
+      <div class="dashboard-card" style="border-left: 4px solid #10b981;">
+        <div class="dashboard-card-title">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 20px;">💳</span>
+            <span>Payment Methods &amp; Cash on Delivery (COD) Controls</span>
+          </div>
+          <span class="badge" id="adminCodStatusBadge" style="background: #dcfce7; color: #15803d; font-weight: 700;">COD: Enabled 🟢</span>
+        </div>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">
+          Enable or disable Cash on Delivery (COD) platform-wide. When disabled, customers must pay online via UPI, GooglePay, PhonePe, or Cards.
+        </p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px;">
+          <!-- COD Toggle Card -->
+          <div style="background: var(--bg); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 14px; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span style="font-weight: 800; font-size: 14px;">💵 Cash on Delivery (COD)</span>
+                <input type="checkbox" id="toggleCodPayment" onchange="toggleCodPaymentSetting(this.checked)" checked style="width: 22px; height: 22px; cursor: pointer; accent-color: #10b981;">
+              </div>
+              <div style="font-size: 12px; color: var(--text-muted);">
+                Allows customers to pay via cash upon food arrival. Delivery riders collect the physical cash.
+              </div>
+            </div>
+            <div style="margin-top: 10px; font-size: 11px; font-weight: 700; color: #10b981;" id="adminCodHintText">
+              ● Status: Active &amp; Available for customers
+            </div>
+          </div>
+          <!-- Online UPI Card -->
+          <div style="background: var(--bg); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="font-weight: 800; font-size: 14px;">⚡ Instant UPI (GPay/PhonePe/Paytm)</span>
+              <span class="badge" style="background: #dbeafe; color: #1e40af; font-weight: 700;">Always Active</span>
+            </div>
+            <div style="font-size: 12px; color: var(--text-muted);">
+              Direct bank-to-bank UPI transfers to verified merchant ID <b style="color: var(--primary);">bhookit@axl</b>.
+            </div>
+          </div>
+        </div>
+      </div>
       <!-- Dynamic Surge & Weather Dispatch Switchboard -->
       <div class="dashboard-card" style="border-left: 4px solid #ea580c;">
         <div class="dashboard-card-title">
