@@ -3197,11 +3197,15 @@ function renderRestaurantView() {
             Address: ${o.customer.address} | Total: <b>₹${o.total}</b> (${o.payment})
           </div>
           <div class="action-btn-group">
-            ${o.status === 'New' ? `<button class="btn-accent" onclick="setOrderStatus('${o.id}', 'Accepted')">Accept Order</button>` : ''}
-            ${o.status === 'Accepted' ? `<button class="btn-secondary" onclick="setOrderStatus('${o.id}', 'Preparing')">Start Preparing (15m)</button>` : ''}
-            ${o.status === 'Preparing' ? `<button class="btn-accent" onclick="setOrderStatus('${o.id}', 'Ready')">Mark Food Ready for Rider</button>` : ''}
-            ${o.status === 'Ready' ? `<span style="font-size:12px; color:var(--accent); font-weight:700;">Awaiting Rider Pickup</span>` : ''}
-            <button class="btn-whatsapp" onclick="sendKitchenWhatsApp('${o.id}')">💬 Send to Chef WhatsApp</button>
+            ${o.status === 'New' ? `
+              <button class="btn-accent" onclick="setOrderStatus('${o.id}', 'Accepted')" style="background:#16a34a; border-color:#16a34a;">✅ Accept Order</button>
+              <button class="btn-secondary" onclick="openRejectOrderModal('${o.id}')" style="background:#fee2e2; border-color:#fca5a5; color:#991b1b; font-weight:700;">❌ Decline / Reject</button>
+            ` : ''}
+            ${o.status === 'Accepted' ? `<button class="btn-secondary" onclick="setOrderStatus('${o.id}', 'Preparing')" style="background:#fef3c7; border-color:#fcd34d; color:#92400e; font-weight:700;">🍳 Start Preparing (15m)</button>` : ''}
+            ${o.status === 'Preparing' ? `<button class="btn-accent" onclick="setOrderStatus('${o.id}', 'Ready')" style="background:#2563eb; border-color:#2563eb; font-weight:700;">🛵 Ready for Pickup (Alert Rider)</button>` : ''}
+            ${o.status === 'Ready' ? `<span style="font-size:12px; color:#16a34a; font-weight:700;">✅ Ready • Awaiting Rider Pickup</span>` : ''}
+            ${o.status === 'Cancelled' ? `<span style="font-size:12px; color:#dc2626; font-weight:700;">❌ Cancelled ${o.rejectionReason ? '(' + o.rejectionReason + ')' : ''}</span>` : ''}
+            <button class="btn-whatsapp" onclick="sendKitchenWhatsApp('${o.id}')">💬 WhatsApp Chef</button>
           </div>
         </div>
       `;
@@ -3254,28 +3258,33 @@ function toggleStoreOpen() {
   vendor.open = !vendor.open;
   saveState();
   renderRestaurantView();
-  showToast(`Store marked ${vendor.open ? 'OPEN' : 'CLOSED'}`, vendor.open ? 'success' : 'warning');
+  if (typeof updateStoreOpenUI === 'function') updateStoreOpenUI();
+  if (typeof populateVendorOutletSelector === 'function') populateVendorOutletSelector();
+  showToast(`Restaurant is now ${vendor.open ? 'OPEN (Online) 🟢' : 'CLOSED (Offline) 🔴'}`, vendor.open ? 'success' : 'warning');
 }
 
 function toggleFoodStock(vendorId, foodId) {
-  const vendor = appData.restaurants.find(r => r.id === vendorId);
-  const food = vendor?.foods.find(f => f.id === foodId);
+  const vendor = appData.restaurants.find(r => r.id === Number(vendorId));
+  const food = vendor?.foods.find(f => f.id === Number(foodId));
   if (!food) return;
   food.inStock = !food.inStock;
   saveState();
   renderRestaurantView();
-  showToast(`${food.name} marked ${food.inStock ? 'In Stock' : 'Out of Stock'}`, 'info');
+  if (typeof renderVendorMenuGrid === 'function') renderVendorMenuGrid();
+  showToast(`${food.name} is now ${food.inStock ? 'In Stock 🟢' : 'Out of Stock 🔴'}`, 'info');
 }
 
 function setOrderStatus(orderId, nextStatus) {
-  const order = appData.orders.find(o => o.id === orderId);
+  const order = appData.orders.find(o => String(o.id) === String(orderId));
   if (!order) return;
   order.status = nextStatus;
   saveState();
   playSound('chime');
   speakVoiceAlert(`Order ${order.id} status updated to ${nextStatus}.`);
-  showToast(`Order #${order.id} status updated to: ${nextStatus}`, 'success');
+  showToast(`Order #${order.id} status: ${nextStatus}`, 'success');
   renderRestaurantView();
+  if (typeof renderVendorOrderHistory === 'function') renderVendorOrderHistory(currentActiveVendorId);
+  if (typeof renderVendorEarnings === 'function') renderVendorEarnings(currentActiveVendorId);
 }
 
 function openAddMenuModal() {
@@ -7435,4 +7444,484 @@ function handlePaymentMethodChange(method) {
   } else {
     if (warning && codAllowed) warning.style.display = 'none';
   }
+}
+
+// =============================================================
+// COMPREHENSIVE RESTAURANT VENDOR PWA ENGINE (partner.bhookit.com/vendor)
+// =============================================================
+
+let currentVendorTab = 'orders';
+let currentEditingFoodId = null;
+
+function initVendorApp() {
+  if (!currentActiveVendorId) currentActiveVendorId = 1;
+  populateVendorOutletSelector();
+  renderRestaurantView();
+  updateStoreOpenUI();
+  renderVendorProfile();
+  renderVendorOffers();
+  renderVendorOrderHistory(currentActiveVendorId);
+  renderVendorEarnings(currentActiveVendorId);
+}
+
+function switchVendorTab(tab) {
+  currentVendorTab = tab;
+  document.querySelectorAll('.vendor-tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.vendor-tab-pane').forEach(pane => pane.classList.remove('active'));
+
+  const activeBtn = document.getElementById('tabBtn_' + tab);
+  const activePane = document.getElementById('vendorTabPane_' + tab);
+
+  if (activeBtn) activeBtn.classList.add('active');
+  if (activePane) activePane.classList.add('active');
+
+  const currentVendor = appData.restaurants.find(r => r.id === currentActiveVendorId) || appData.restaurants[0];
+
+  if (tab === 'menu') renderVendorMenuGrid();
+  if (tab === 'history') renderVendorOrderHistory(currentActiveVendorId);
+  if (tab === 'earnings') renderVendorEarnings(currentActiveVendorId);
+  if (tab === 'offers') renderVendorOffers();
+  if (tab === 'profile') renderVendorProfile();
+}
+
+function populateVendorOutletSelector() {
+  const select = document.getElementById('vendorOutletSelector');
+  const loginSelect = document.getElementById('loginOutletSelect');
+  if (!select) return;
+
+  const optionsHtml = appData.restaurants.map(r => `
+    <option value="${r.id}" ${r.id === currentActiveVendorId ? 'selected' : ''}>${r.name} (${r.open ? '🟢 Open' : '🔴 Closed'})</option>
+  `).join('');
+
+  select.innerHTML = optionsHtml;
+  if (loginSelect) loginSelect.innerHTML = optionsHtml;
+
+  const currentVendor = appData.restaurants.find(r => r.id === currentActiveVendorId) || appData.restaurants[0];
+  const badgeName = document.getElementById('vendorBadgeName');
+  if (badgeName) badgeName.textContent = currentVendor.name;
+}
+
+function updateStoreOpenUI() {
+  const currentVendor = appData.restaurants.find(r => r.id === currentActiveVendorId);
+  if (!currentVendor) return;
+
+  const btn = document.getElementById('storeStatusToggleBtn');
+  const dot = document.getElementById('storeStatusDot');
+  const label = document.getElementById('storeStatusLabel');
+
+  if (btn) {
+    if (currentVendor.open) {
+      btn.style.background = '#dcfce7';
+      btn.style.color = '#15803d';
+      if (dot) dot.textContent = '🟢';
+      if (label) label.textContent = 'Store Open (Online)';
+    } else {
+      btn.style.background = '#fee2e2';
+      btn.style.color = '#991b1b';
+      if (dot) dot.textContent = '🔴';
+      if (label) label.textContent = 'Store Closed (Offline)';
+    }
+  }
+}
+
+// 1. ORDER PIPELINE & REJECT MODAL
+function openRejectOrderModal(orderId) {
+  const modal = document.getElementById('rejectOrderModal');
+  const idInput = document.getElementById('rejectOrderId');
+  const title = document.getElementById('rejectOrderTitle');
+  if (idInput) idInput.value = orderId;
+  if (title) title.textContent = `Select a reason for declining Order #${orderId}:`;
+  if (modal) modal.classList.remove('hidden');
+}
+
+function confirmRejectOrderAction() {
+  const idInput = document.getElementById('rejectOrderId');
+  if (!idInput) return;
+  const orderId = idInput.value;
+  const reasonRadio = document.querySelector('input[name="rejectReason"]:checked');
+  const reason = reasonRadio ? reasonRadio.value : 'Kitchen capacity exceeded';
+
+  const order = appData.orders.find(o => String(o.id) === String(orderId));
+  if (order) {
+    order.status = 'Cancelled';
+    order.rejectionReason = reason;
+    order.cancelledBy = 'Restaurant Vendor';
+    saveState();
+    showToast(`Order #${orderId} rejected: ${reason}`, 'warning');
+    closeModal('rejectOrderModal');
+    renderRestaurantView();
+    if (typeof renderCustomerView === 'function') renderCustomerView();
+  }
+}
+
+// 2. MENU & PRICE MANAGEMENT
+function renderVendorMenuGrid(searchTerm = '', categoryFilter = 'All') {
+  const container = document.getElementById('vendorMenuListContainer');
+  const catSelect = document.getElementById('vendorMenuCategoryFilter');
+  if (!container) return;
+
+  const currentVendor = appData.restaurants.find(r => r.id === currentActiveVendorId);
+  if (!currentVendor || !Array.isArray(currentVendor.foods)) {
+    container.innerHTML = '<p style="color:var(--text-muted); padding: 20px;">No menu items available.</p>';
+    return;
+  }
+
+  // Populate category filter dropdown
+  const categories = ['All', ...new Set(currentVendor.foods.map(f => f.category))];
+  if (catSelect) {
+    catSelect.innerHTML = categories.map(c => `<option value="${c}" ${c === categoryFilter ? 'selected' : ''}>${c}</option>`).join('');
+  }
+
+  let filteredFoods = currentVendor.foods;
+  if (searchTerm) {
+    filteredFoods = filteredFoods.filter(f => f.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  }
+  if (categoryFilter !== 'All') {
+    filteredFoods = filteredFoods.filter(f => f.category === categoryFilter);
+  }
+
+  if (!filteredFoods.length) {
+    container.innerHTML = '<p style="color:var(--text-muted); padding: 20px;">No matching dishes found.</p>';
+    return;
+  }
+
+  container.innerHTML = filteredFoods.map(f => `
+    <div class="dish-card-row">
+      <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+        <img src="${f.img || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=100'}" alt="${f.name}" style="width: 54px; height: 54px; border-radius: 8px; object-fit: cover; flex-shrink: 0;">
+        <div>
+          <div style="font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 6px;">
+            <span class="${f.veg ? 'veg-indicator' : 'nonveg-indicator'}"></span>
+            <span>${f.name}</span>
+            <span style="font-size: 10px; background: var(--bg-surface-alt, #f1f5f9); border: 1px solid var(--border); padding: 1px 6px; border-radius: 4px; color: var(--text-muted);">${f.category}</span>
+          </div>
+          <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">${f.desc || 'No description provided'}</div>
+          <div style="font-size: 14px; font-weight: 800; color: var(--primary); margin-top: 4px;">₹${f.price}</div>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px; flex-shrink: 0;">
+        <!-- Stock Available / Out of Stock Toggle -->
+        <div style="text-align: center;">
+          <label class="stock-switch" title="Toggle Item In Stock / Out of Stock">
+            <input type="checkbox" ${f.inStock ? 'checked' : ''} onchange="toggleFoodStock(${currentVendor.id}, ${f.id})">
+            <span class="stock-slider"></span>
+          </label>
+          <div style="font-size: 10px; font-weight: 700; color: ${f.inStock ? '#10b981' : '#ef4444'}; margin-top: 2px;">
+            ${f.inStock ? 'In Stock' : 'Out of Stock'}
+          </div>
+        </div>
+        <!-- Edit Button -->
+        <button class="btn-secondary" onclick="openEditDishModal(${currentVendor.id}, ${f.id})" style="padding: 6px 12px; font-size: 12px;">✏️ Edit</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterVendorMenu(val) {
+  const cat = document.getElementById('vendorMenuCategoryFilter')?.value || 'All';
+  renderVendorMenuGrid(val, cat);
+}
+
+function filterVendorMenuByCategory(cat) {
+  const search = document.getElementById('vendorMenuSearchInput')?.value || '';
+  renderVendorMenuGrid(search, cat);
+}
+
+function openEditDishModal(vendorId, foodId) {
+  const currentVendor = appData.restaurants.find(r => r.id === vendorId);
+  const food = currentVendor?.foods.find(f => f.id === foodId);
+  if (!food) return;
+
+  currentEditingFoodId = foodId;
+  document.getElementById('editDishId').value = food.id;
+  document.getElementById('editDishVendorId').value = vendorId;
+  document.getElementById('editDishName').value = food.name;
+  document.getElementById('editDishPrice').value = food.price;
+  document.getElementById('editDishCategory').value = food.category;
+  document.getElementById('editDishVeg').value = String(!!food.veg);
+  document.getElementById('editDishStock').value = String(!!food.inStock);
+  document.getElementById('editDishDesc').value = food.desc || '';
+  document.getElementById('editDishImg').value = food.img || '';
+
+  document.getElementById('editDishModal').classList.remove('hidden');
+}
+
+function saveDishEditForm(e) {
+  e.preventDefault();
+  const vendorId = Number(document.getElementById('editDishVendorId').value);
+  const foodId = Number(document.getElementById('editDishId').value);
+  const currentVendor = appData.restaurants.find(r => r.id === vendorId);
+  const food = currentVendor?.foods.find(f => f.id === foodId);
+  if (!food) return;
+
+  food.name = document.getElementById('editDishName').value.trim();
+  food.price = Number(document.getElementById('editDishPrice').value);
+  food.category = document.getElementById('editDishCategory').value.trim();
+  food.veg = document.getElementById('editDishVeg').value === 'true';
+  food.inStock = document.getElementById('editDishStock').value === 'true';
+  food.desc = document.getElementById('editDishDesc').value.trim();
+  food.img = document.getElementById('editDishImg').value.trim() || food.img;
+
+  saveState();
+  closeModal('editDishModal');
+  showToast(`Updated "${food.name}" price: ₹${food.price}`, 'success');
+  renderVendorMenuGrid();
+  renderRestaurantView();
+}
+
+function confirmDeleteDish() {
+  const vendorId = Number(document.getElementById('editDishVendorId').value);
+  const foodId = Number(document.getElementById('editDishId').value);
+  const currentVendor = appData.restaurants.find(r => r.id === vendorId);
+  if (!currentVendor) return;
+
+  if (confirm('Are you sure you want to remove this dish from the menu?')) {
+    currentVendor.foods = currentVendor.foods.filter(f => f.id !== foodId);
+    saveState();
+    closeModal('editDishModal');
+    showToast('Dish deleted from menu.', 'info');
+    renderVendorMenuGrid();
+    renderRestaurantView();
+  }
+}
+
+function openAddDishModal() {
+  document.getElementById('addDishModal').classList.remove('hidden');
+}
+
+function saveNewDishForm(e) {
+  e.preventDefault();
+  const currentVendor = appData.restaurants.find(r => r.id === currentActiveVendorId);
+  if (!currentVendor) return;
+
+  const newDish = {
+    id: Date.now(),
+    name: document.getElementById('newDishName').value.trim(),
+    price: Number(document.getElementById('newDishPrice').value),
+    category: document.getElementById('newDishCategory').value.trim(),
+    veg: document.getElementById('newDishVeg').value === 'true',
+    inStock: document.getElementById('newDishStock').value === 'true',
+    desc: document.getElementById('newDishDesc').value.trim(),
+    img: document.getElementById('newDishImg').value.trim() || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400'
+  };
+
+  currentVendor.foods.push(newDish);
+  saveState();
+  closeModal('addDishModal');
+  showToast(`Added "${newDish.name}" to menu! 🍽️`, 'success');
+  renderVendorMenuGrid();
+  renderRestaurantView();
+  e.target.reset();
+}
+
+// 3. ORDER HISTORY TAB
+function renderVendorOrderHistory(vendorId, search = '', statusFilter = 'All') {
+  const container = document.getElementById('vendorOrderHistoryList');
+  if (!container) return;
+
+  const currentVendor = appData.restaurants.find(r => r.id === vendorId) || appData.restaurants[0];
+  let orders = appData.orders.filter(o => o.restaurantId === currentVendor.id || o.restaurantName === currentVendor.name || (o.isMultiVendorHub && o.items.some(i => i.restaurantId === currentVendor.id)));
+
+  if (statusFilter !== 'All') {
+    orders = orders.filter(o => o.status.toLowerCase() === statusFilter.toLowerCase());
+  }
+  if (search) {
+    const q = search.toLowerCase();
+    orders = orders.filter(o => String(o.id).toLowerCase().includes(q) || (o.customer && (o.customer.name.toLowerCase().includes(q) || o.customer.phone.includes(q))));
+  }
+
+  if (!orders.length) {
+    container.innerHTML = '<p style="color:var(--text-muted); padding: 18px 0;">No matching orders in history archive.</p>';
+    return;
+  }
+
+  container.innerHTML = `
+    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+      <thead>
+        <tr style="border-bottom: 2px solid var(--border); text-align: left; color: var(--text-muted);">
+          <th style="padding: 10px 8px;">Order #</th>
+          <th style="padding: 10px 8px;">Date &amp; Time</th>
+          <th style="padding: 10px 8px;">Customer</th>
+          <th style="padding: 10px 8px;">Items</th>
+          <th style="padding: 10px 8px;">Total Bill</th>
+          <th style="padding: 10px 8px;">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${orders.map(o => `
+          <tr style="border-bottom: 1px solid var(--border);">
+            <td style="padding: 10px 8px; font-weight: 700;">#${o.id}</td>
+            <td style="padding: 10px 8px; color: var(--text-muted); font-size: 12px;">${new Date(o.createdAt || Date.now()).toLocaleDateString()} ${new Date(o.createdAt || Date.now()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
+            <td style="padding: 10px 8px;">${o.customer ? o.customer.name : 'Customer'}</td>
+            <td style="padding: 10px 8px; font-size: 12px;">${(o.items || []).map(i => `${i.qty}x ${i.name}`).join(', ')}</td>
+            <td style="padding: 10px 8px; font-weight: 700; color: var(--primary);">₹${o.total} (${o.payment})</td>
+            <td style="padding: 10px 8px;"><span class="status-pill ${(o.status || 'new').toLowerCase().replace(/\s+/g, '-')}">${o.status}</span></td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+// 4. FINANCIAL STATEMENT & EARNINGS BREAKDOWN
+function renderVendorEarnings(vendorId) {
+  const container = document.getElementById('vendorEarningsDetailsBox');
+  if (!container) return;
+
+  const currentVendor = appData.restaurants.find(r => r.id === vendorId) || appData.restaurants[0];
+  const deliveredOrders = appData.orders.filter(o => (o.restaurantId === currentVendor.id || o.restaurantName === currentVendor.name) && (o.status === 'Delivered' || o.status === 'Accepted' || o.status === 'Preparing' || o.status === 'Ready'));
+
+  const totalGross = deliveredOrders.reduce((sum, o) => sum + (o.subtotal || o.total || 0), 0);
+  const commRate = currentVendor.commissionRate || 10;
+  const platformFee = Math.round(totalGross * (commRate / 100));
+  const netEarnings = totalGross - platformFee;
+
+  container.innerHTML = `
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 24px;">
+      <div style="background: var(--bg); border: 1.5px solid var(--border); border-radius: 12px; padding: 16px;">
+        <div style="font-size: 12px; color: var(--text-muted); font-weight: 700;">Completed Orders</div>
+        <div style="font-size: 26px; font-weight: 800; color: var(--text-color); margin: 6px 0;">${deliveredOrders.length}</div>
+        <div style="font-size: 11px; color: #10b981;">● 100% Fulfilled Rate</div>
+      </div>
+      <div style="background: var(--bg); border: 1.5px solid var(--border); border-radius: 12px; padding: 16px;">
+        <div style="font-size: 12px; color: var(--text-muted); font-weight: 700;">Total Gross Sales</div>
+        <div style="font-size: 26px; font-weight: 800; color: #10b981; margin: 6px 0;">₹${totalGross}</div>
+        <div style="font-size: 11px; color: var(--text-muted);">Customer Food Value</div>
+      </div>
+      <div style="background: var(--bg); border: 1.5px solid var(--border); border-radius: 12px; padding: 16px;">
+        <div style="font-size: 12px; color: var(--text-muted); font-weight: 700;">Platform Fee (${commRate}%)</div>
+        <div style="font-size: 26px; font-weight: 800; color: #d97706; margin: 6px 0;">- ₹${platformFee}</div>
+        <div style="font-size: 11px; color: var(--text-muted);">Platform hosting & dispatch</div>
+      </div>
+      <div style="background: #ecfdf5; border: 1.5px solid #a7f3d0; border-radius: 12px; padding: 16px;">
+        <div style="font-size: 12px; color: #047857; font-weight: 700;">Net Payout Amount</div>
+        <div style="font-size: 26px; font-weight: 800; color: #047857; margin: 6px 0;">₹${netEarnings}</div>
+        <div style="font-size: 11px; color: #059669; font-weight: 600;">Next NEFT: Tomorrow 10:00 AM</div>
+      </div>
+    </div>
+    <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px;">
+      <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 8px;">🏦 Registered Settlement Account</h4>
+      <div style="font-size: 13px; color: var(--text-muted); line-height: 1.6;">
+        <div><b>Bank:</b> State Bank of India, Sakoli Main Branch</div>
+        <div><b>Account:</b> ${currentVendor.name} (A/C: *******4928)</div>
+        <div><b>IFSC:</b> SBIN0001248 • <b>Settlement Cycle:</b> Daily Automated Payout (T+1)</div>
+      </div>
+    </div>
+  `;
+}
+
+// 5. RESTAURANT PROFILE
+function renderVendorProfile() {
+  const currentVendor = appData.restaurants.find(r => r.id === currentActiveVendorId) || appData.restaurants[0];
+  const nameEl = document.getElementById('profRestName');
+  if (!nameEl) return;
+
+  nameEl.value = currentVendor.name || '';
+  document.getElementById('profRestPhone').value = currentVendor.phone || '';
+  document.getElementById('profRestFssai').value = currentVendor.fssai || '11522045000123';
+  document.getElementById('profRestTimings').value = currentVendor.timings || '10:00 AM - 11:00 PM';
+  document.getElementById('profRestPrepTime').value = currentVendor.prepTime || '25 mins';
+  document.getElementById('profRestPureVeg').value = String(!!currentVendor.pureVeg);
+  document.getElementById('profRestAddress').value = currentVendor.address || 'Main Market Road, Sakoli';
+  document.getElementById('profRestBanner').value = currentVendor.coverImg || '';
+}
+
+function saveVendorProfileForm(e) {
+  e.preventDefault();
+  const currentVendor = appData.restaurants.find(r => r.id === currentActiveVendorId);
+  if (!currentVendor) return;
+
+  currentVendor.name = document.getElementById('profRestName').value.trim();
+  currentVendor.phone = document.getElementById('profRestPhone').value.trim();
+  currentVendor.fssai = document.getElementById('profRestFssai').value.trim();
+  currentVendor.timings = document.getElementById('profRestTimings').value.trim();
+  currentVendor.prepTime = document.getElementById('profRestPrepTime').value.trim();
+  currentVendor.pureVeg = document.getElementById('profRestPureVeg').value === 'true';
+  currentVendor.address = document.getElementById('profRestAddress').value.trim();
+  currentVendor.coverImg = document.getElementById('profRestBanner').value.trim() || currentVendor.coverImg;
+
+  saveState();
+  populateVendorOutletSelector();
+  showToast('Restaurant profile updated successfully! 💾', 'success');
+}
+
+// 6. OFFERS & DISCOUNTS TAB
+function renderVendorOffers() {
+  const container = document.getElementById('vendorOffersListContainer');
+  if (!container) return;
+
+  const currentVendor = appData.restaurants.find(r => r.id === currentActiveVendorId);
+  if (!currentVendor) return;
+
+  if (!Array.isArray(currentVendor.offers)) {
+    currentVendor.offers = [
+      { id: 1, code: 'TASTY20', discount: 20, minOrder: 199, active: true, desc: '20% OFF on orders above ₹199' }
+    ];
+  }
+
+  container.innerHTML = currentVendor.offers.map(off => `
+    <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface); border: 1.5px dashed var(--primary); border-radius: 12px; padding: 14px 18px; margin-bottom: 12px;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-weight: 800; font-size: 16px; color: var(--primary); letter-spacing: 1px;">🏷️ ${off.code}</span>
+          <span class="badge" style="background: ${off.active ? '#dcfce7' : '#fee2e2'}; color: ${off.active ? '#15803d' : '#991b1b'};">${off.active ? 'Active on BhookIt' : 'Paused'}</span>
+        </div>
+        <div style="font-size: 13px; color: var(--text-color); margin-top: 4px;">${off.desc} (Min. Order: ₹${off.minOrder})</div>
+      </div>
+      <button class="btn-secondary" onclick="toggleVendorOffer(${off.id})" style="padding: 6px 14px; font-size: 12px;">
+        ${off.active ? 'Pause Offer' : 'Activate'}
+      </button>
+    </div>
+  `).join('');
+}
+
+function openVendorOfferModal() {
+  document.getElementById('vendorOfferModal')?.classList.remove('hidden');
+}
+
+function saveVendorOfferForm(e) {
+  e.preventDefault();
+  const currentVendor = appData.restaurants.find(r => r.id === currentActiveVendorId);
+  if (!currentVendor) return;
+
+  if (!Array.isArray(currentVendor.offers)) currentVendor.offers = [];
+
+  const newOffer = {
+    id: Date.now(),
+    code: document.getElementById('newOfferCode').value.trim().toUpperCase(),
+    discount: Number(document.getElementById('newOfferPercent').value),
+    minOrder: Number(document.getElementById('newOfferMinOrder').value),
+    desc: document.getElementById('newOfferDesc').value.trim(),
+    active: true
+  };
+
+  currentVendor.offers.push(newOffer);
+  saveState();
+  closeModal('vendorOfferModal');
+  showToast(`Offer "${newOffer.code}" launched successfully! 🎉`, 'success');
+  renderVendorOffers();
+  e.target.reset();
+}
+
+function toggleVendorOffer(offerId) {
+  const currentVendor = appData.restaurants.find(r => r.id === currentActiveVendorId);
+  const off = currentVendor?.offers?.find(o => o.id === offerId);
+  if (!off) return;
+  off.active = !off.active;
+  saveState();
+  renderVendorOffers();
+  showToast(`Offer ${off.code} ${off.active ? 'activated' : 'paused'}.`, 'info');
+}
+
+// 7. RESTAURANT LOGIN & OUTLET SWITCHER
+function openVendorLoginModal() {
+  document.getElementById('vendorLoginModal')?.classList.remove('hidden');
+}
+
+function submitVendorLoginForm(e) {
+  e.preventDefault();
+  const outletId = Number(document.getElementById('loginOutletSelect').value);
+  switchVendor(outletId);
+  closeModal('vendorLoginModal');
+  showToast('Logged in to Kitchen Terminal! 👨‍🍳', 'success');
 }
