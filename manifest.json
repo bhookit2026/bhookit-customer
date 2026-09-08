@@ -1,7 +1,7 @@
-﻿{
-  "name": "BhookIt â€” Multi-Restaurant Food Ordering & Delivery System",
+{
+  "name": "BhookIt — Order Food Online | Fast Delivery",
   "short_name": "BhookIt",
-  "description": "All-in-one multi-vendor food delivery and restaurant management platform with live GPS tracking, rider dispatch, and vendor portals.",
+  "description": "Order from the best restaurants near you. Fast delivery, live tracking, UPI payment — only on BhookIt.",
   "start_url": "./customer.html",
   "scope": "./",
   "display": "standalone",

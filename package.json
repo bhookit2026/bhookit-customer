@@ -1,22 +1,6 @@
 {
-  "name": "bhookit-delivery-app",
-  "version": "14.0.0",
-  "description": "BhookIt Multi-Restaurant Food Ordering & Management System",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
-  },
-  "keywords": [
-    "food-delivery",
-    "multi-restaurant",
-    "pos",
-    "kds",
-    "bhookit"
-  ],
-  "author": "BhookIt Team",
-  "license": "ISC",
-  "engines": {
-    "node": ">=16.0.0"
-  }
+  "name": "bhookit-customer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "BhookIt customer web app (static + serverless API on Vercel; server.js is used by Render)"
 }

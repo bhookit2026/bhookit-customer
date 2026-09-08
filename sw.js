@@ -1,8 +1,9 @@
 // BhookIt V1.0 Progressive Web App Service Worker
-const CACHE_NAME = 'bhookit-v12.5-cache';
+const CACHE_NAME = 'bhookit-v12.7-cache';
 const STATIC_ASSETS = [
   './',
   './customer.html',
+  './index.html',
   './style.css',
   './app.js',
   './manifest.json',
