@@ -185,40 +185,32 @@
           </div>
         </button>
       </div>
-      <!-- Search & Category Filters -->
+      <!-- Quick Filters & Category Strip -->
       <div class="search-filter-card">
-        <div class="search-input-wrapper">
-          <span>🔍</span>
-          <input type="text" id="foodSearchInput" class="search-input" placeholder="Search for dishes, restaurants, or cuisines (e.g. Pizza, Thali, Biryani)..." onfocus="openFullScreenSearch()" onclick="openFullScreenSearch()">
-          
-          <button type="button" id="btnVoiceSearch" class="voice-search-btn" title="Search by Voice">
-            🎙️
-          </button>
-          
-          <!-- Delivery Area Quick Selector Button -->
-          <button type="button" class="area-selector-search-btn" onclick="openLocationModal()" title="Change Delivery Area or City">
-            <span>📍</span>
-            <span id="searchAreaLabel">Sakoli (Market)</span>
-            <span style="font-size: 10px; color: var(--primary);">▾</span>
-          </button>
-          <!-- Voice Search Microphone Button -->
-          <button id="btnVoiceSearch" class="voice-search-btn" onclick="toggleVoiceSearch()" title="Voice Search: Speak food craving in Marathi or English">
-            <span id="voiceSearchIcon">🎙️</span>
-          </button>
-          <!-- Pure Veg Filter Toggle -->
-          <button id="pureVegFilterBtn" class="pure-veg-toggle" onclick="togglePureVegFilter()" title="Filter Pure Vegetarian Dishes Only">
-            <span class="veg-indicator" style="width: 12px; height: 12px;"></span>
-            <span id="txtPureVegLabel">Pure Veg</span>
-          </button>
-          <!-- Sort Dropdown -->
-          <select id="foodSortSelect" class="sort-select" onchange="applySorting(this.value)">
-            <option value="default">⚡ Featured</option>
-            <option value="rating">⭐ Highest Rated</option>
-            <option value="prepTime">🕒 Fastest Delivery</option>
-            <option value="priceLow">💵 Price: Low to High</option>
-            <option value="priceHigh">💎 Price: High to Low</option>
-          </select>
-          <button class="btn-secondary" onclick="resetFilters()" style="padding: 6px 12px; font-size: 12px;">Clear</button>
+        <input type="hidden" id="foodSearchInput" value="">
+        <div class="filters-action-row" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <!-- Pure Veg Filter Toggle -->
+            <button id="pureVegFilterBtn" class="pure-veg-toggle" onclick="togglePureVegFilter()" title="Filter Pure Vegetarian Dishes Only">
+              <span class="veg-indicator" style="width: 12px; height: 12px;"></span>
+              <span id="txtPureVegLabel">Pure Veg</span>
+            </button>
+            <!-- Sort Dropdown -->
+            <select id="foodSortSelect" class="sort-select" onchange="applySorting(this.value)">
+              <option value="default">⚡ Featured</option>
+              <option value="rating">⭐ Highest Rated</option>
+              <option value="prepTime">🕒 Fastest Delivery</option>
+              <option value="priceLow">💵 Price: Low to High</option>
+              <option value="priceHigh">💎 Price: High to Low</option>
+            </select>
+            <!-- Delivery Area Quick Selector Button -->
+            <button type="button" class="area-selector-search-btn" onclick="openLocationModal()" title="Change Delivery Area or City">
+              <span>📍</span>
+              <span id="searchAreaLabel">Sakoli (Market)</span>
+              <span style="font-size: 10px; color: var(--primary);">▾</span>
+            </button>
+          </div>
+          <button class="btn-secondary" onclick="resetFilters()" style="padding: 6px 14px; font-size: 12px;">Clear</button>
         </div>
         <div class="category-strip" id="categoryStrip">
           <button class="category-pill active" onclick="filterCategory('All')">✨ All Items</button>
