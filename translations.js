@@ -43,9 +43,9 @@ const TRANSLATIONS = {
     wallet: 'Wallet',
     favorites: 'Favorites',
     tableBookings: 'Table Reservations',
-    redeemWallet: 'Redeem Wallet',
-    spinAndWin: 'Spin & Win Rewards',
-    spinAndWinDesc: 'Spin daily lucky wheel for instant discounts & wallet cash',
+    spinAndWin: 'Weekly Spin & Win 🎰',
+    spinAndWinDesc: 'Spin weekly lucky wheel to win Free Dessert or Free Delivery!',
+    spinAndWinBadge: 'Weekly Free',
     appLanguage: 'App Language',
     chooseLanguage: 'Select your preferred display language'
   },
@@ -94,8 +94,9 @@ const TRANSLATIONS = {
     favorites: 'आवडते पदार्थ',
     tableBookings: 'टेबल बुकिंग्स',
     redeemWallet: 'वॉलेट वापरा',
-    spinAndWin: 'स्पिन आणि विन रिवॉर्ड्स',
-    spinAndWinDesc: 'दररोज लकी व्हील फिरवा आणि त्वरित डिस्काउंट व वॉलेट कॅश मिळवा',
+    spinAndWin: 'साप्ताहिक लकी स्पिन 🎰',
+    spinAndWinDesc: 'आठवड्यातून एकदा व्हील फिरवा आणि मोफत गोड पदार्थ किंवा मोफत डिलिव्हरी जिंका!',
+    spinAndWinBadge: 'साप्ताहिक फ्री',
     appLanguage: 'ॲप भाषा',
     chooseLanguage: 'तुमची पसंतीची भाषा निवडा'
   },
@@ -144,8 +145,9 @@ const TRANSLATIONS = {
     favorites: 'पसंदीदा व्यंजन',
     tableBookings: 'टेबल बुकिंग',
     redeemWallet: 'वॉलेट उपयोग करें',
-    spinAndWin: 'स्पिन और जीतें',
-    spinAndWinDesc: 'रोजाना लकी व्हील घुमाएं और पाएं इंस्टेंट डिस्काउंट और वॉलेट कैश',
+    spinAndWin: 'साप्ताहिक लकी स्पिन 🎰',
+    spinAndWinDesc: 'हफ्ते में एक बार लकी व्हील घुमाएं और फ्री डेजर्ट या फ्री डिलीवरी जीतें!',
+    spinAndWinBadge: 'साप्ताहिक फ्री',
     appLanguage: 'ऐप की भाषा',
     chooseLanguage: 'अपनी पसंदीदा भाषा चुनें'
   }

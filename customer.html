@@ -1530,20 +1530,22 @@
       </div>
     </div>
   </div>
-  <!-- MODAL: Daily Lucky Food Wheel (Spin & Win) -->
+  <!-- MODAL: Weekly Lucky Food Wheel (Spin & Win) -->
   <div id="gamificationModal" class="modal-backdrop hidden">
     <div class="modal-card gamify-modal-card" style="max-width: 480px; padding: 0; overflow: hidden; text-align: center;">
       <div style="background: linear-gradient(135deg, #ec4899, #8b5cf6); color: #fff; padding: 18px 20px; display: flex; justify-content: space-between; align-items: center;">
         <div style="display: flex; align-items: center; gap: 10px;">
           <span style="font-size: 24px;">🎁</span>
           <div style="text-align: left;">
-            <h3 style="margin: 0; font-size: 17px; font-weight: 900; color: #fff;">Daily Lucky Food Wheel</h3>
-            <span style="font-size: 11px; color: #fbcfe8;">Spin once every 24h &amp; win instant wallet cash or free food!</span>
+            <h3 style="margin: 0; font-size: 17px; font-weight: 900; color: #fff;">Weekly Lucky Food Wheel (साप्ताहिक लकी स्पिन)</h3>
+            <span style="font-size: 11px; color: #fbcfe8;">Spin once every week &amp; win Free Dessert or Free Delivery!</span>
           </div>
         </div>
         <button class="modal-close-btn" style="color: #fff; position: static; background: rgba(255,255,255,0.2);" onclick="closeModal('gamificationModal')">×</button>
       </div>
       <div style="padding: 24px 20px;">
+        <!-- Weekly Cooldown Notice -->
+        <div id="luckyWeeklyCooldownNotice" class="hidden" style="margin-bottom: 14px; padding: 10px 14px; background: rgba(245, 158, 11, 0.12); border: 1.5px solid #f59e0b; border-radius: 12px; font-size: 12px; color: #b45309; font-weight: 700;"></div>
         <!-- Wheel Container -->
         <div class="wheel-stage">
           <div class="wheel-pointer">🔻</div>
@@ -1553,14 +1555,14 @@
         <!-- Reward Result Box -->
         <div id="luckyWinBox" class="lucky-win-box hidden" style="margin-top: 18px;">
           <div style="font-size: 36px; margin-bottom: 4px;">🎉</div>
-          <h4 style="font-size: 18px; font-weight: 900; color: #9d174d; margin: 0 0 6px 0;" id="luckyWinTitle">You Won ₹50 OFF!</h4>
-          <p style="font-size: 12px; color: #831843; margin: 0 0 12px 0;" id="luckyWinSubtitle">Coupon code <b id="luckyCouponCode">SPIN50</b> has been saved to your wallet.</p>
+          <h4 style="font-size: 18px; font-weight: 900; color: #9d174d; margin: 0 0 6px 0;" id="luckyWinTitle">You Won Free Dessert!</h4>
+          <p style="font-size: 12px; color: #831843; margin: 0 0 12px 0;" id="luckyWinSubtitle">Coupon code <b id="luckyCouponCode">FREEDESSERT</b> has been saved to your wallet.</p>
           <button class="btn-primary" onclick="claimLuckyReward()" style="margin: 0 auto; width: auto; padding: 10px 24px; font-weight: 800; background: linear-gradient(135deg, #ec4899, #8b5cf6); border: none;">
             🎁 Claim &amp; Auto-Apply Reward ➔
           </button>
         </div>
         <p style="font-size: 11px; color: var(--text-muted); margin-top: 14px;">
-          100% Guaranteed Win • Prizes include ₹50 OFF, Free Dessert, ₹30 Wallet Cash, and VIP Membership!
+          100% Guaranteed Win • Prizes: 🍰 Free Dessert OR 🛵 Free Delivery!
         </p>
       </div>
     </div>

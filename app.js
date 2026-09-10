@@ -781,6 +781,24 @@ function playSound(type = 'chime') {
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
       osc.start();
       osc.stop(ctx.currentTime + 0.2);
+    } else if (type === 'click' || type === 'wheel_tick') {
+      // Snappy mechanical flapper ratchet click for wheel spinning
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(1400, ctx.currentTime);
+      filter.Q.setValueAtTime(3.5, ctx.currentTime);
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(1100, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(180, ctx.currentTime + 0.02);
+      gain.gain.setValueAtTime(0.35, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.022);
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.024);
     }
   } catch (e) {}
 }
@@ -4284,13 +4302,13 @@ function renderAuthModalContent() {
         </div>
         <p id="authErrorMessage" style="color: var(--danger); font-size: 12px; margin: 4px 0 0; text-align: center;"></p>
 
-        <!-- Spin & Win Rewards in Account -->
-        <div style="margin-top: 10px; padding: 12px 14px; background: linear-gradient(135deg, rgba(236, 72, 153, 0.12), rgba(139, 92, 246, 0.12)); border: 1.5px solid rgba(236, 72, 153, 0.35); border-radius: 12px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s ease;" onclick="closeModal('authModal'); openGamificationModal();" title="Daily Lucky Rewards">
+        <!-- Weekly Spin & Win Rewards in Account -->
+        <div style="margin-top: 10px; padding: 12px 14px; background: linear-gradient(135deg, rgba(236, 72, 153, 0.12), rgba(139, 92, 246, 0.12)); border: 1.5px solid rgba(236, 72, 153, 0.35); border-radius: 12px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s ease;" onclick="closeModal('authModal'); openGamificationModal();" title="Weekly Lucky Rewards">
           <div style="display: flex; align-items: center; gap: 10px;">
             <span style="font-size: 24px;">🎰</span>
             <div>
-              <div style="font-size: 13px; font-weight: 800; color: #ec4899;">Spin &amp; Win Rewards</div>
-              <div style="font-size: 11px; color: var(--text-muted);">Spin daily lucky wheel for instant discounts</div>
+              <div style="font-size: 13px; font-weight: 800; color: #ec4899;">Weekly Spin &amp; Win 🎰</div>
+              <div style="font-size: 11px; color: var(--text-muted);">Win Free Dessert or Free Delivery once a week!</div>
             </div>
           </div>
           <span style="font-size: 11px; font-weight: 800; color: #fff; background: linear-gradient(135deg, #ec4899, #8b5cf6); padding: 5px 12px; border-radius: 20px; white-space: nowrap;">Play ➔</span>
@@ -4363,13 +4381,13 @@ function renderAuthModalContent() {
           <button class="btn-secondary" onclick="closeModal('authModal'); openWalletModal();" style="padding: 4px 10px; font-size: 11px;">View Wallet</button>
         </div>
 
-        <!-- Spin & Win Rewards in Account -->
-        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: linear-gradient(135deg, rgba(236, 72, 153, 0.12), rgba(139, 92, 246, 0.12)); border: 1.5px solid rgba(236, 72, 153, 0.35); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;" onclick="closeModal('authModal'); openGamificationModal();" title="Daily Lucky Rewards">
+        <!-- Weekly Spin & Win Rewards in Account -->
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: linear-gradient(135deg, rgba(236, 72, 153, 0.12), rgba(139, 92, 246, 0.12)); border: 1.5px solid rgba(236, 72, 153, 0.35); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;" onclick="closeModal('authModal'); openGamificationModal();" title="Weekly Lucky Rewards">
           <div style="display: flex; align-items: center; gap: 10px;">
             <span style="font-size: 24px;">🎰</span>
             <div>
-              <div style="font-size: 13px; font-weight: 800; color: #ec4899;">Spin &amp; Win Rewards</div>
-              <div style="font-size: 11px; color: var(--text-muted);">Daily lucky discounts &amp; promo coins</div>
+              <div style="font-size: 13px; font-weight: 800; color: #ec4899;">Weekly Spin &amp; Win 🎰</div>
+              <div style="font-size: 11px; color: var(--text-muted);">Win Free Dessert or Free Delivery once a week!</div>
             </div>
           </div>
           <span style="font-size: 11px; font-weight: 800; color: #fff; background: linear-gradient(135deg, #ec4899, #8b5cf6); padding: 5px 12px; border-radius: 20px; white-space: nowrap;">Play ➔</span>
@@ -4424,6 +4442,7 @@ function renderAccountView() {
   const user = appData.currentUser || { name: 'Guest User', email: 'guest@parcelkar.com', phone: '', address: '' };
   const walletBal = (typeof appData.walletBalance === 'number') ? appData.walletBalance : (user.walletBalance || 250);
 
+  const weeklyStatus = (typeof getWeeklySpinStatus === 'function') ? getWeeklySpinStatus() : { canSpin: true };
   let html = '';
 
   if (isUser) {
@@ -4459,7 +4478,7 @@ function renderAccountView() {
           <button class="btn-primary" onclick="openWalletModal()" style="padding: 8px 16px; font-size: 12px; font-weight: 700; background: #059669; border-color: #059669;">+ Add Money</button>
         </div>
 
-        <!-- 🎰 SPIN & WIN REWARDS SECTION -->
+        <!-- 🎰 WEEKLY SPIN & WIN REWARDS SECTION -->
         <div class="dashboard-card spin-and-win-account-card" style="padding: 18px 20px; background: linear-gradient(135deg, rgba(236, 72, 153, 0.12), rgba(139, 92, 246, 0.12)); border: 1.5px solid rgba(236, 72, 153, 0.4); border-radius: 16px; box-shadow: 0 4px 16px rgba(236, 72, 153, 0.15); display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
           <div style="display: flex; align-items: center; gap: 14px; min-width: 220px; flex: 1;">
             <div style="width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #ec4899, #8b5cf6); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 12px rgba(236, 72, 153, 0.35); flex-shrink: 0;">
@@ -4467,14 +4486,14 @@ function renderAccountView() {
             </div>
             <div>
               <div style="display: flex; align-items: center; gap: 6px;">
-                <span style="font-size: 15px; font-weight: 800; color: #ec4899;">${typeof t === 'function' ? t('spinAndWin') : 'Spin & Win Rewards'}</span>
-                <span style="font-size: 9px; font-weight: 800; color: #fff; background: #ec4899; padding: 1px 6px; border-radius: 999px; text-transform: uppercase;">Daily Free</span>
+                <span style="font-size: 15px; font-weight: 800; color: #ec4899;">${typeof t === 'function' ? t('spinAndWin') : 'Weekly Spin & Win 🎰'}</span>
+                <span style="font-size: 9px; font-weight: 800; color: #fff; background: ${weeklyStatus.canSpin ? '#ec4899' : '#f59e0b'}; padding: 1px 6px; border-radius: 999px; text-transform: uppercase;">${weeklyStatus.canSpin ? (typeof t === 'function' ? (t('spinAndWinBadge') || 'Weekly Free') : 'Weekly Free') : '⏳ Used'}</span>
               </div>
-              <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">${typeof t === 'function' ? t('spinAndWinDesc') : 'Spin daily lucky wheel for instant discounts & wallet cash'}</div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">${typeof t === 'function' ? t('spinAndWinDesc') : 'Spin weekly lucky wheel to win Free Dessert or Free Delivery!'}</div>
             </div>
           </div>
-          <button class="btn-primary spin-btn-glow" onclick="openGamificationModal()" style="padding: 10px 20px; font-size: 13px; font-weight: 800; background: linear-gradient(135deg, #ec4899, #8b5cf6); border: none; border-radius: 12px; cursor: pointer; white-space: nowrap;">
-            🎰 Spin &amp; Win Now ➔
+          <button class="${weeklyStatus.canSpin ? 'btn-primary spin-btn-glow' : 'btn-secondary'}" onclick="openGamificationModal()" style="padding: 10px 20px; font-size: 13px; font-weight: 800; ${weeklyStatus.canSpin ? 'background: linear-gradient(135deg, #ec4899, #8b5cf6); border: none; color: #fff;' : ''} border-radius: 12px; cursor: pointer; white-space: nowrap;">
+            ${weeklyStatus.canSpin ? '🎰 Spin &amp; Win Now ➔' : '⏳ View Wheel ➔'}
           </button>
         </div>
 
@@ -4552,7 +4571,7 @@ function renderAccountView() {
           </div>
         </div>
 
-        <!-- 🎰 SPIN & WIN REWARDS SECTION -->
+        <!-- 🎰 WEEKLY SPIN & WIN REWARDS SECTION -->
         <div class="dashboard-card spin-and-win-account-card" style="padding: 18px 20px; background: linear-gradient(135deg, rgba(236, 72, 153, 0.12), rgba(139, 92, 246, 0.12)); border: 1.5px solid rgba(236, 72, 153, 0.4); border-radius: 16px; box-shadow: 0 4px 16px rgba(236, 72, 153, 0.15); display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
           <div style="display: flex; align-items: center; gap: 14px; min-width: 220px; flex: 1;">
             <div style="width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #ec4899, #8b5cf6); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 12px rgba(236, 72, 153, 0.35); flex-shrink: 0;">
@@ -4560,14 +4579,14 @@ function renderAccountView() {
             </div>
             <div>
               <div style="display: flex; align-items: center; gap: 6px;">
-                <span style="font-size: 15px; font-weight: 800; color: #ec4899;">${typeof t === 'function' ? t('spinAndWin') : 'Spin & Win Rewards'}</span>
-                <span style="font-size: 9px; font-weight: 800; color: #fff; background: #ec4899; padding: 1px 6px; border-radius: 999px; text-transform: uppercase;">Daily Free</span>
+                <span style="font-size: 15px; font-weight: 800; color: #ec4899;">${typeof t === 'function' ? t('spinAndWin') : 'Weekly Spin & Win 🎰'}</span>
+                <span style="font-size: 9px; font-weight: 800; color: #fff; background: ${weeklyStatus.canSpin ? '#ec4899' : '#f59e0b'}; padding: 1px 6px; border-radius: 999px; text-transform: uppercase;">${weeklyStatus.canSpin ? (typeof t === 'function' ? (t('spinAndWinBadge') || 'Weekly Free') : 'Weekly Free') : '⏳ Used'}</span>
               </div>
-              <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">${typeof t === 'function' ? t('spinAndWinDesc') : 'Spin daily lucky wheel for instant discounts & wallet cash'}</div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">${typeof t === 'function' ? t('spinAndWinDesc') : 'Spin weekly lucky wheel to win Free Dessert or Free Delivery!'}</div>
             </div>
           </div>
-          <button class="btn-primary spin-btn-glow" onclick="openGamificationModal()" style="padding: 10px 20px; font-size: 13px; font-weight: 800; background: linear-gradient(135deg, #ec4899, #8b5cf6); border: none; border-radius: 12px; cursor: pointer; white-space: nowrap;">
-            🎰 Spin &amp; Win Now ➔
+          <button class="${weeklyStatus.canSpin ? 'btn-primary spin-btn-glow' : 'btn-secondary'}" onclick="openGamificationModal()" style="padding: 10px 20px; font-size: 13px; font-weight: 800; ${weeklyStatus.canSpin ? 'background: linear-gradient(135deg, #ec4899, #8b5cf6); border: none; color: #fff;' : ''} border-radius: 12px; cursor: pointer; white-space: nowrap;">
+            ${weeklyStatus.canSpin ? '🎰 Spin &amp; Win Now ➔' : '⏳ View Wheel ➔'}
           </button>
         </div>
 
@@ -6523,32 +6542,139 @@ function bumpKdsOrder(orderId, nextStatus) {
 }
 
 // -------------------------------------------------------------
-// PHASE 11: GAMIFIED LUCKY SPIN WHEEL ENGINE
+// PHASE 11: WEEKLY GAMIFIED LUCKY SPIN WHEEL ENGINE
 // -------------------------------------------------------------
 const LUCKY_SECTORS = [
-  { label: '₹50 OFF', color: '#ec4899', textColor: '#ffffff', type: 'coupon', value: 'SPIN50', title: 'You Won ₹50 OFF!', sub: 'Use coupon code SPIN50 on orders above ₹199.' },
-  { label: 'Free Dessert', color: '#8b5cf6', textColor: '#ffffff', type: 'wallet', value: 40, title: 'You Won Free Dessert (₹40 Cash)!', sub: '₹40 instant bonus added to your Parcelकर wallet.' },
-  { label: '₹30 Cash', color: '#10b981', textColor: '#ffffff', type: 'wallet', value: 30, title: 'You Won ₹30 Wallet Cash!', sub: '₹30 instantly credited to your Parcelकर wallet.' },
-  { label: '15% Discount', color: '#f59e0b', textColor: '#ffffff', type: 'coupon', value: 'LUCKY15', title: 'You Won 15% OFF Coupon!', sub: 'Use coupon LUCKY15 on your next delicious meal.' },
-  { label: 'Free Delivery', color: '#3b82f6', textColor: '#ffffff', type: 'coupon', value: 'FREEDEL', title: 'You Won Free Delivery!', sub: 'Coupon FREEDEL auto-applied to waive ₹30 delivery fee.' },
-  { label: 'VIP Pass', color: '#d946ef', textColor: '#ffffff', type: 'vip', value: 1, title: 'You Won 1-Day VIP Gold Pass!', sub: 'Enjoy ₹0 delivery fees and 15% wallet cashback for 24h!' },
-  { label: '₹100 Mega Win', color: '#ef4444', textColor: '#ffffff', type: 'wallet', value: 100, title: 'MEGA WIN! ₹100 Wallet Cash!', sub: '₹100 jackpot cash credited to your Parcelकर wallet.' },
-  { label: 'BOGO 50%', color: '#06b6d4', textColor: '#ffffff', type: 'coupon', value: 'BOGO50', title: 'You Won 50% OFF Combo Coupon!', sub: 'Use coupon BOGO50 on any meal combo deal.' }
+  { label: 'Free Dessert 🍰', color: '#ec4899', textColor: '#ffffff', type: 'dessert', value: 'FREEDESSERT', title: '🎉 You Won Free Dessert! 🍰', sub: 'Complimentary dessert coupon <b>FREEDESSERT</b> applied & ₹50 added to your wallet!' },
+  { label: 'Free Delivery 🛵', color: '#3b82f6', textColor: '#ffffff', type: 'delivery', value: 'FREEDEL', title: '🎉 You Won Free Delivery! 🛵', sub: 'Zero delivery fee coupon <b>FREEDEL</b> applied & ₹30 added to your wallet!' },
+  { label: 'Free Dessert 🍨', color: '#8b5cf6', textColor: '#ffffff', type: 'dessert', value: 'FREEDESSERT', title: '🎉 You Won Free Dessert! 🍨', sub: 'Complimentary dessert coupon <b>FREEDESSERT</b> applied & ₹50 added to your wallet!' },
+  { label: 'Free Delivery 🚀', color: '#10b981', textColor: '#ffffff', type: 'delivery', value: 'FREEDEL', title: '🎉 You Won Free Delivery! 🚀', sub: 'Zero delivery fee coupon <b>FREEDEL</b> applied & ₹30 added to your wallet!' },
+  { label: 'Free Dessert 🧁', color: '#f43f5e', textColor: '#ffffff', type: 'dessert', value: 'FREEDESSERT', title: '🎉 You Won Free Dessert! 🧁', sub: 'Complimentary dessert coupon <b>FREEDESSERT</b> applied & ₹50 added to your wallet!' },
+  { label: 'Free Delivery 🛵', color: '#0ea5e9', textColor: '#ffffff', type: 'delivery', value: 'FREEDEL', title: '🎉 You Won Free Delivery! 🛵', sub: 'Zero delivery fee coupon <b>FREEDEL</b> applied & ₹30 added to your wallet!' },
+  { label: 'Free Dessert 🍩', color: '#d946ef', textColor: '#ffffff', type: 'dessert', value: 'FREEDESSERT', title: '🎉 You Won Free Dessert! 🍩', sub: 'Complimentary dessert coupon <b>FREEDESSERT</b> applied & ₹50 added to your wallet!' },
+  { label: 'Free Delivery ⚡', color: '#059669', textColor: '#ffffff', type: 'delivery', value: 'FREEDEL', title: '🎉 You Won Free Delivery! ⚡', sub: 'Zero delivery fee coupon <b>FREEDEL</b> applied & ₹30 added to your wallet!' }
 ];
 
 let isSpinningWheel = false;
 let currentWheelAngle = 0;
 let pendingWonPrize = null;
+let _wheelAudioContext = null;
+
+const WEEKLY_SPIN_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
+
+function getWeeklySpinStatus() {
+  const lastSpinStr = localStorage.getItem('parcelkar_last_lucky_spin') || (appData.currentUser && appData.currentUser.lastLuckySpinTime);
+  if (!lastSpinStr) return { canSpin: true, remainingMs: 0 };
+  const lastSpin = parseInt(lastSpinStr, 10);
+  if (isNaN(lastSpin)) return { canSpin: true, remainingMs: 0 };
+  const now = Date.now();
+  const elapsed = now - lastSpin;
+  if (elapsed >= WEEKLY_SPIN_COOLDOWN_MS) {
+    return { canSpin: true, remainingMs: 0 };
+  } else {
+    return {
+      canSpin: false,
+      remainingMs: WEEKLY_SPIN_COOLDOWN_MS - elapsed,
+      nextDate: new Date(lastSpin + WEEKLY_SPIN_COOLDOWN_MS)
+    };
+  }
+}
+
+function getWheelAudioContext() {
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return null;
+    if (!_wheelAudioContext || _wheelAudioContext.state === 'closed') {
+      _wheelAudioContext = new AudioContextClass();
+    }
+    if (_wheelAudioContext.state === 'suspended') {
+      _wheelAudioContext.resume();
+    }
+    return _wheelAudioContext;
+  } catch (e) {
+    return null;
+  }
+}
+
+function playWheelTickSound(pitch = 1.0) {
+  try {
+    const ctx = getWheelAudioContext();
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(1400 * pitch, ctx.currentTime);
+    filter.Q.setValueAtTime(3.5, ctx.currentTime);
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(1150 * pitch, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.02);
+
+    gain.gain.setValueAtTime(0.35, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.022);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.024);
+  } catch (e) {}
+}
 
 function openGamificationModal() {
   const winBox = document.getElementById('luckyWinBox');
   if (winBox) winBox.classList.add('hidden');
   const spinBtn = document.getElementById('btnSpinWheel');
-  if (spinBtn) {
-    spinBtn.disabled = false;
-    spinBtn.style.opacity = '1';
-    spinBtn.innerHTML = 'SPIN<br>NOW';
+  const cooldownNotice = document.getElementById('luckyWeeklyCooldownNotice');
+
+  const status = getWeeklySpinStatus();
+
+  if (!status.canSpin) {
+    const days = Math.floor(status.remainingMs / (24 * 60 * 60 * 1000));
+    const hours = Math.floor((status.remainingMs % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+    const dateStr = status.nextDate.toLocaleDateString(currentLanguage === 'mr' ? 'mr-IN' : currentLanguage === 'hi' ? 'hi-IN' : 'en-IN', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    if (spinBtn) {
+      spinBtn.disabled = true;
+      spinBtn.style.opacity = '0.5';
+      spinBtn.style.cursor = 'not-allowed';
+      spinBtn.innerHTML = 'WEEKLY<br>USED';
+    }
+    if (cooldownNotice) {
+      cooldownNotice.classList.remove('hidden');
+      cooldownNotice.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <span style="font-size: 20px;">⏳</span>
+          <div style="text-align: left;">
+            <div style="font-weight: 800; font-size: 13px;">${currentLanguage === 'mr' ? 'या आठवड्याचा लकी स्पिन वापरला आहे!' : currentLanguage === 'hi' ? 'इस हफ्ते का लकी स्पिन इस्तेमाल हो चुका है!' : 'Weekly Free Spin Already Used!'}</div>
+            <div style="font-size: 11px; opacity: 0.9; margin-top: 2px;">
+              ${currentLanguage === 'mr' ? `पुढील मोफत स्पिन <b>${days} दिवस ${hours} तासांनंतर (${dateStr})</b> उपलब्ध होईल.` : currentLanguage === 'hi' ? `अगला फ्री स्पिन <b>${days} दिन ${hours} घंटे बाद (${dateStr})</b> उपलब्ध होगा।` : `Next free spin unlocks in <b>${days}d ${hours}h (${dateStr})</b>.`}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+  } else {
+    if (spinBtn) {
+      spinBtn.disabled = false;
+      spinBtn.style.opacity = '1';
+      spinBtn.style.cursor = 'pointer';
+      spinBtn.innerHTML = 'SPIN<br>NOW';
+    }
+    if (cooldownNotice) {
+      cooldownNotice.classList.add('hidden');
+    }
   }
+
   openModal('gamificationModal');
   setTimeout(() => {
     drawLuckyWheel(currentWheelAngle);
@@ -6597,10 +6723,10 @@ function drawLuckyWheel(currentAngle) {
     ctx.rotate(angle + (arc / 2));
     ctx.textAlign = 'right';
     ctx.fillStyle = LUCKY_SECTORS[i].textColor || '#ffffff';
-    ctx.font = 'bold 12px Inter, sans-serif';
+    ctx.font = 'bold 11px Inter, sans-serif';
     ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
     ctx.shadowBlur = 4;
-    ctx.fillText(LUCKY_SECTORS[i].label, radius - 20, 4);
+    ctx.fillText(LUCKY_SECTORS[i].label, radius - 16, 4);
     ctx.restore();
   }
 
@@ -6628,7 +6754,20 @@ function drawLuckyWheel(currentAngle) {
 }
 
 function spinLuckyWheel() {
+  const status = getWeeklySpinStatus();
+  if (!status.canSpin) {
+    showToast(currentLanguage === 'mr' ? 'तुम्ही या आठवड्याचा लकी स्पिन वापरला आहे!' : currentLanguage === 'hi' ? 'आप इस हफ्ते का लकी स्पिन इस्तेमाल कर चुके हैं!' : 'You have already used your weekly spin!', 'warning');
+    return;
+  }
+
   if (isSpinningWheel) return;
+
+  // Initialize Web Audio Context from direct user gesture
+  const audioCtx = getWheelAudioContext();
+  if (audioCtx && audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+
   isSpinningWheel = true;
 
   const spinBtn = document.getElementById('btnSpinWheel');
@@ -6641,22 +6780,21 @@ function spinLuckyWheel() {
   const winBox = document.getElementById('luckyWinBox');
   if (winBox) winBox.classList.add('hidden');
 
-  // Random landing prize index (0 to 7)
+  // Random landing prize index (0 to 7) - ALL slices are strictly Free Dessert or Free Delivery
   const targetIndex = Math.floor(Math.random() * LUCKY_SECTORS.length);
   const numSlices = LUCKY_SECTORS.length;
   const arc = (2 * Math.PI) / numSlices;
 
   // The pointer is at the TOP (angle = 3*PI/2)
-  // We want (3*PI/2 - finalAngle) mod 2PI to land at targetIndex center
   const targetSliceMid = (targetIndex + 0.5) * arc;
   const targetRemainder = ((3 * Math.PI / 2) - targetSliceMid + (2 * Math.PI * 10)) % (2 * Math.PI);
 
-  const fullRotations = (5 + Math.floor(Math.random() * 3)) * (2 * Math.PI);
+  const fullRotations = (6 + Math.floor(Math.random() * 3)) * (2 * Math.PI);
   const startAngle = currentWheelAngle;
   const totalAngleToRotate = fullRotations + targetRemainder - (startAngle % (2 * Math.PI));
   const finalAngle = startAngle + totalAngleToRotate;
 
-  const duration = 3800;
+  const duration = 4000;
   const startTime = performance.now();
   let lastTickSoundAngle = startAngle;
 
@@ -6669,9 +6807,11 @@ function spinLuckyWheel() {
     currentWheelAngle = startAngle + (totalAngleToRotate * easeOut);
     drawLuckyWheel(currentWheelAngle);
 
-    // Audio click effect on slice passage
-    if (Math.abs(currentWheelAngle - lastTickSoundAngle) > (arc / 2)) {
-      playSound('click');
+    // Audio click effect on each sector/peg boundary passage
+    if (Math.abs(currentWheelAngle - lastTickSoundAngle) >= (arc / 2)) {
+      const currentSpeed = 1 - progress;
+      const pitch = 0.85 + (currentSpeed * 0.45);
+      playWheelTickSound(pitch);
       lastTickSoundAngle = currentWheelAngle;
     }
 
@@ -6690,7 +6830,7 @@ function spinLuckyWheel() {
 
 function showLuckyWin(prize) {
   pendingWonPrize = prize;
-  playSound('order_placed');
+  playSound('delivered');
 
   const winBox = document.getElementById('luckyWinBox');
   const winTitle = document.getElementById('luckyWinTitle');
@@ -6706,41 +6846,64 @@ function showLuckyWin(prize) {
 function claimLuckyReward() {
   if (!pendingWonPrize) return;
 
-  if (pendingWonPrize.type === 'coupon') {
+  // Record weekly spin timestamp
+  const spinTime = Date.now();
+  localStorage.setItem('parcelkar_last_lucky_spin', spinTime.toString());
+  if (!appData.currentUser) {
+    appData.currentUser = { walletBalance: 0, walletLedger: [] };
+  }
+  appData.currentUser.lastLuckySpinTime = spinTime;
+
+  if (pendingWonPrize.type === 'dessert') {
     if (!appData.settings.coupons) appData.settings.coupons = {};
-    appData.settings.coupons[pendingWonPrize.value] = {
+    appData.settings.coupons['FREEDESSERT'] = {
       type: 'flat',
-      value: pendingWonPrize.value === 'SPIN50' ? 50 : 30,
-      min: 199
+      value: 50,
+      min: 0
     };
-    appliedCouponCode = pendingWonPrize.value;
+    appliedCouponCode = 'FREEDESSERT';
     const couponInput = document.getElementById('couponCodeInput');
-    if (couponInput) couponInput.value = pendingWonPrize.value;
-    showToast(`🎉 Coupon ${pendingWonPrize.value} applied to your cart!`, 'success');
-  } else if (pendingWonPrize.type === 'wallet') {
-    if (!appData.currentUser) appData.currentUser = { walletBalance: 0, walletLedger: [] };
-    appData.currentUser.walletBalance = (appData.currentUser.walletBalance || 0) + pendingWonPrize.value;
+    if (couponInput) couponInput.value = 'FREEDESSERT';
+
+    appData.currentUser.walletBalance = (appData.currentUser.walletBalance || 0) + 50;
     if (!Array.isArray(appData.currentUser.walletLedger)) appData.currentUser.walletLedger = [];
     appData.currentUser.walletLedger.unshift({
       id: 'tx_' + Date.now(),
       type: 'credit',
-      title: `🎁 ${pendingWonPrize.title}`,
-      amount: pendingWonPrize.value,
+      title: '🍰 Weekly Free Dessert Bonus',
+      amount: 50,
       date: new Date().toLocaleDateString('en-IN')
     });
-    pushNotification('🎁', `₹${pendingWonPrize.value} won from Daily Lucky Wheel credited to your wallet!`);
-    showToast(`💰 ₹${pendingWonPrize.value} credited to your Parcelकर Wallet!`, 'success');
-  } else if (pendingWonPrize.type === 'vip') {
-    if (appData.currentUser) {
-      appData.currentUser.isVip = true;
-      pushNotification('👑', 'VIP Gold Club pass activated! Enjoy ₹0 delivery and 15% cashback.');
-      showToast('👑 VIP Gold Pass activated! Enjoy ₹0 delivery!', 'success');
-    }
+    pushNotification('🍰', 'Free Dessert reward activated! Coupon FREEDESSERT applied and ₹50 added to your wallet.');
+    showToast('🍰 Free Dessert claimed! ₹50 credited to wallet & coupon FREEDESSERT applied!', 'success');
+  } else if (pendingWonPrize.type === 'delivery') {
+    if (!appData.settings.coupons) appData.settings.coupons = {};
+    appData.settings.coupons['FREEDEL'] = {
+      type: 'flat',
+      value: 30,
+      min: 0
+    };
+    appliedCouponCode = 'FREEDEL';
+    const couponInput = document.getElementById('couponCodeInput');
+    if (couponInput) couponInput.value = 'FREEDEL';
+
+    appData.currentUser.walletBalance = (appData.currentUser.walletBalance || 0) + 30;
+    if (!Array.isArray(appData.currentUser.walletLedger)) appData.currentUser.walletLedger = [];
+    appData.currentUser.walletLedger.unshift({
+      id: 'tx_' + Date.now(),
+      type: 'credit',
+      title: '🛵 Weekly Free Delivery Bonus',
+      amount: 30,
+      date: new Date().toLocaleDateString('en-IN')
+    });
+    pushNotification('🛵', 'Free Delivery reward activated! Coupon FREEDEL applied and ₹30 added to your wallet.');
+    showToast('🛵 Free Delivery claimed! Coupon FREEDEL applied & ₹30 credited to wallet!', 'success');
   }
 
   saveState();
-  updateWalletUI();
+  if (typeof updateWalletUI === 'function') updateWalletUI();
   updateUserBadge();
+  if (typeof renderAccountView === 'function') renderAccountView();
   closeModal('gamificationModal');
 }
 
