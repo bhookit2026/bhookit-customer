@@ -1705,6 +1705,9 @@ function renderCustomerView() {
       countBadge.textContent = `Showing ${visibleCount} available restaurants`;
     }
   }
+
+  // Keep search box filter icon and active badge in sync
+  updateSearchFilterBadge();
 }
 
 function filterCategory(cat) {
@@ -1725,7 +1728,142 @@ function resetFilters() {
   const sortSel = document.getElementById('foodSortSelect');
   if (sortSel) sortSel.value = 'default';
   selectedCategory = 'All';
-  filterCategory('All');
+  document.querySelectorAll('.category-pill').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent.includes('All'));
+  });
+  renderCustomerView();
+  updateSearchFilterBadge();
+}
+
+// -------------------------------------------------------------
+// FILTER MODAL CONTROLS (Triggered from Search Box Filter Icon)
+// -------------------------------------------------------------
+let modalTempVeg = false;
+let modalTempSort = 'default';
+let modalTempCat = 'All';
+
+function openFilterModal() {
+  modalTempVeg = !!isPureVegOnly;
+  modalTempSort = currentSortMode || 'default';
+  modalTempCat = selectedCategory || 'All';
+
+  // Sync Dietary Chips in Modal
+  const vegBtnOnly = document.getElementById('filterModalVegOnly');
+  const vegBtnAll = document.getElementById('filterModalVegAll');
+  if (vegBtnOnly) vegBtnOnly.classList.toggle('active', modalTempVeg);
+  if (vegBtnAll) vegBtnAll.classList.toggle('active-all', !modalTempVeg);
+
+  // Sync Sort Radios in Modal
+  document.querySelectorAll('input[name="modalSortRadio"]').forEach(r => {
+    r.checked = (r.value === modalTempSort);
+    const parent = r.closest('.filter-radio-row');
+    if (parent) parent.classList.toggle('active', r.value === modalTempSort);
+  });
+
+  // Sync Category Chips in Modal
+  document.querySelectorAll('.filter-cat-chip').forEach(c => {
+    c.classList.toggle('active', c.getAttribute('data-cat') === modalTempCat);
+  });
+
+  openModal('foodFilterModal');
+}
+
+function setModalVeg(isVeg) {
+  modalTempVeg = isVeg;
+  const vegBtnOnly = document.getElementById('filterModalVegOnly');
+  const vegBtnAll = document.getElementById('filterModalVegAll');
+  if (vegBtnOnly) vegBtnOnly.classList.toggle('active', modalTempVeg);
+  if (vegBtnAll) vegBtnAll.classList.toggle('active-all', !modalTempVeg);
+  playSound('chime');
+}
+
+function setModalSort(sortVal) {
+  modalTempSort = sortVal;
+  document.querySelectorAll('input[name="modalSortRadio"]').forEach(r => {
+    r.checked = (r.value === modalTempSort);
+    const parent = r.closest('.filter-radio-row');
+    if (parent) parent.classList.toggle('active', r.value === modalTempSort);
+  });
+  playSound('rating');
+}
+
+function setModalCat(catVal) {
+  modalTempCat = catVal;
+  document.querySelectorAll('.filter-cat-chip').forEach(c => {
+    c.classList.toggle('active', c.getAttribute('data-cat') === modalTempCat);
+  });
+  playSound('rating');
+}
+
+function applyModalFilters() {
+  isPureVegOnly = modalTempVeg;
+  currentSortMode = modalTempSort;
+
+  // Sync page elements if present
+  const vegBtn = document.getElementById('pureVegFilterBtn');
+  if (vegBtn) vegBtn.classList.toggle('active', isPureVegOnly);
+  const sortSel = document.getElementById('foodSortSelect');
+  if (sortSel) sortSel.value = currentSortMode;
+
+  if (modalTempCat !== selectedCategory) {
+    filterCategory(modalTempCat);
+  } else {
+    renderCustomerView();
+  }
+
+  closeModal('foodFilterModal');
+  updateSearchFilterBadge();
+  playSound('chime');
+  showToast('✅ Filters applied successfully', 'success');
+}
+
+function resetAllFiltersFromModal() {
+  resetFilters();
+  modalTempVeg = false;
+  modalTempSort = 'default';
+  modalTempCat = 'All';
+
+  const vegBtnOnly = document.getElementById('filterModalVegOnly');
+  const vegBtnAll = document.getElementById('filterModalVegAll');
+  if (vegBtnOnly) vegBtnOnly.classList.remove('active');
+  if (vegBtnAll) vegBtnAll.classList.add('active-all');
+
+  document.querySelectorAll('input[name="modalSortRadio"]').forEach(r => {
+    r.checked = (r.value === 'default');
+    const parent = r.closest('.filter-radio-row');
+    if (parent) parent.classList.toggle('active', r.value === 'default');
+  });
+
+  document.querySelectorAll('.filter-cat-chip').forEach(c => {
+    c.classList.toggle('active', c.getAttribute('data-cat') === 'All');
+  });
+
+  closeModal('foodFilterModal');
+  updateSearchFilterBadge();
+  playSound('rating');
+  showToast('🔄 All filters cleared', 'info');
+}
+
+function updateSearchFilterBadge() {
+  let count = 0;
+  if (isPureVegOnly) count++;
+  if (currentSortMode && currentSortMode !== 'default') count++;
+  if (selectedCategory && selectedCategory !== 'All') count++;
+
+  const badges = document.querySelectorAll('.search-filter-badge');
+  badges.forEach(b => {
+    if (count > 0) {
+      b.textContent = count;
+      b.classList.remove('hidden');
+    } else {
+      b.classList.add('hidden');
+    }
+  });
+
+  const filterBtns = document.querySelectorAll('.home-search-filter-btn, .fs-filter-icon-btn');
+  filterBtns.forEach(btn => {
+    btn.classList.toggle('active', count > 0);
+  });
 }
 
 let selectedAllergyTags = [];

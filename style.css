@@ -6211,3 +6211,301 @@ html, body {
   background: #1e293b;
 }
 
+/* ============================================================
+   IN-SEARCH FILTER ICON & FILTER MODAL STYLES
+   ============================================================ */
+
+/* Divider between voice search and filter icon inside search bar */
+.search-action-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border, #cbd5e1);
+  margin: 0 2px;
+  opacity: 0.8;
+}
+
+/* Filter icon button inside home hero search bar */
+.home-search-filter-btn {
+  font-size: 16px;
+  color: var(--text-muted, #64748b);
+  background: var(--bg-surface-alt, #f1f5f9);
+  border: 1.5px solid var(--border, #e2e8f0);
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+.home-search-filter-btn:hover {
+  border-color: var(--primary, #ff4722);
+  color: var(--primary, #ff4722);
+  transform: scale(1.08);
+  background: rgba(255, 71, 34, 0.08);
+}
+
+.home-search-filter-btn.active {
+  background: linear-gradient(135deg, #ff4722, #ea580c);
+  color: #ffffff;
+  border-color: #ff4722;
+  box-shadow: 0 3px 10px rgba(255, 71, 34, 0.35);
+}
+
+.home-search-filter-btn.active svg {
+  stroke: #ffffff;
+}
+
+/* Filter icon inside full screen search modal input box */
+.fs-filter-icon-btn {
+  font-size: 15px;
+  color: var(--text-muted, #64748b);
+  background: transparent;
+  border: none;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  margin-right: 4px;
+  flex-shrink: 0;
+}
+
+.fs-filter-icon-btn:hover {
+  color: var(--primary, #ff4722);
+  background: rgba(255, 71, 34, 0.08);
+}
+
+.fs-filter-icon-btn.active {
+  color: var(--primary, #ff4722);
+}
+
+/* Active filter count indicator badge */
+.search-filter-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #ff4722;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--bg-card, #ffffff);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  animation: popFilterBadge 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popFilterBadge {
+  0% { transform: scale(0); }
+  80% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+/* Filter Modal Dialog */
+.filter-modal-dialog {
+  max-width: 480px;
+  width: 92%;
+  border-radius: 20px;
+  padding: 22px;
+  background: var(--bg-card, #ffffff);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+  animation: slideUpFilterModal 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUpFilterModal {
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.filter-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border, #e2e8f0);
+}
+
+.filter-modal-body {
+  padding: 16px 0;
+  max-height: 62vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.filter-section-group {
+  margin-bottom: 18px;
+}
+
+.filter-section-group:last-child {
+  margin-bottom: 0;
+}
+
+.filter-section-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text-main, #1e293b);
+  margin-bottom: 8px;
+  letter-spacing: 0.3px;
+}
+
+.filter-chips-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.filter-choice-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border, #e2e8f0);
+  background: var(--bg-surface-alt, #f8fafc);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main, #334155);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  justify-content: center;
+}
+
+.filter-choice-chip:hover {
+  border-color: var(--primary, #ff4722);
+}
+
+.filter-choice-chip.active {
+  border-color: #05a760;
+  background: rgba(5, 167, 96, 0.08);
+  color: #05a760;
+}
+
+.filter-choice-chip.active-all {
+  border-color: var(--primary, #ff4722);
+  background: rgba(255, 71, 34, 0.08);
+  color: var(--primary, #ff4722);
+}
+
+.filter-sort-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filter-radio-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border, #e2e8f0);
+  background: var(--bg-surface-alt, #f8fafc);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main, #334155);
+}
+
+.filter-radio-row:hover {
+  border-color: var(--primary, #ff4722);
+}
+
+.filter-radio-row.active,
+.filter-radio-row:has(input:checked) {
+  border-color: var(--primary, #ff4722);
+  background: rgba(255, 71, 34, 0.06);
+  color: var(--primary, #ff4722);
+  font-weight: 700;
+}
+
+.filter-radio-row input[type="radio"] {
+  accent-color: var(--primary, #ff4722);
+  width: 16px;
+  height: 16px;
+}
+
+.filter-category-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filter-cat-chip {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1.5px solid var(--border, #e2e8f0);
+  background: var(--bg-card, #ffffff);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-main, #475569);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-cat-chip:hover {
+  border-color: var(--primary, #ff4722);
+}
+
+.filter-cat-chip.active {
+  background: linear-gradient(135deg, #ff4722, #ea580c);
+  color: #ffffff;
+  border-color: #ff4722;
+  box-shadow: 0 2px 6px rgba(255, 71, 34, 0.25);
+}
+
+.filter-modal-footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border, #e2e8f0);
+}
+
+/* Dark theme overrides for filter modal */
+[data-theme="dark"] .filter-modal-dialog {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .search-action-divider {
+  background: #334155;
+}
+
+[data-theme="dark"] .home-search-filter-btn {
+  background: #0f172a;
+  border-color: #334155;
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .search-filter-badge {
+  border-color: #1e293b;
+}
+
+[data-theme="dark"] .filter-choice-chip,
+[data-theme="dark"] .filter-radio-row {
+  background: #0f172a;
+  border-color: #334155;
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .filter-cat-chip {
+  background: #0f172a;
+  border-color: #334155;
+  color: #cbd5e1;
+}
+

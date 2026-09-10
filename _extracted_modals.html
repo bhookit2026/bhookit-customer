@@ -1433,6 +1433,94 @@
     </div>
   </div>
   <!-- ============================================================
+       FOOD SEARCH FILTERS & SORTING MODAL
+       ============================================================ -->
+  <div id="foodFilterModal" class="modal-overlay hidden" onclick="if(event.target===this) closeModal('foodFilterModal')">
+    <div class="modal-content filter-modal-dialog">
+      <div class="filter-modal-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 24px;">🎛️</span>
+          <div>
+            <h3 class="modal-title" style="margin: 0; font-size: 17px; font-weight: 800;">Filters &amp; Sorting</h3>
+            <p style="font-size: 12px; color: var(--text-muted); margin: 2px 0 0 0;">Refine food items &amp; restaurant choices</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="closeModal('foodFilterModal')" aria-label="Close" style="position: static; font-size: 18px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--bg-surface-alt, #f1f5f9); border: none; cursor: pointer;">✕</button>
+      </div>
+
+      <div class="filter-modal-body">
+        <!-- Section: Dietary Preference -->
+        <div class="filter-section-group">
+          <label class="filter-section-label">🌱 Dietary Preference</label>
+          <div class="filter-chips-grid">
+            <button type="button" class="filter-choice-chip active-all" id="filterModalVegAll" onclick="setModalVeg(false)">
+              <span style="font-size: 16px;">🍽️</span>
+              <span>All (Veg &amp; Non-Veg)</span>
+            </button>
+            <button type="button" class="filter-choice-chip" id="filterModalVegOnly" onclick="setModalVeg(true)">
+              <span class="veg-indicator" style="width: 12px; height: 12px;"></span>
+              <span>Pure Veg Only</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Section: Sort By -->
+        <div class="filter-section-group">
+          <label class="filter-section-label">⚡ Sort Results By</label>
+          <div class="filter-sort-options">
+            <label class="filter-radio-row active">
+              <input type="radio" name="modalSortRadio" value="default" checked onchange="setModalSort('default')">
+              <span style="font-size: 16px;">⚡</span>
+              <span style="flex: 1;">Featured &amp; Recommended</span>
+            </label>
+            <label class="filter-radio-row">
+              <input type="radio" name="modalSortRadio" value="rating" onchange="setModalSort('rating')">
+              <span style="font-size: 16px;">⭐</span>
+              <span style="flex: 1;">Highest Rated (4.0+ Stars)</span>
+            </label>
+            <label class="filter-radio-row">
+              <input type="radio" name="modalSortRadio" value="prepTime" onchange="setModalSort('prepTime')">
+              <span style="font-size: 16px;">🕒</span>
+              <span style="flex: 1;">Fastest Delivery (&lt; 30 Mins)</span>
+            </label>
+            <label class="filter-radio-row">
+              <input type="radio" name="modalSortRadio" value="priceLow" onchange="setModalSort('priceLow')">
+              <span style="font-size: 16px;">💵</span>
+              <span style="flex: 1;">Price: Low to High (Budget-friendly)</span>
+            </label>
+            <label class="filter-radio-row">
+              <input type="radio" name="modalSortRadio" value="priceHigh" onchange="setModalSort('priceHigh')">
+              <span style="font-size: 16px;">💎</span>
+              <span style="flex: 1;">Price: High to Low (Premium)</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Section: Quick Cuisines / Categories -->
+        <div class="filter-section-group">
+          <label class="filter-section-label">🍽️ Cuisines &amp; Categories</label>
+          <div class="filter-category-chips">
+            <button type="button" class="filter-cat-chip active" data-cat="All" onclick="setModalCat('All')">✨ All Items</button>
+            <button type="button" class="filter-cat-chip" data-cat="Favorites" onclick="setModalCat('Favorites')">❤️ Favorites</button>
+            <button type="button" class="filter-cat-chip" data-cat="Fast Food" onclick="setModalCat('Fast Food')">🍔 Fast Food</button>
+            <button type="button" class="filter-cat-chip" data-cat="North Indian" onclick="setModalCat('North Indian')">🥘 North Indian</button>
+            <button type="button" class="filter-cat-chip" data-cat="South Indian" onclick="setModalCat('South Indian')">🥞 South Indian</button>
+            <button type="button" class="filter-cat-chip" data-cat="Pizza & Burger" onclick="setModalCat('Pizza & Burger')">🍕 Pizza &amp; Italian</button>
+            <button type="button" class="filter-cat-chip" data-cat="Chinese" onclick="setModalCat('Chinese')">🍜 Chinese &amp; Momos</button>
+            <button type="button" class="filter-cat-chip" data-cat="Desserts" onclick="setModalCat('Desserts')">🍨 Desserts &amp; Shakes</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="filter-modal-footer">
+        <button type="button" class="btn-secondary" onclick="resetAllFiltersFromModal()" style="font-weight: 700; padding: 10px 18px;">Clear All</button>
+        <button type="button" class="btn-primary" onclick="applyModalFilters()" style="flex: 1; font-weight: 800; font-size: 14px; padding: 10px 20px; border-radius: 12px;">Apply Filters</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
        FULL SCREEN SEARCH MODAL (Swiggy / Zomato Full Takeover UX)
        ============================================================ -->
   <div id="fullScreenSearchModal" class="fs-search-overlay hidden" role="dialog" aria-modal="true" aria-label="Search Food and Restaurants">
@@ -1455,6 +1543,20 @@
         >
         <button id="fsClearBtn" class="fs-clear-btn hidden" onclick="clearFullScreenSearch()" title="Clear text" aria-label="Clear Search">
           ✕
+        </button>
+        <button type="button" class="fs-filter-icon-btn" onclick="openFilterModal()" title="Filters &amp; Sorting" aria-label="Filters">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="4" y1="21" x2="4" y2="14"></line>
+            <line x1="4" y1="10" x2="4" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12" y2="3"></line>
+            <line x1="20" y1="21" x2="20" y2="16"></line>
+            <line x1="20" y1="12" x2="20" y2="3"></line>
+            <line x1="1" y1="14" x2="7" y2="14"></line>
+            <line x1="9" y1="8" x2="15" y2="8"></line>
+            <line x1="17" y1="16" x2="23" y2="16"></line>
+          </svg>
+          <span class="search-filter-badge hidden">0</span>
         </button>
       </div>
       <button id="fsVoiceBtn" class="fs-voice-btn" onclick="triggerFsVoiceSearch()" title="Voice search (Speak dish in Marathi/Hindi/English)" aria-label="Voice Search">
