@@ -543,13 +543,13 @@ header {
   position: absolute;
   bottom: 12px;
   right: 12px;
-  background: #fff;
-  color: var(--text-main);
+  background: #ffffff;
+  color: #0f172a;
   padding: 4px 10px;
   border-radius: 20px;
   font-size: 12px;
-  font-weight: 700;
-  box-shadow: var(--shadow-sm);
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -1631,16 +1631,45 @@ header {
   border: 1px solid rgba(255, 71, 34, 0.45) !important;
 }
 
-/* Restaurant Add Food Button in Dark Mode */
+/* Restaurant Add Food Button in Dark Mode (Vibrant solid gradient with bold white text) */
 [data-theme="dark"] .btn-add-food {
-  background: #1e293b !important;
-  border-color: #ff4722 !important;
-  color: #ff7a59 !important;
+  background: linear-gradient(135deg, #ff4722, #ea580c) !important;
+  border: none !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  box-shadow: 0 2px 8px rgba(255, 71, 34, 0.4) !important;
 }
 
 [data-theme="dark"] .btn-add-food:hover {
-  background: #ff4722 !important;
+  background: linear-gradient(135deg, #ea580c, #c2410c) !important;
   color: #ffffff !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 71, 34, 0.55) !important;
+}
+
+/* Restaurant Rating Tag in Dark Mode (High contrast white text on dark glass) */
+[data-theme="dark"] .restaurant-rating-tag {
+  background: rgba(15, 23, 42, 0.94) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Free Delivery Badge in Food Card */
+.dish-free-del-badge {
+  font-size: 9px;
+  font-weight: 800;
+  color: #059669;
+  background: #ecfdf5;
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid #a7f3d0;
+}
+
+[data-theme="dark"] .dish-free-del-badge {
+  color: #34d399 !important;
+  background: rgba(16, 185, 129, 0.16) !important;
+  border-color: rgba(16, 185, 129, 0.35) !important;
 }
 
 /* Section Badges in Dark Mode */

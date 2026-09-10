@@ -1653,7 +1653,7 @@ function renderCustomerView() {
         </div>
 
         <div style="display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap;">
-          <span class="fssai-pill">🛡️ FSSAI #${r.fssai || '11524012000341'}</span>
+          <span class="fssai-pill">🛡️ FSSAI #${r.fssai || '11524012000341'}</span>
           <span class="hygiene-badge">⭐ Hygiene ${r.hygiene || '4.8'}</span>
         </div>
 
@@ -1669,12 +1669,12 @@ function renderCustomerView() {
                   </span>
                   <div style="display: flex; align-items: center; gap: 4px;">
                     <span class="food-price">₹${(typeof getDishEffectivePrice === 'function') ? getDishEffectivePrice(f) : f.price}</span>
-                    ${(appData.settings && appData.settings.hideDeliveryCharges) ? `<span style="font-size: 9px; font-weight: 800; color: #059669; background: #ecfdf5; padding: 1px 5px; border-radius: 4px; border: 1px solid #a7f3d0;">${appData.settings.deliveryAutoAddStrategy === 'item_flat' ? '✨ Free Del' : '🚚 Free Del'}</span>` : ''}
+                    ${(appData.settings && appData.settings.hideDeliveryCharges) ? `<span class="dish-free-del-badge">${appData.settings.deliveryAutoAddStrategy === 'item_flat' ? '✨ Free Del' : '🚚 Free Del'}</span>` : ''}
                   </div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 6px;">
                   <button class="btn-fav-dish ${isFav ? 'active' : ''}" onclick="toggleFavoriteDish(${r.id}, ${f.id}, event)" title="${isFav ? 'Remove Favorite' : 'Add to Favorites'}">
-                    ${isFav ? '❤️' : '🤍'}
+                    ${isFav ? '❤️' : '🤍'}
                   </button>
                   <button class="btn-add-food" onclick="openCustomizeModal(${r.id}, ${f.id})" ${!r.open || !f.inStock ? 'disabled style="opacity:0.5;"' : ''}>
                     ${!f.inStock ? t('soldOut') : t('addToOrder')}
@@ -1696,7 +1696,7 @@ function renderCustomerView() {
         <div style="grid-column: 1 / -1; text-align: center; padding: 48px 20px; background: var(--bg-card); border-radius: var(--radius-md); border: 1px dashed var(--border);">
           <div style="font-size: 48px; margin-bottom: 8px;">❤️</div>
           <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 6px;">No Favorites Saved Yet</h3>
-          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">Tap the heart (🤍) icon on any dish to save it here for fast ordering!</p>
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">Tap the heart (🤍) icon on any dish to save it here for fast ordering!</p>
           <button class="btn-primary" onclick="filterCategory('All')" style="width: auto; padding: 8px 18px;">Browse All Dishes</button>
         </div>
       `;
