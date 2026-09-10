@@ -698,7 +698,7 @@ const adminHtml = `${headCommon('Parcelकर Master Admin — Platform Operatio
 
         <div class="user-profile-badge" id="userProfileArea">
           <span>🛡️</span>
-          <span id="userLabel">Super Admin</span>
+          <span id="userLabel">👑 Rakesh Bhaskar (Super Admin)</span>
         </div>
         <button class="btn-danger" onclick="adminLogout()" style="padding: 5px 10px; font-size: 12px;" title="Log out of Super Admin">🚪 Logout</button>
       </div>

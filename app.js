@@ -208,7 +208,7 @@ const SEED_DATA = {
   },
   currentUser: {
     id: 'user_demo_1',
-    name: 'Rakesh Sharma',
+    name: 'Rakesh Bhaskar',
     email: 'rakesh.user@demo.com',
     phone: '9876543210',
     address: '',
@@ -318,7 +318,7 @@ const SEED_DATA = {
       restaurantId: 2,
       restaurantName: 'Aapla Bhojanalay',
       customer: {
-        name: 'Rakesh Sharma',
+        name: 'Rakesh Bhaskar',
         phone: '9876543210',
         address: 'Flat 402, Green Avenue, Sakoli'
       },
@@ -348,6 +348,15 @@ let appData = JSON.parse(localStorage.getItem(STORAGE_KEY)) ||
               JSON.parse(localStorage.getItem('bhookit_v11_data_v2')) ||
               JSON.parse(localStorage.getItem('bhookit_v1_data')) ||
               SEED_DATA;
+
+// Auto-migrate Rakesh Sharma -> Rakesh Bhaskar as Super Admin and current user
+if (appData) {
+  if (!appData.adminSettings) appData.adminSettings = {};
+  appData.adminSettings.superAdminName = 'Rakesh Bhaskar';
+  if (appData.currentUser && appData.currentUser.name === 'Rakesh Sharma') {
+    appData.currentUser.name = 'Rakesh Bhaskar';
+  }
+}
 
 // Ensure managers list exists in appData
 if (appData && (!Array.isArray(appData.managers) || !appData.managers.length)) {
@@ -426,7 +435,7 @@ if (appData) {
         id: 'TB-89102',
         restaurantId: 1,
         restaurantName: 'Sakoli Food Corner',
-        customerName: 'Rakesh Sharma',
+        customerName: 'Rakesh Bhaskar',
         customerPhone: '9876543210',
         date: new Date().toISOString().slice(0, 10),
         timeSlot: '07:30 PM (Dinner)',
@@ -453,7 +462,7 @@ if (appData) {
       {
         id: 'DSP-78901',
         orderId: 'FB-98210',
-        customerName: 'Rakesh Sharma',
+        customerName: 'Rakesh Bhaskar',
         restaurantName: 'Sakoli Food Corner',
         amount: 80,
         reason: 'Missing Extra Butter Naan',
@@ -484,7 +493,7 @@ if (appData) {
       waypoints: [
         { type: 'pickup', title: 'Pickup from Sakoli Food Corner', address: 'Main Road, Sakoli', orderId: 'FB-98210', items: 'Paneer Butter Masala (1), Butter Naan (2)', done: false },
         { type: 'pickup', title: 'Pickup from Aapla Bhojanalay', address: 'Station Road, Sakoli', orderId: 'FB-98211', items: 'Special Veg Thali (1), Butter Roti (2)', done: false },
-        { type: 'drop', title: 'Drop to Rakesh Sharma', address: 'Flat 402, Green Avenue, Sakoli', orderId: 'FB-98210', otp: '5821', done: false },
+        { type: 'drop', title: 'Drop to Rakesh Bhaskar', address: 'Flat 402, Green Avenue, Sakoli', orderId: 'FB-98210', otp: '5821', done: false },
         { type: 'drop', title: 'Drop to Amit Patil', address: 'Cabin 14, Station Road, Sakoli', orderId: 'FB-98211', otp: '7419', done: false }
       ]
     };
@@ -2074,7 +2083,7 @@ async function submitOrder() {
     return alert(t('emptyCart'));
   }
 
-  const name = document.getElementById('custName')?.value.trim() || appData.currentUser?.name || 'Rakesh Sharma';
+  const name = document.getElementById('custName')?.value.trim() || appData.currentUser?.name || 'Rakesh Bhaskar';
   const phone = document.getElementById('custPhone')?.value.trim() || appData.currentUser?.phone || '9876543210';
   const address = document.getElementById('custAddress')?.value.trim() || appData.currentUser?.address || '';
   let payment = document.getElementById('paymentMethod')?.value || 'UPI';
@@ -2490,7 +2499,7 @@ function openTableBookingModal(restId) {
 
   const nameInput = document.getElementById('tbGuestName');
   const phoneInput = document.getElementById('tbGuestPhone');
-  if (nameInput) nameInput.value = appData.currentUser?.name || 'Rakesh Sharma';
+  if (nameInput) nameInput.value = appData.currentUser?.name || 'Rakesh Bhaskar';
   if (phoneInput) phoneInput.value = appData.currentUser?.phone || '9876543210';
 
   // Reset chips
@@ -2545,7 +2554,7 @@ function confirmTableReservation() {
 
   const date = document.getElementById('tbDateInput')?.value;
   const seatingZone = document.getElementById('tbSeatingSelect')?.value || 'Indoor AC Family Section';
-  const guestName = (document.getElementById('tbGuestName')?.value || '').trim() || (appData.currentUser?.name || 'Rakesh Sharma');
+  const guestName = (document.getElementById('tbGuestName')?.value || '').trim() || (appData.currentUser?.name || 'Rakesh Bhaskar');
   const guestPhone = (document.getElementById('tbGuestPhone')?.value || '').trim() || (appData.currentUser?.phone || '9876543210');
   const notes = (document.getElementById('tbSpecialNotes')?.value || '').trim();
 
@@ -2630,7 +2639,7 @@ function renderCustomerTableBookings() {
 
   const myBookings = (appData.tableBookings || []).filter(b => 
     b.customerPhone === (appData.currentUser?.phone || '9876543210') || 
-    b.customerName === (appData.currentUser?.name || 'Rakesh Sharma')
+    b.customerName === (appData.currentUser?.name || 'Rakesh Bhaskar')
   );
 
   const badge = document.getElementById('tbCountBadge');
@@ -2740,7 +2749,7 @@ function setTableBookingStatus(bookingId, status) {
 function renderOrdersView() {
   const myBookings = (appData.tableBookings || []).filter(b => 
     b.customerPhone === (appData.currentUser?.phone || '9876543210') || 
-    b.customerName === (appData.currentUser?.name || 'Rakesh Sharma')
+    b.customerName === (appData.currentUser?.name || 'Rakesh Bhaskar')
   );
   const badge = document.getElementById('tbCountBadge');
   if (badge) badge.textContent = myBookings.length;
@@ -5002,7 +5011,7 @@ let groupOrderState = {
   roomCode: 'ROOM-FOOD-9821',
   splitMode: 'equal',
   members: [
-    { name: 'Rakesh Sharma (You - Host)', role: 'Host', isSelf: true, items: [{ name: 'Special Maharashtrian Veg Thali', price: 160, qty: 1 }], total: 160 },
+    { name: 'Rakesh Bhaskar (You - Host)', role: 'Host', isSelf: true, items: [{ name: 'Special Maharashtrian Veg Thali', price: 160, qty: 1 }], total: 160 },
     { name: 'Sneha Patil', role: 'Friend', isSelf: false, items: [{ name: 'Farmhouse Cheese Pizza (7 inch)', price: 189, qty: 1 }], total: 189 },
     { name: 'Amit Kulkarni', role: 'Friend', isSelf: false, items: [{ name: 'Crispy Veg Burger', price: 99, qty: 1 }, { name: 'Peri-Peri Fries', price: 79, qty: 1 }], total: 178 }
   ]
@@ -8375,8 +8384,12 @@ function checkAdminAuth() {
   try {
     const session = JSON.parse(rawSession);
     if (session && session.role === 'admin') {
-      if (gateEl) { gateEl.style.display = 'none'; gateEl.classList.add('hidden'); }
+      if (gateEl) { gateEl.style.display = 'none'; gateEl.classList.remove('hidden'); }
       if (dashEl) { dashEl.style.display = 'block'; dashEl.classList.remove('hidden'); }
+      const userLabel = document.getElementById('userLabel');
+      if (userLabel) {
+        userLabel.textContent = session.isSuperAdmin ? '👑 Rakesh Bhaskar (Super Admin)' : (session.name || 'Admin');
+      }
       return true;
     }
   } catch (e) {}
@@ -8421,7 +8434,7 @@ function submitAdminLogin(e) {
     const sessionData = {
       role: 'admin',
       isSuperAdmin: true,
-      name: 'Super Admin',
+      name: 'Rakesh Bhaskar',
       roleTitle: 'Super Admin (Executive)',
       login: login,
       permissions: ['all'],
@@ -8431,7 +8444,7 @@ function submitAdminLogin(e) {
     try { localStorage.setItem('parcelkar_admin_session', JSON.stringify(sessionData)); } catch (e) {}
 
     if (errEl) errEl.style.display = 'none';
-    showToast('Super Admin Executive Center Unlocked 🛡️', 'success');
+    showToast('Welcome back, Super Admin Rakesh Bhaskar! 🛡️', 'success');
 
     const gateEl = document.getElementById('adminAuthGate');
     const dashEl = document.getElementById('adminDashboardContainer');
