@@ -50,33 +50,36 @@
 
       <form onsubmit="submitAdminLogin(event)">
         <label style="font-size: 12px; font-weight: 700; color: #cbd5e1; display: block; margin-bottom: 6px;">
-          Super Admin Email / Username
+          Super Admin / Manager Username or Email
         </label>
-        <input type="text" id="adminAuthLoginInput" placeholder="admin@parcelkar.com or admin" required autocomplete="username" value="admin@parcelkar.com">
+        <input type="text" id="adminAuthLoginInput" placeholder="Enter Username (e.g. admin@parcelkar.com)" required autocomplete="username">
 
-        <label style="font-size: 12px; font-weight: 700; color: #cbd5e1; display: block; margin-bottom: 6px;">
-          Master Password / PIN
-        </label>
-        <input type="password" id="adminAuthPassInput" placeholder="Enter Master Password (Default: admin123)" required autocomplete="current-password" value="admin123">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; margin-bottom: 6px;">
+          <label style="font-size: 12px; font-weight: 700; color: #cbd5e1;">
+            Password / PIN
+          </label>
+          <button type="button" onclick="toggleInputVisibility('adminAuthPassInput')" style="background: none; border: none; color: #f87171; font-size: 11px; font-weight: 700; cursor: pointer;">
+            👁️ Show/Hide
+          </button>
+        </div>
+        <input type="password" id="adminAuthPassInput" placeholder="Enter your secret password" required autocomplete="current-password">
 
-        <button type="submit" class="btn-primary" style="width: 100%; padding: 12px; font-size: 14px; font-weight: 800; border-radius: 10px; margin-top: 6px; box-shadow: 0 4px 14px rgba(255,71,34,0.35);">
+        <button type="submit" class="btn-primary" style="width: 100%; padding: 12px; font-size: 14px; font-weight: 800; border-radius: 10px; margin-top: 12px; box-shadow: 0 4px 14px rgba(255,71,34,0.35);">
           🔓 Unlock Executive Admin Center
         </button>
       </form>
 
-      <div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.1);">
-        <div style="font-size: 11px; font-weight: 700; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
-          ⚡ One-Click Master Login:
-        </div>
-        <div class="demo-login-chip" onclick="document.getElementById('adminAuthLoginInput').value='admin@parcelkar.com'; document.getElementById('adminAuthPassInput').value='admin123'; submitAdminLogin();">
-          <span>🛡️</span>
-          <span style="flex: 1;">Super Admin (admin@parcelkar.com / admin123)</span>
-          <span style="font-size: 10px; opacity: 0.7;">Click to Login →</span>
-        </div>
+      <div style="margin-top: 20px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 11px; color: #94a3b8;">
+          🔒 Strictly Password Protected
+        </span>
+        <button type="button" onclick="resetAdminPasswordToDefault()" style="background: none; border: none; color: #94a3b8; font-size: 11px; text-decoration: underline; cursor: pointer;">
+          Forgot Password? Reset to Default
+        </button>
       </div>
 
-      <div style="text-align: center; margin-top: 18px; font-size: 11px; color: #64748b; line-height: 1.4;">
-        🔒 Encrypted session verification. Only authorized personnel may access.
+      <div style="text-align: center; margin-top: 14px; font-size: 11px; color: #64748b; line-height: 1.4;">
+        🔒 Password Verification: You must enter your authorized username and password to proceed.
       </div>
     </div>
   </div>
