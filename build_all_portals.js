@@ -335,14 +335,9 @@ const adminModalsHtml = `
           <input type="password" id="confirmAdminPass" class="input-field" placeholder="Re-enter new password" required minlength="4" style="width: 100%;">
         </div>
 
-        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 16px;">
-          <button type="button" class="btn-secondary" onclick="resetAdminPasswordToDefault()" style="font-size: 12px; padding: 6px 12px; color: #dc2626; border-color: rgba(220,38,38,0.3); font-weight: 700;">
-            🔄 Reset to Default (admin123)
-          </button>
-          <div style="display: flex; gap: 8px;">
-            <button type="button" class="btn-secondary" onclick="closeModal('changeAdminPassModal')">Cancel</button>
-            <button type="submit" class="btn-primary" style="font-weight: 800;">💾 Save Password</button>
-          </div>
+        <div style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-bottom: 16px;">
+          <button type="button" class="btn-secondary" onclick="closeModal('changeAdminPassModal')">Cancel</button>
+          <button type="submit" class="btn-primary" style="font-weight: 800;">💾 Save Password</button>
         </div>
       </form>
     </div>
