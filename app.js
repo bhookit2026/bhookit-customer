@@ -201,7 +201,7 @@ const SEED_DATA = {
   settings: {
     riderDeliveryCommission: 40,
     deliveryBase: 30,
-    hideDeliveryCharges: false,
+    hideDeliveryCharges: true,
     deliveryAutoAddStrategy: 'cart_split',
     deliveryItemFlatAmount: 15,
     perKm: 8,
@@ -358,11 +358,76 @@ let appData = JSON.parse(localStorage.getItem(STORAGE_KEY)) ||
               JSON.parse(localStorage.getItem('bhookit_v1_data')) ||
               SEED_DATA;
 
-// Ensure delivery charges visibility settings exist
+// Cross-Domain Shared Settings Helpers (.parcelkar.com)
+function setSharedSettingsCookie(settings) {
+  try {
+    if (typeof document === 'undefined') return;
+    const json = JSON.stringify(settings);
+    const isParcelkar = typeof window !== 'undefined' && window.location && window.location.hostname.includes('parcelkar.com');
+    const domainPart = isParcelkar ? '; domain=.parcelkar.com' : '';
+    document.cookie = `parcelkar_global_settings=${encodeURIComponent(json)}; path=/${domainPart}; max-age=31536000; SameSite=Lax`;
+  } catch (e) {}
+}
+
+function getSharedSettingsCookie() {
+  try {
+    if (typeof document === 'undefined') return null;
+    const match = document.cookie.match(/parcelkar_global_settings=([^;]+)/);
+    if (match) {
+      return JSON.parse(decodeURIComponent(match[1]));
+    }
+  } catch (e) {}
+  return null;
+}
+
+// Immediate Cookie Sync across subdomains (.parcelkar.com)
+try {
+  const sharedFromCookie = getSharedSettingsCookie();
+  if (sharedFromCookie) {
+    Object.assign(appData.settings, sharedFromCookie);
+  }
+} catch (e) {}
+
+// Ensure delivery charges visibility settings exist (Default: true / Hidden)
 if (!appData.settings) appData.settings = {};
-if (appData.settings.hideDeliveryCharges === undefined) appData.settings.hideDeliveryCharges = false;
+if (appData.settings.hideDeliveryCharges === undefined) appData.settings.hideDeliveryCharges = true;
 if (!appData.settings.deliveryAutoAddStrategy) appData.settings.deliveryAutoAddStrategy = 'cart_split';
 if (appData.settings.deliveryItemFlatAmount === undefined) appData.settings.deliveryItemFlatAmount = 15;
+
+// BroadcastChannel for instant real-time sync across tabs in same browser
+let settingsBroadcastChannel = null;
+try {
+  if (typeof BroadcastChannel !== 'undefined') {
+    settingsBroadcastChannel = new BroadcastChannel('parcelkar_settings_channel');
+    settingsBroadcastChannel.onmessage = (event) => {
+      if (event.data && event.data.settings) {
+        Object.assign(appData.settings, event.data.settings);
+        saveState();
+        if (typeof updateBillTotals === 'function') updateBillTotals();
+        if (typeof renderCustomerView === 'function') renderCustomerView();
+        if (typeof renderCartView === 'function') renderCartView();
+        if (typeof renderAdminDeliveryVisibilitySwitchboard === 'function') renderAdminDeliveryVisibilitySwitchboard();
+      }
+    };
+  }
+} catch (e) {}
+
+// Fetch remote settings from /api/settings in background
+if (typeof fetch !== 'undefined') {
+  fetch('/api/settings')
+    .then(res => res.json())
+    .then(data => {
+      if (data && data.settings) {
+        Object.assign(appData.settings, data.settings);
+        setSharedSettingsCookie(appData.settings);
+        saveState();
+        if (typeof updateBillTotals === 'function') updateBillTotals();
+        if (typeof renderCustomerView === 'function') renderCustomerView();
+        if (typeof renderCartView === 'function') renderCartView();
+      }
+    })
+    .catch(() => {});
+}
 
 // =============================================================
 // GLOBAL SUPER ADMIN SECURITY & CREDENTIAL PROTOCOLS
@@ -9523,6 +9588,24 @@ function saveAdminDeliveryVisibilitySettings() {
   appData.settings.deliveryItemFlatAmount = flatFee;
 
   saveState();
+  setSharedSettingsCookie(appData.settings);
+
+  // Notify other open tabs via BroadcastChannel
+  if (settingsBroadcastChannel) {
+    try {
+      settingsBroadcastChannel.postMessage({ settings: appData.settings });
+    } catch (e) {}
+  }
+
+  // Push to serverless API
+  if (typeof fetch !== 'undefined') {
+    fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(appData.settings)
+    }).catch(() => {});
+  }
+
   renderAdminDeliveryVisibilitySwitchboard();
 
   const msg = isHide 

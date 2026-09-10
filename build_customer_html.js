@@ -185,7 +185,7 @@ ${customerModals}
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js"></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=20260910_2115"></script>
   <script src="translations.js"></script>
 </body>
 </html>`;

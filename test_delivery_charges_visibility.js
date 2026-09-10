@@ -68,6 +68,7 @@ console.assert(appData.settings.hideDeliveryCharges === false, 'Default should b
 console.log('✅ TEST 1 PASSED: Default settings correctly initialized.\n');
 
 console.log('=== TEST 2: Standard Mode Pricing & Bill Calculation (Show Delivery Charges) ===');
+appData.settings.hideDeliveryCharges = false;
 const testCart1 = [
   { restaurantId: 1, restaurantName: 'Sakoli Food Corner', foodId: 101, name: 'Paneer Butter Masala', basePrice: 160, price: 160, qty: 1, addons: [] }
 ];
