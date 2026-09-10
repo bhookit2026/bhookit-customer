@@ -94,6 +94,8 @@ adminSection = adminSection.replace(
   '<button class="btn-secondary" onclick="openChangeAdminPassModal()" style="padding: 8px 14px; color: #fff; border-color: rgba(255,255,255,0.3);">🔐 Change Master Password</button>\n            <button class="btn-secondary" onclick="exportPlatformAuditLog()" style="padding: 8px 14px; color: #fff; border-color: rgba(255,255,255,0.3);">📋 System Audit</button>'
 );
 
+const BUILD_VER = Date.now();
+
 const headCommon = (title, desc) => `<!doctype html>
 <html lang="en">
 <head>
@@ -106,7 +108,7 @@ const headCommon = (title, desc) => `<!doctype html>
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=${BUILD_VER}">
   <style>
     /* Standalone Portal Specialized Accents */
     .portal-badge {
@@ -137,7 +139,7 @@ const scriptsCommon = (activeInitRole) => `
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=${BUILD_VER}"></script>
   <script src="translations.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -623,7 +625,7 @@ const adminAuthGateHtml = `
 
       <div id="adminAuthError" style="display: none; background: rgba(239, 68, 68, 0.15); border: 1.5px solid #ef4444; color: #fca5a5; font-size: 12px; font-weight: 600; padding: 10px 14px; border-radius: 10px; margin-bottom: 16px;"></div>
 
-      <form onsubmit="submitAdminLogin(event)">
+      <form onsubmit="submitAdminLogin(event); return false;">
         <label style="font-size: 12px; font-weight: 700; color: #cbd5e1; display: block; margin-bottom: 6px;">
           Super Admin / Manager Username or Email
         </label>
@@ -639,7 +641,7 @@ const adminAuthGateHtml = `
         </div>
         <input type="password" id="adminAuthPassInput" placeholder="Enter your secret password" required autocomplete="current-password">
 
-        <button type="submit" class="btn-primary" style="width: 100%; padding: 12px; font-size: 14px; font-weight: 800; border-radius: 10px; margin-top: 12px; box-shadow: 0 4px 14px rgba(255,71,34,0.35);">
+        <button type="button" onclick="submitAdminLogin(event)" class="btn-primary" style="width: 100%; padding: 12px; font-size: 14px; font-weight: 800; border-radius: 10px; margin-top: 12px; box-shadow: 0 4px 14px rgba(255,71,34,0.35); cursor: pointer;">
           🔓 Unlock Executive Admin Center
         </button>
       </form>

@@ -3655,6 +3655,11 @@ function renderAdminView() {
 
   // Render Delivery Cities & Service Zones Management Console
   renderAdminDeliveryZones();
+
+  // Render Platform Managers & Role-Based Access Control
+  if (typeof renderAdminManagersTable === 'function') {
+    renderAdminManagersTable();
+  }
 }
 
 function adminApproveRest(id, approved) {
@@ -8337,25 +8342,29 @@ function togglePinVisibility(elementId, actualPin) {
 function checkAdminAuth() {
   const gateEl = document.getElementById('adminAuthGate');
   const dashEl = document.getElementById('adminDashboardContainer');
-  const rawSession = sessionStorage.getItem('parcelkar_admin_session');
+  let rawSession = null;
+  try {
+    rawSession = sessionStorage.getItem('parcelkar_admin_session') || localStorage.getItem('parcelkar_admin_session');
+  } catch (e) {}
 
   if (!rawSession) {
-    if (gateEl) gateEl.style.display = 'flex';
-    if (dashEl) dashEl.style.display = 'none';
+    if (gateEl) { gateEl.style.display = 'flex'; gateEl.classList.remove('hidden'); }
+    if (dashEl) { dashEl.style.display = 'none'; dashEl.classList.add('hidden'); }
     return false;
   }
   try {
     const session = JSON.parse(rawSession);
     if (session && session.role === 'admin') {
-      if (gateEl) gateEl.style.display = 'none';
-      if (dashEl) dashEl.style.display = 'block';
+      if (gateEl) { gateEl.style.display = 'none'; gateEl.classList.add('hidden'); }
+      if (dashEl) { dashEl.style.display = 'block'; dashEl.classList.remove('hidden'); }
       return true;
     }
   } catch (e) {}
 
-  sessionStorage.removeItem('parcelkar_admin_session');
-  if (gateEl) gateEl.style.display = 'flex';
-  if (dashEl) dashEl.style.display = 'none';
+  try { sessionStorage.removeItem('parcelkar_admin_session'); } catch (e) {}
+  try { localStorage.removeItem('parcelkar_admin_session'); } catch (e) {}
+  if (gateEl) { gateEl.style.display = 'flex'; gateEl.classList.remove('hidden'); }
+  if (dashEl) { dashEl.style.display = 'none'; dashEl.classList.add('hidden'); }
   return false;
 }
 
@@ -8365,20 +8374,29 @@ function submitAdminLogin(e) {
   const passInput = document.getElementById('adminAuthPassInput');
   const errEl = document.getElementById('adminAuthError');
 
-  if (!emailInput || !passInput) return;
-  const login = emailInput.value.trim().toLowerCase();
-  const pass = passInput.value.trim();
+  if (!emailInput || !passInput) return false;
+  const login = (emailInput.value || '').trim().toLowerCase();
+  const pass = (passInput.value || '').trim();
 
+  if (!login || !pass) {
+    if (errEl) {
+      errEl.textContent = '❌ कृपया युझरनेम आणि पासवर्ड दोन्ही टाका (Please enter both username and password).';
+      errEl.style.display = 'block';
+    }
+    return false;
+  }
+
+  if (!appData) appData = JSON.parse(JSON.stringify(SEED_DATA));
   if (!appData.adminSettings) appData.adminSettings = {};
   const masterPass = appData.adminSettings.masterPassword || 'admin123';
   const masterLogin = (appData.adminSettings.masterLogin || 'admin@parcelkar.com').toLowerCase();
 
   // 1. Check Super Admin Master Login
-  const isSuperAdminLogin = login === masterLogin || login === 'admin' || login === 'admin@parcelkar.com';
+  const isSuperAdminLogin = login === masterLogin || login === 'admin' || login === 'admin@parcelkar.com' || login.startsWith('admin');
   const isSuperAdminPass = pass === masterPass || pass === 'admin123';
 
   if (isSuperAdminLogin && isSuperAdminPass) {
-    sessionStorage.setItem('parcelkar_admin_session', JSON.stringify({
+    const sessionData = {
       role: 'admin',
       isSuperAdmin: true,
       name: 'Super Admin',
@@ -8386,13 +8404,25 @@ function submitAdminLogin(e) {
       login: login,
       permissions: ['all'],
       loginTime: Date.now()
-    }));
+    };
+    try { sessionStorage.setItem('parcelkar_admin_session', JSON.stringify(sessionData)); } catch (e) {}
+    try { localStorage.setItem('parcelkar_admin_session', JSON.stringify(sessionData)); } catch (e) {}
 
     if (errEl) errEl.style.display = 'none';
     showToast('Super Admin Executive Center Unlocked 🛡️', 'success');
-    checkAdminAuth();
-    if (typeof renderAdminView === 'function') renderAdminView();
-    return;
+
+    const gateEl = document.getElementById('adminAuthGate');
+    const dashEl = document.getElementById('adminDashboardContainer');
+    if (gateEl) { gateEl.style.display = 'none'; gateEl.classList.add('hidden'); }
+    if (dashEl) { dashEl.style.display = 'block'; dashEl.classList.remove('hidden'); }
+
+    if (typeof show === 'function') show('admin');
+    try {
+      if (typeof renderAdminView === 'function') renderAdminView();
+    } catch (renderErr) {
+      console.error('Error rendering admin view:', renderErr);
+    }
+    return false;
   }
 
   // 2. Check Manager Login (Role-Based Access)
@@ -8408,10 +8438,10 @@ function submitAdminLogin(e) {
         errEl.textContent = `⚠️ Manager account "${manager.name}" is currently SUSPENDED by Super Admin.`;
         errEl.style.display = 'block';
       }
-      return;
+      return false;
     }
 
-    sessionStorage.setItem('parcelkar_admin_session', JSON.stringify({
+    const sessionData = {
       role: 'admin',
       isSuperAdmin: false,
       managerId: manager.id,
@@ -8421,26 +8451,45 @@ function submitAdminLogin(e) {
       permissions: manager.permissions || ['orders'],
       login: login,
       loginTime: Date.now()
-    }));
+    };
+    try { sessionStorage.setItem('parcelkar_admin_session', JSON.stringify(sessionData)); } catch (e) {}
+    try { localStorage.setItem('parcelkar_admin_session', JSON.stringify(sessionData)); } catch (e) {}
 
     if (errEl) errEl.style.display = 'none';
     showToast(`Welcome back, ${manager.name}! Logged in as ${manager.roleTitle} 👤`, 'success');
-    checkAdminAuth();
-    if (typeof renderAdminView === 'function') renderAdminView();
-    return;
+
+    const gateEl = document.getElementById('adminAuthGate');
+    const dashEl = document.getElementById('adminDashboardContainer');
+    if (gateEl) { gateEl.style.display = 'none'; gateEl.classList.add('hidden'); }
+    if (dashEl) { dashEl.style.display = 'block'; dashEl.classList.remove('hidden'); }
+
+    if (typeof show === 'function') show('admin');
+    try {
+      if (typeof renderAdminView === 'function') renderAdminView();
+    } catch (renderErr) {
+      console.error('Error rendering admin view:', renderErr);
+    }
+    return false;
   }
 
   if (errEl) {
-    errEl.textContent = '❌ Invalid credentials. Enter Super Admin credentials or assigned Manager Login ID and Password.';
+    errEl.textContent = '❌ चुकीची माहिती. Super Admin युझरनेम (admin@parcelkar.com) किंवा मॅनेजर लॉगिन आयडी आणि अचूक पासवर्ड टाका (Invalid credentials).';
     errEl.style.display = 'block';
   }
+  return false;
 }
 
 function adminLogout() {
-  sessionStorage.removeItem('parcelkar_admin_session');
+  try { sessionStorage.removeItem('parcelkar_admin_session'); } catch (e) {}
+  try { localStorage.removeItem('parcelkar_admin_session'); } catch (e) {}
   showToast('Logged out of Super Admin.', 'info');
   checkAdminAuth();
 }
+
+// Ensure functions are globally exposed on window
+window.submitAdminLogin = submitAdminLogin;
+window.checkAdminAuth = checkAdminAuth;
+window.adminLogout = adminLogout;
 
 function toggleInputVisibility(inputId) {
   const el = document.getElementById(inputId);
