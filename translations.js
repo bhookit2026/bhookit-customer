@@ -47,7 +47,10 @@ const TRANSLATIONS = {
     spinAndWinDesc: 'Spin weekly lucky wheel to win Free Dessert or Free Delivery!',
     spinAndWinBadge: 'Weekly Free',
     appLanguage: 'App Language',
-    chooseLanguage: 'Select your preferred display language'
+    chooseLanguage: 'Select your preferred display language',
+    foodieBotTitle: 'FoodieBot AI Assistant',
+    foodieBotDesc: 'Online • Multi-lingual (EN/MR/HI)',
+    foodieBotPlaceholder: 'Ask FoodieBot anything (e.g. Spiciest paneer, track order)...'
   },
   mr: {
     systemTitle: 'पार्सलकर सिस्टीम',
@@ -98,7 +101,10 @@ const TRANSLATIONS = {
     spinAndWinDesc: 'आठवड्यातून एकदा व्हील फिरवा आणि मोफत गोड पदार्थ किंवा मोफत डिलिव्हरी जिंका!',
     spinAndWinBadge: 'साप्ताहिक फ्री',
     appLanguage: 'ॲप भाषा',
-    chooseLanguage: 'तुमची पसंतीची भाषा निवडा'
+    chooseLanguage: 'तुमची पसंतीची भाषा निवडा',
+    foodieBotTitle: 'FoodieBot AI असिस्टंट',
+    foodieBotDesc: 'सक्रिय • बहुभाषिक (इंग्रजी/मराठी/हिंदी)',
+    foodieBotPlaceholder: 'काहीही विचारा (उदा. झणझणीत पनीर, ऑर्डर ट्रॅक, कूपन)...'
   },
   hi: {
     systemTitle: 'पार्सलकर सिस्टम',
@@ -149,6 +155,9 @@ const TRANSLATIONS = {
     spinAndWinDesc: 'हफ्ते में एक बार लकी व्हील घुमाएं और फ्री डेजर्ट या फ्री डिलीवरी जीतें!',
     spinAndWinBadge: 'साप्ताहिक फ्री',
     appLanguage: 'ऐप की भाषा',
-    chooseLanguage: 'अपनी पसंदीदा भाषा चुनें'
+    chooseLanguage: 'अपनी पसंदीदा भाषा चुनें',
+    foodieBotTitle: 'FoodieBot AI असिस्टेंट',
+    foodieBotDesc: 'सक्रिय • बहुभाषी (EN/MR/HI)',
+    foodieBotPlaceholder: 'कुछ भी पूछें (जैसे तीखा पनीर, आर्डर ट्रैक, कूपन)...'
   }
 };

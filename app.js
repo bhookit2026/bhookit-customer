@@ -175,6 +175,7 @@ function setLanguage(lang) {
   });
 
   applyLanguageTranslations();
+  if (typeof updateFoodieBotChips === 'function') updateFoodieBotChips();
   if (typeof renderAccountView === 'function') renderAccountView();
   if (typeof renderAuthModalContent === 'function') renderAuthModalContent();
   showToast(`Language set to ${lang === 'mr' ? 'मराठी' : lang === 'hi' ? 'हिंदी' : 'English'}`, 'info');
@@ -313,7 +314,9 @@ const SEED_DATA = {
       foods: [
         { id: 301, name: 'Dum Veg Biryani Handi', price: 199, category: 'North Indian', veg: true, inStock: true, desc: 'Aromatic long-grain basmati rice cooked with fresh seasonal vegetables and saffron.' },
         { id: 302, name: 'Paneer Tikka Kathi Roll', price: 110, category: 'Fast Food', veg: true, inStock: true, desc: 'Charcoal grilled cottage cheese wrapped in a crispy flaky paratha.' },
-        { id: 303, name: 'Hyderabadi Mirchi Ka Salan', price: 60, category: 'North Indian', veg: true, inStock: true, desc: 'Spicy and tangy peanut sesame gravy best paired with biryani.' }
+        { id: 303, name: 'Hyderabadi Mirchi Ka Salan', price: 60, category: 'North Indian', veg: true, inStock: true, desc: 'Spicy and tangy peanut sesame gravy best paired with biryani.' },
+        { id: 304, name: 'Special Chicken Dum Biryani', price: 249, category: 'North Indian', veg: false, inStock: true, desc: 'Tender chicken marinated in handi spices layered with fragrant basmati rice.' },
+        { id: 305, name: 'Chicken Tikka Kathi Roll', price: 140, category: 'Fast Food', veg: false, inStock: true, desc: 'Smoky grilled chicken pieces wrapped in flaky paratha with mint chutney.' }
       ]
     },
     {
@@ -4497,6 +4500,25 @@ function renderAccountView() {
           </button>
         </div>
 
+        <!-- 🤖 FOODIEBOT AI ASSISTANT CARD -->
+        <div class="dashboard-card foodiebot-account-card" style="padding: 16px 20px; background: linear-gradient(135deg, rgba(255, 71, 34, 0.08), rgba(244, 63, 94, 0.08)); border: 1.5px solid rgba(255, 71, 34, 0.25); border-radius: 16px; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 14px; min-width: 220px; flex: 1;">
+            <div style="width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #ff4722, #f43f5e); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 12px rgba(255,71,34,0.3); flex-shrink: 0;">
+              🤖
+            </div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 15px; font-weight: 800; color: var(--text-main);">${typeof t === 'function' ? (t('foodieBotTitle') || 'FoodieBot AI Assistant') : 'FoodieBot AI Assistant'}</span>
+                <span style="font-size: 9px; font-weight: 800; color: #059669; background: #d1fae5; padding: 1px 6px; border-radius: 999px;">ONLINE</span>
+              </div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">${currentLanguage === 'mr' ? 'अन्न शिफारसी, थेट ऑर्डर ट्रॅकिंग किंवा २४/७ सपोर्टसाठी चॅट करा.' : currentLanguage === 'hi' ? 'भोजन सुझाव, लाइव आर्डर ट्रैकिंग या 24/7 सपोर्ट के लिए चैट करें।' : 'Ask for food recommendations, live order tracking, or 24/7 support.'}</div>
+            </div>
+          </div>
+          <button class="btn-primary" onclick="toggleFoodieBot()" style="padding: 10px 18px; font-size: 12px; font-weight: 800; border-radius: 12px; cursor: pointer; white-space: nowrap;">
+            💬 ${currentLanguage === 'mr' ? 'FoodieBot शी बोला ➔' : currentLanguage === 'hi' ? 'FoodieBot से बात करें ➔' : 'Chat with FoodieBot ➔'}
+          </button>
+        </div>
+
         <!-- 🌐 APP LANGUAGE SELECTION SECTION -->
         <div class="dashboard-card language-account-card" style="padding: 18px 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-sm);">
           <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
@@ -4587,6 +4609,25 @@ function renderAccountView() {
           </div>
           <button class="${weeklyStatus.canSpin ? 'btn-primary spin-btn-glow' : 'btn-secondary'}" onclick="openGamificationModal()" style="padding: 10px 20px; font-size: 13px; font-weight: 800; ${weeklyStatus.canSpin ? 'background: linear-gradient(135deg, #ec4899, #8b5cf6); border: none; color: #fff;' : ''} border-radius: 12px; cursor: pointer; white-space: nowrap;">
             ${weeklyStatus.canSpin ? '🎰 Spin &amp; Win Now ➔' : '⏳ View Wheel ➔'}
+          </button>
+        </div>
+
+        <!-- 🤖 FOODIEBOT AI ASSISTANT CARD -->
+        <div class="dashboard-card foodiebot-account-card" style="padding: 16px 20px; background: linear-gradient(135deg, rgba(255, 71, 34, 0.08), rgba(244, 63, 94, 0.08)); border: 1.5px solid rgba(255, 71, 34, 0.25); border-radius: 16px; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 14px; min-width: 220px; flex: 1;">
+            <div style="width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #ff4722, #f43f5e); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 12px rgba(255,71,34,0.3); flex-shrink: 0;">
+              🤖
+            </div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 15px; font-weight: 800; color: var(--text-main);">${typeof t === 'function' ? (t('foodieBotTitle') || 'FoodieBot AI Assistant') : 'FoodieBot AI Assistant'}</span>
+                <span style="font-size: 9px; font-weight: 800; color: #059669; background: #d1fae5; padding: 1px 6px; border-radius: 999px;">ONLINE</span>
+              </div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">${currentLanguage === 'mr' ? 'अन्न शिफारसी, थेट ऑर्डर ट्रॅकिंग किंवा २४/७ सपोर्टसाठी चॅट करा.' : currentLanguage === 'hi' ? 'भोजन सुझाव, लाइव आर्डर ट्रैकिंग या 24/7 सपोर्ट के लिए चैट करें।' : 'Ask for food recommendations, live order tracking, or 24/7 support.'}</div>
+            </div>
+          </div>
+          <button class="btn-primary" onclick="toggleFoodieBot()" style="padding: 10px 18px; font-size: 12px; font-weight: 800; border-radius: 12px; cursor: pointer; white-space: nowrap;">
+            💬 ${currentLanguage === 'mr' ? 'FoodieBot शी बोला ➔' : currentLanguage === 'hi' ? 'FoodieBot से बात करें ➔' : 'Chat with FoodieBot ➔'}
           </button>
         </div>
 
@@ -5850,33 +5891,140 @@ function confirmPodCapture() {
 // 9G. FOODIEBOT AI SOMMELIER & LIVE SUPPORT ASSISTANT
 // -------------------------------------------------------------
 let foodieBotHistory = [];
+let isFoodieBotTyping = false;
 
-function toggleFoodieBot() {
+function detectFoodieBotLanguage(text) {
+  if (!text) return typeof currentLanguage !== 'undefined' ? currentLanguage : 'en';
+  if (/[\u0900-\u097F]/.test(text)) {
+    if (/(आहे|पाहिजे|करा|नाही|कुठे|कशी|सांगा|काय|जेवण|हवी|द्या|सुचवा|किती|माझी|चाललंय|चालू|बघा)/.test(text)) return 'mr';
+    if (/(है|चाहिए|बताओ|कहाँ|कैसे|खाना|दीजिए|बताइए|कितना|मेरी|दिखाओ)/.test(text)) return 'hi';
+    return typeof currentLanguage !== 'undefined' && currentLanguage === 'hi' ? 'hi' : 'mr';
+  }
+  const lower = text.toLowerCase();
+  if (/(kashi|ahe|pahije|jevan|kuthe|sang|madat|kiti|bhook|maza|mazi|chalu)/.test(lower)) return 'mr';
+  if (/(kaise|chahiye|khana|kahan|batao|karo|bhookh|mera|meri|dikhao)/.test(lower)) return 'hi';
+  return typeof currentLanguage !== 'undefined' ? currentLanguage : 'en';
+}
+
+function updateFoodieBotChips() {
+  const container = document.getElementById('foodieBotChips') || document.getElementById('foodieBotQuickChips');
+  if (!container) return;
+  const lang = typeof currentLanguage !== 'undefined' ? currentLanguage : 'en';
+
+  if (lang === 'mr') {
+    container.innerHTML = `
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('माझी ऑर्डर कुठे आहे?')">📦 ऑर्डर ट्रॅक करा</button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('सर्वोत्तम शाकाहारी जेवण सुचवा')">🌱 शाकाहारी जेवण</button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('चिकन बिर्याणी आणि थाळी दाखवा')">🍗 चिकन व बिर्याणी</button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('चालू कूपन कोड काय आहेत?')">🎟️ कूपन कोड्स</button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('साप्ताहिक लकी स्पिन बद्दल सांगा')">🎰 लकी स्पिन</button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('ऑर्डर कशी करायची?')">📱 कशी करावी ऑर्डर?</button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('कस्टमर केअर नंबर')">📞 २४/७ सपोर्ट</button>
+    `;
+  } else if (lang === 'hi') {
+    container.innerHTML = `
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('मेरी आर्डर कहाँ है?')">📦 आर्डर ट्रैक करें</button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('बेस्ट वेज खाना बताओ')">🌱 वेज खाना</button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('चिकन बिरयानी और थाली दिखाओ')">🍗 चिकन बिरयानी</button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('कूपन कोड बताओ')">🎟️ कूपन कोड्स</button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('लकी स्पिन के बारे में बताओ')">🎰 लकी स्पिन</button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('आर्डर कैसे करें?')">📱 आर्डर कैसे करें?</button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('कस्टमर केयर नंबर')">📞 24/7 सपोर्ट</button>
+    `;
+  } else {
+    container.innerHTML = `
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('Where is my active order?')">📦 Track Order</button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('Suggest best vegetarian dishes')">🌱 Pure Veg</button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('Best Biryani and Thali in Sakoli')">🍛 Biryani & Thali</button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('What are the active coupons?')">🎟️ Active Coupons</button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('Tell me about weekly lucky spin')">🎰 Lucky Spin</button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('How do I place an order?')">📱 How to Order</button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('Customer support phone number')">📞 24/7 Support</button>
+    `;
+  }
+}
+
+function toggleFoodieBot(forceOpen) {
   const drawer = document.getElementById('foodieBotDrawer');
+  const backdrop = document.getElementById('foodieBotBackdrop');
   if (!drawer) return;
-  const isHidden = drawer.classList.contains('hidden');
-  drawer.classList.toggle('hidden');
 
-  if (isHidden && foodieBotHistory.length === 0) {
-    const greeting = currentLanguage === 'mr' ?
-      'नमस्कार! मी आहे FoodieBot AI 🤖. आज काय खायला आवडेल? शाकाहारी थाळी, पिझ्झा, किंवा बिर्याणी?' :
-      currentLanguage === 'hi' ?
-      'नमस्ते! मैं हूँ FoodieBot AI 🤖. आज क्या खाने का मन है? वेज थाली, पिज्जा, या बिरयानी?' :
-      'Hello there! I am FoodieBot AI 🤖. What are you craving today? I can recommend top dishes, check order ETA, or help with your cart!';
-    addBotMessage(greeting);
+  const shouldOpen = forceOpen !== undefined ? forceOpen : drawer.classList.contains('hidden');
+
+  if (shouldOpen) {
+    drawer.classList.remove('hidden');
+    if (backdrop) backdrop.classList.remove('hidden');
+    updateFoodieBotChips();
+    const input = document.getElementById('foodieBotInput');
+    if (input) setTimeout(() => input.focus(), 150);
+
+    if (foodieBotHistory.length === 0) {
+      const lang = typeof currentLanguage !== 'undefined' ? currentLanguage : 'en';
+      let greeting = '';
+      let initialActions = [];
+      if (lang === 'mr') {
+        greeting = 'नमस्कार! मी आहे **FoodieBot AI** 🤖 (Parcelकर साकोली).\nमी तुम्हाला साकोलीतील सर्वोत्तम जेवण सुचवू शकतो, चालू ऑर्डर्स ट्रॅक करू शकतो किंवा कूपन्स देऊ शकतो. आज काय खायला आवडेल?';
+        initialActions = [
+          { label: '🌱 शाकाहारी जेवण', prompt: 'शाकाहारी जेवण सुचवा' },
+          { label: '🍗 चिकन व बिर्याणी', prompt: 'चिकन बिर्याणी आणि थाळी दाखवा' },
+          { label: '⚡ झटपट डिलिव्हरी', prompt: 'लवकर डिलिव्हरी होणारे पदार्थ' },
+          { label: '🎟️ चालू कूपन कोड्स', prompt: 'चालू कूपन कोड काय आहेत?' }
+        ];
+      } else if (lang === 'hi') {
+        greeting = 'नमस्ते! मैं हूँ **FoodieBot AI** 🤖 (Parcelकर साकोली).\nमैं आपको साकोली के बेस्ट रेस्टोरेंट से खाना सुझवा सकता हूँ, आर्डर ट्रैक कर सकता हूँ या कूपन दिला सकता हूँ। आज आपका क्या खाने का मन है?';
+        initialActions = [
+          { label: '🌱 वेज खाना', prompt: 'बेस्ट वेज खाना बताओ' },
+          { label: '🍗 चिकन बिरयानी', prompt: 'चिकन बिरयानी और थाली दिखाओ' },
+          { label: '⚡ फास्ट डिलीवरी', prompt: 'फास्ट डिलीवरी खाना' },
+          { label: '🎟️ कूपन कोड', prompt: 'कूपन कोड बताओ' }
+        ];
+      } else {
+        greeting = 'Hello there! I am **FoodieBot AI** 🤖 (Parcelकर Sakoli).\nI can recommend top Sakoli specialties, track your live order, check wallet perks, or find promo coupons! What are you craving today?';
+        initialActions = [
+          { label: '🌱 Pure Veg', prompt: 'Suggest best vegetarian dishes' },
+          { label: '🍗 Chicken & Biryani', prompt: 'Best Biryani and Thali in Sakoli' },
+          { label: '⚡ Fast Delivery', prompt: 'Fast delivery under 25 mins' },
+          { label: '🎟️ Active Coupons', prompt: 'What are the active coupons?' }
+        ];
+      }
+      addBotMessage(greeting, [], initialActions);
+    }
+  } else {
+    drawer.classList.add('hidden');
+    if (backdrop) backdrop.classList.add('hidden');
   }
 }
 
-function openSupportChat() {
-  const drawer = document.getElementById('foodieBotDrawer');
-  if (drawer && drawer.classList.contains('hidden')) {
-    toggleFoodieBot();
-  }
-  addBotMessage('👋 Hello! Live Order Support is active. Please let me know how I can assist with your delivery or order.');
+function openFoodieBot() {
+  toggleFoodieBot(true);
 }
 
-function addBotMessage(text, dishRecommendations = []) {
-  foodieBotHistory.push({ sender: 'bot', text, dishes: dishRecommendations });
+function openFoodieBotWithPrompt(prompt) {
+  toggleFoodieBot(true);
+  if (prompt) {
+    askFoodieBot(prompt);
+  }
+}
+
+function formatBotText(str) {
+  if (!str) return '';
+  let html = str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+  html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+  html = html.replace(/\n/g, '<br>');
+  return html;
+}
+
+function addBotMessage(text, dishRecommendations = [], actions = []) {
+  foodieBotHistory.push({
+    sender: 'bot',
+    text,
+    dishes: dishRecommendations,
+    actions: actions || []
+  });
   renderFoodieBotMessages();
 }
 
@@ -5889,38 +6037,69 @@ function renderFoodieBotMessages() {
   const container = document.getElementById('foodieBotMessages');
   if (!container) return;
 
-  container.innerHTML = foodieBotHistory.map(m => {
+  const escapeQuotes = (str) => (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+  let html = foodieBotHistory.map(m => {
     if (m.sender === 'user') {
-      return `<div class="foodiebot-msg user">${m.text}</div>`;
+      return `<div class="foodiebot-msg user">${formatBotText(m.text)}</div>`;
     } else {
       let dishesHtml = '';
       if (m.dishes && m.dishes.length) {
         dishesHtml = m.dishes.map(d => `
           <div class="foodiebot-dish-card">
-            <div>
-              <div style="font-weight: 700; font-size: 12px;">${d.veg ? '🥗' : '🍗'} ${d.name}</div>
-              <div style="font-size: 11px; color: var(--primary); font-weight: 800;">₹${d.price} • ${d.restaurantName}</div>
+            <div style="flex: 1; min-width: 0; padding-right: 8px;">
+              <div style="font-weight: 700; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                ${d.veg ? '🟢' : '🔴'} ${d.name}
+              </div>
+              <div style="font-size: 11px; color: var(--primary); font-weight: 800; margin-top: 2px;">
+                ₹${d.price} <span style="color: #64748b; font-weight: 500;">• ${d.restaurantName || ''}</span>
+              </div>
             </div>
-            <button class="btn-primary" onclick="quickAddFromBot(${d.restaurantId}, ${d.id})" style="padding: 4px 10px; font-size: 11px; margin: 0;">
+            <button type="button" class="btn-primary" onclick="quickAddFromBot(${d.restaurantId}, ${d.id})" style="padding: 5px 12px; font-size: 11px; margin: 0; border-radius: 8px; flex-shrink: 0; box-shadow: none;">
               + Add
             </button>
           </div>
         `).join('');
       }
+
+      let actionsHtml = '';
+      if (m.actions && m.actions.length) {
+        actionsHtml = `<div class="foodiebot-actions">` + m.actions.map(act => {
+          if (act.prompt) {
+            return `<button type="button" class="foodiebot-action-btn" onclick="askFoodieBot('${escapeQuotes(act.prompt)}')">${act.label}</button>`;
+          } else if (act.onClick) {
+            return `<button type="button" class="foodiebot-action-btn" onclick="${act.onClick}">${act.label}</button>`;
+          }
+          return '';
+        }).join('') + `</div>`;
+      }
+
       return `
         <div class="foodiebot-msg bot">
-          <div>${m.text}</div>
+          <div>${formatBotText(m.text)}</div>
           ${dishesHtml}
+          ${actionsHtml}
         </div>
       `;
     }
   }).join('');
 
+  if (isFoodieBotTyping) {
+    html += `
+      <div class="foodiebot-msg bot" id="foodieBotTypingIndicator">
+        <div class="foodiebot-typing">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    `;
+  }
+
+  container.innerHTML = html;
   container.scrollTop = container.scrollHeight;
 }
 
 function quickAddFromBot(restId, foodId) {
-  const rest = appData.restaurants.find(r => r.id === restId);
+  const rest = (appData.restaurants || []).find(r => r.id === restId);
   const food = (rest?.foods || []).find(f => f.id === foodId);
   if (!rest || !food) return;
 
@@ -5943,6 +6122,19 @@ function quickAddFromBot(restId, foodId) {
   updateCartBadge();
   playSound('chime');
   showToast(`🛒 Added ${food.name} to cart!`, 'success');
+
+  const cartTotal = currentCart.reduce((s, i) => s + (i.price * i.qty), 0);
+  const lang = typeof currentLanguage !== 'undefined' ? currentLanguage : 'en';
+  const confirmText = lang === 'mr' ?
+    `✅ **${food.name}** कार्टमध्ये जमा केले! (एकूण कार्ट: **₹${cartTotal}**)` :
+    lang === 'hi' ?
+    `✅ **${food.name}** कार्ट में जोड़ दिया गया! (कुल कार्ट: **₹${cartTotal}**)` :
+    `✅ Added **${food.name}** to your cart! (Cart total: **₹${cartTotal}**)`;
+
+  addBotMessage(confirmText, [], [
+    { label: lang === 'mr' ? '🛒 कार्ट उघडा आणि ऑर्डर करा' : '🛒 View Cart & Checkout', onClick: "toggleCartPanel(); toggleFoodieBot();" },
+    { label: lang === 'mr' ? '🍔 आणखी पदार्थ निवडा' : '🍔 Add More Food', onClick: "show('customer'); toggleFoodieBot();" }
+  ]);
 }
 
 function askFoodieBot(prompt) {
@@ -5959,74 +6151,385 @@ function sendFoodieBotMessage() {
   addUserMessage(text);
   input.value = '';
 
-  const lower = text.toLowerCase();
+  isFoodieBotTyping = true;
+  renderFoodieBotMessages();
 
   setTimeout(() => {
-    // 1. Order tracking intent
-    if (lower.includes('track') || lower.includes('order') || lower.includes('status') || lower.includes('where')) {
-      const activeOrder = appData.orders.find(o => o.status !== 'Delivered' && o.status !== 'Cancelled') || appData.orders[0];
-      if (activeOrder) {
-        addBotMessage(`📦 Order #${activeOrder.id} from ${activeOrder.restaurantName} is currently *${activeOrder.status}*!\nEstimated Delivery Time: ~${activeOrder.etaMinutes || 20} mins.`);
-      } else {
-        addBotMessage("You don't have any active orders right now. Would you like to explore our top-rated restaurants?");
-      }
-      return;
-    }
-
-    // 2. Loyalty wallet intent
-    if (lower.includes('wallet') || lower.includes('cash') || lower.includes('balance') || lower.includes('money')) {
-      const bal = appData.currentUser?.walletBalance || 0;
-      addBotMessage(`💳 Your Parcelकर Wallet has ₹${bal} available.\nYou get 5% instant cashback on every meal order and ₹20 bonus on verified reviews!`);
-      return;
-    }
-
-    // 3. Dietary: Vegetarian intent
-    if (lower.includes('veg') || lower.includes('paneer') || lower.includes('salad') || lower.includes('शाकाहारी')) {
-      const vegDishes = [];
-      appData.restaurants.forEach(r => {
-        r.foods.filter(f => f.veg).forEach(f => {
-          vegDishes.push({ ...f, restaurantId: r.id, restaurantName: r.name });
-        });
-      });
-      const top3 = vegDishes.slice(0, 3);
-      addBotMessage("🌱 Here are our most popular pure-vegetarian specialties cooked fresh:", top3);
-      return;
-    }
-
-    // 4. Fast delivery / Urgent intent
-    if (lower.includes('fast') || lower.includes('quick') || lower.includes('urgent') || lower.includes('25 mins')) {
-      const fastRest = appData.restaurants.filter(r => (r.prepTime || '').includes('20') || (r.prepTime || '').includes('15') || r.id === 1);
-      const fastDishes = [];
-      fastRest.forEach(r => {
-        r.foods.slice(0, 2).forEach(f => {
-          fastDishes.push({ ...f, restaurantId: r.id, restaurantName: r.name });
-        });
-      });
-      addBotMessage("⚡ These hot meals can be prepared and delivered in under 25 minutes:", fastDishes.slice(0, 3));
-      return;
-    }
-
-    // 5. Biryani & Thali intent
-    if (lower.includes('biryani') || lower.includes('thali') || lower.includes('rice')) {
-      const biryaniDishes = [];
-      appData.restaurants.forEach(r => {
-        r.foods.filter(f => f.name.toLowerCase().includes('thali') || f.name.toLowerCase().includes('biryani') || f.name.toLowerCase().includes('rice')).forEach(f => {
-          biryaniDishes.push({ ...f, restaurantId: r.id, restaurantName: r.name });
-        });
-      });
-      addBotMessage("🍛 Here are our authentic Biryani and Maharastrian Thali recommendations:", biryaniDishes.slice(0, 3));
-      return;
-    }
-
-    // 6. Generic food fallback
-    const allDishes = [];
-    appData.restaurants.forEach(r => {
-      r.foods.forEach(f => allDishes.push({ ...f, restaurantId: r.id, restaurantName: r.name }));
-    });
-    const shuffled = allDishes.sort(() => 0.5 - Math.random()).slice(0, 2);
-    addBotMessage(`Here are some delicious choices curated just for you:`, shuffled);
-  }, 450);
+    isFoodieBotTyping = false;
+    const response = evaluateFoodieBotQuery(text);
+    addBotMessage(response.text, response.dishes || [], response.actions || []);
+  }, 380);
 }
+
+function evaluateFoodieBotQuery(rawText) {
+  const text = (rawText || '').trim();
+  const lower = text.toLowerCase();
+  const lang = detectFoodieBotLanguage(text);
+
+  // 1. GREETING INTENT
+  if (/^(hi|hello|hey|hola|namaste|namaskar|good morning|good evening|gm|sup|हॅलो|हाय|नमस्कार|नमस्ते|सुप्रभात|काय चाललंय)$/i.test(lower)) {
+    if (lang === 'mr') {
+      return {
+        text: 'नमस्कार! मी आहे **FoodieBot AI** 🤖.\nमी तुम्हाला साकोलीतील सर्वोत्तम जेवण सुचवू शकतो, चालू ऑर्डर्स ट्रॅक करू शकतो किंवा कूपन्स मिळवून देऊ शकतो. आज काय खायला आवडेल?',
+        actions: [
+          { label: '🌱 शाकाहारी जेवण', prompt: 'शाकाहारी जेवण सुचवा' },
+          { label: '🍛 बिर्याणी व थाळी', prompt: 'सर्वोत्तम बिर्याणी आणि थाळी' },
+          { label: '⚡ झटपट डिलिव्हरी', prompt: 'लवकर डिलिव्हरी होणारे पदार्थ' },
+          { label: '🎟️ चालू ऑफर्स', prompt: 'कूपन कोड काय आहेत' }
+        ]
+      };
+    } else if (lang === 'hi') {
+      return {
+        text: 'नमस्ते! मैं हूँ **FoodieBot AI** 🤖.\nमैं आपको साकोली के बेस्ट रेस्टोरेंट से खाना सुझवा सकता हूँ, आर्डर ट्रैक कर सकता हूँ या कूपन दिला सकता हूँ। आज आपका क्या खाने का मन है?',
+        actions: [
+          { label: '🌱 वेज खाना', prompt: 'बेस्ट वेज खाना बताओ' },
+          { label: '🍛 बिरयानी और थाली', prompt: 'बेस्ट बिरयानी और थाली' },
+          { label: '⚡ फास्ट डिलीवरी', prompt: 'फास्ट डिलीवरी खाना' },
+          { label: '🎟️ कूपन कोड', prompt: 'कूपन कोड बताओ' }
+        ]
+      };
+    } else {
+      return {
+        text: 'Hello! I am **FoodieBot AI** 🤖, your personal dining & food delivery concierge.\nI can recommend top Sakoli specialties, track your active order, or fetch live promo coupons. What are you craving today?',
+        actions: [
+          { label: '🌱 Pure Veg', prompt: 'Suggest best vegetarian dishes' },
+          { label: '🍛 Biryani & Thali', prompt: 'Best Biryani & Thali' },
+          { label: '⚡ Fast Delivery', prompt: 'Fast delivery under 25 mins' },
+          { label: '🎟️ Active Coupons', prompt: 'What are the active coupons?' }
+        ]
+      };
+    }
+  }
+
+  // 2. ORDER TRACKING INTENT (Only explicit tracking phrases, never bare 'order'!)
+  const isTracking = /(track|where.*(order|food|courier|delivery)|order.*(status|where|eta|track)|status.*order|delivery.*status|कधी.*येईल|कुठे.*आहे|ट्रॅक|ट्रैक|आर्डर.*कहाँ|स्थिति|#?ord-\d+)/i.test(lower);
+  if (isTracking) {
+    const orders = (appData && appData.orders) || [];
+    const activeOrder = orders.find(o => o.status !== 'Delivered' && o.status !== 'Cancelled') || orders[0];
+    if (activeOrder) {
+      if (lang === 'mr') {
+        return {
+          text: `📦 **ऑर्डर #${activeOrder.id} ची सद्यस्थिती:**\n• रेस्टॉरंट: **${activeOrder.restaurantName}**\n• स्थिती: **${activeOrder.status}**\n• रायडर: **${activeOrder.deliveryBoy || 'विक्रम रायडर'}** (📞 ${activeOrder.riderPhone || '+91 9822334455'})\n• अंदाजित वेळ: **~${activeOrder.etaMinutes || 15} मिनिटे** 🛵`,
+          actions: [
+            { label: '📍 लाईव्ह ट्रॅक मॅप उघडा', onClick: "show('track'); toggleFoodieBot();" },
+            { label: '📞 रायडरला कॉल करा', onClick: `window.open('tel:${activeOrder.riderPhone || '+91 9822334455'}')` }
+          ]
+        };
+      } else if (lang === 'hi') {
+        return {
+          text: `📦 **आर्डर #${activeOrder.id} का लाइव स्टेटस:**\n• रेस्टोरेंट: **${activeOrder.restaurantName}**\n• स्टेटस: **${activeOrder.status}**\n• राइडर: **${activeOrder.deliveryBoy || 'विक्रम राइडर'}** (📞 ${activeOrder.riderPhone || '+91 9822334455'})\n• अनुमानित समय: **~${activeOrder.etaMinutes || 15} मिनट** 🛵`,
+          actions: [
+            { label: '📍 लाइव ट्रैक देखें', onClick: "show('track'); toggleFoodieBot();" },
+            { label: '📞 राइडर को कॉल करें', onClick: `window.open('tel:${activeOrder.riderPhone || '+91 9822334455'}')` }
+          ]
+        };
+      } else {
+        return {
+          text: `📦 **Order #${activeOrder.id} Live Status:**\n• Restaurant: **${activeOrder.restaurantName}**\n• Status: **${activeOrder.status}**\n• Delivery Hero: **${activeOrder.deliveryBoy || 'Vikram Rider'}** (📞 ${activeOrder.riderPhone || '+91 9822334455'})\n• Estimated Arrival: **~${activeOrder.etaMinutes || 15} mins** 🛵`,
+          actions: [
+            { label: '📍 Open Live Tracking', onClick: "show('track'); toggleFoodieBot();" },
+            { label: '📞 Call Courier Partner', onClick: `window.open('tel:${activeOrder.riderPhone || '+91 9822334455'}')` }
+          ]
+        };
+      }
+    } else {
+      const msg = lang === 'mr' ?
+        'तुमची सध्या कोणतीही चालू ऑर्डर नाही. आज काहीतरी चविष्ट मागवायचे आहे का?' :
+        lang === 'hi' ?
+        'आपकी अभी कोई सक्रिय आर्डर नहीं है। क्या आप कुछ स्वादिष्ट मंगाना चाहते हैं?' :
+        'You have no active orders right now. Would you like to explore our top-rated restaurants?';
+      return {
+        text: msg,
+        actions: [{ label: '🍔 Explore Restaurants', onClick: "show('customer'); toggleFoodieBot();" }]
+      };
+    }
+  }
+
+  // 3. COUPONS & OFFERS INTENT
+  if (/(coupon|discount|offer|promo|code|deal|save|कूपन|ऑफर|सूट|कोड|डिस्काउंट)/i.test(lower)) {
+    if (lang === 'mr') {
+      return {
+        text: '🎉 **Parcelकर चालू कूपन कोड्स (साकोली):**\n• **PARCELKAR20**: २०% थेट सूट (किमान ₹२०० च्या ऑर्डरवर)\n• **WELCOME50**: नवीन ग्राहकांसाठी थेट ₹५० सूट\n• **FREEDEL**: ₹१९९ पेक्षा जास्त ऑर्डरवर मोफत डिलिव्हरी\nचेकआउट करताना कूपन कोड निवडा आणि झटपट बचत करा!',
+        actions: [
+          { label: '🍔 मेनू एक्सप्लोर करा', onClick: "show('customer'); toggleFoodieBot();" },
+          { label: '🎰 लकी स्पिन चाक फिरवा', onClick: "openGamificationModal(); toggleFoodieBot();" }
+        ]
+      };
+    } else if (lang === 'hi') {
+      return {
+        text: '🎉 **सक्रिय कूपन और डिस्काउंट कोड:**\n• **PARCELKAR20**: 20% की छूट (₹200 से अधिक पर)\n• **WELCOME50**: फ्लैट ₹50 की छूट\n• **FREEDEL**: फ्री डिलीवरी प्रोमो\nचेकआउट पेज पर कूपन कोड लगाएं!',
+        actions: [
+          { label: '🍔 खाना आर्डर करें', onClick: "show('customer'); toggleFoodieBot();" },
+          { label: '🎰 लकी स्पिन खेलें', onClick: "openGamificationModal(); toggleFoodieBot();" }
+        ]
+      };
+    } else {
+      return {
+        text: '🎉 **Active Promo Codes for Sakoli:**\n• **PARCELKAR20**: 20% OFF (Orders above ₹200)\n• **WELCOME50**: Flat ₹50 OFF for all foodies\n• **FREEDEL**: Free Delivery promo above ₹199\nApply during checkout to save instantly on your delicious meal!',
+        actions: [
+          { label: '🍔 Explore Menu', onClick: "show('customer'); toggleFoodieBot();" },
+          { label: '🎰 Spin Lucky Wheel', onClick: "openGamificationModal(); toggleFoodieBot();" }
+        ]
+      };
+    }
+  }
+
+  // 4. WEEKLY LUCKY SPIN INTENT
+  if (/(spin|wheel|lucky|reward|prize|लकी|स्पिन|चाक|इनाम)/i.test(lower)) {
+    if (lang === 'mr') {
+      return {
+        text: '🎰 **साप्ताहिक लकी स्पिन & विन (Weekly Lucky Spin)!**\nदर आठवड्यातून १ वेळा व्हील फिरवा आणि हमखास जिंका:\n• **🍰 मोफत डेझर्ट (Free Dessert)**\n• **🛵 मोफत डिलिव्हरी (Free Delivery)**\nप्रत्येक फिरवण्यावर गॅरंटीड बक्षीस!',
+        actions: [
+          { label: '🎰 स्पिन व्हील उघडा', onClick: "openGamificationModal(); toggleFoodieBot();" }
+        ]
+      };
+    } else if (lang === 'hi') {
+      return {
+        text: '🎰 **साप्ताहिक लकी स्पिन & विन!**\nहर हफ्ते 1 बार पहिया घुमाएं और पक्का जीतें:\n• **🍰 फ्री डेजर्ट (Free Dessert)**\n• **🛵 फ्री डिलीवरी (Free Delivery)**\nहर स्पिन पर निश्चित उपहार!',
+        actions: [
+          { label: '🎰 स्पिन व्हील खोलें', onClick: "openGamificationModal(); toggleFoodieBot();" }
+        ]
+      };
+    } else {
+      return {
+        text: '🎰 **Weekly Lucky Spin & Win!**\nSpin once every 7 days to win guaranteed prizes:\n• **🍰 Free Dessert** voucher\n• **🛵 Free Delivery** voucher\nNo empty spins — 100% win rate!',
+        actions: [
+          { label: '🎰 Spin Lucky Wheel Now', onClick: "openGamificationModal(); toggleFoodieBot();" }
+        ]
+      };
+    }
+  }
+
+  // 5. WALLET & CASHBACK INTENT
+  if (/(wallet|cashback|balance|refund|पाकीट|वॉलेट|पैसे|कॅशबॅक|रिफंड)/i.test(lower)) {
+    const bal = (appData.currentUser && appData.currentUser.walletBalance) || 250;
+    if (lang === 'mr') {
+      return {
+        text: `💳 **तुमच्या Parcelकर वॉलेटमध्ये शिल्लक: ₹${bal}**\n• प्रत्येक ऑर्डरवर मिळवा **५% इन्स्टंट कॅशबॅक**\n• प्रत्येक प्रमाणित रिव्ह्यूवर **₹२० बोनस** जमा होतो!\nवॉलेटचे पैसे पुढील कोणत्याही ऑर्डरवर वापरता येतात.`,
+        actions: [
+          { label: '💳 वॉलेट उघडा', onClick: "openWalletModal(); toggleFoodieBot();" }
+        ]
+      };
+    } else if (lang === 'hi') {
+      return {
+        text: `💳 **आपके Parcelकर वॉलेट में बैलेंस: ₹${bal}**\n• हर आर्डर पर पाएं **5% इंस्टेंट कैशबैक**\n• रिव्यू देने पर **₹20 बोनस**!\nवॉलेट राशि का इस्तेमाल किसी भी आर्डर में करें।`,
+        actions: [
+          { label: '💳 वॉलेट देखें', onClick: "openWalletModal(); toggleFoodieBot();" }
+        ]
+      };
+    } else {
+      return {
+        text: `💳 **Your Parcelकर Wallet Balance: ₹${bal}**\n• Get **5% Instant Cashback** on every completed meal\n• Earn **₹20 Bonus** for each verified food review!\nUse wallet credits seamlessly during checkout.`,
+        actions: [
+          { label: '💳 Open Wallet', onClick: "openWalletModal(); toggleFoodieBot();" }
+        ]
+      };
+    }
+  }
+
+  // 6. CUSTOMER SUPPORT & WHATSAPP INTENT
+  if (/(support|help|contact|call|phone|number|whatsapp|agent|care|मदत|फोन|नंबर|कस्टमर केअर|संपर्क|कॉल|सहायता)/i.test(lower)) {
+    if (lang === 'mr') {
+      return {
+        text: '📞 **Parcelकर २४/७ साकोली कस्टमर सपोर्ट:**\n• **हेल्पलाईन**: +91 9822334455\n• **ईमेल**: support@parcelkar.com\n• **पत्ता**: मेन मार्केट रोड, साकोली (भंडारा)\nकोणतीही समस्या असल्यास आमच्या व्हॉट्सॲप सपोर्टवर थेट चॅट करा!',
+        actions: [
+          { label: '💬 WhatsApp Support', onClick: "window.open('https://wa.me/919822334455?text=Hello%20Parcelkar%20Support', '_blank')" },
+          { label: '📞 थेट फोन कॉल', onClick: "window.open('tel:+919822334455')" }
+        ]
+      };
+    } else if (lang === 'hi') {
+      return {
+        text: '📞 **Parcelकर 24/7 साकोली कस्टमर सपोर्ट:**\n• **हेल्पलाइन**: +91 9822334455\n• **ईमेल**: support@parcelkar.com\n• **पता**: मेन मार्केट रोड, साकोली\nव्हाट्सएप पर सहायता के लिए नीचे क्लिक करें!',
+        actions: [
+          { label: '💬 WhatsApp Support', onClick: "window.open('https://wa.me/919822334455?text=Hello%20Parcelkar%20Support', '_blank')" },
+          { label: '📞 कॉल करें', onClick: "window.open('tel:+919822334455')" }
+        ]
+      };
+    } else {
+      return {
+        text: '📞 **Parcelकर 24/7 Sakoli Support Desk:**\n• **Helpline**: +91 9822334455\n• **Email**: support@parcelkar.com\n• **Office**: Main Market Road, Sakoli\nTap below to connect directly with our local support team on WhatsApp!',
+        actions: [
+          { label: '💬 WhatsApp Support', onClick: "window.open('https://wa.me/919822334455?text=Hello%20Parcelkar%20Support', '_blank')" },
+          { label: '📞 Call Helpline', onClick: "window.open('tel:+919822334455')" }
+        ]
+      };
+    }
+  }
+
+  // 7. SAKOLI DELIVERY AREAS & TIMINGS INTENT
+  if (/(sakoli|area|location|delivery time|address|coverage|where do you deliver|कवरेज|पत्ता|डिलिव्हरी कुठे|साकोली|क्षेत्र)/i.test(lower)) {
+    if (lang === 'mr') {
+      return {
+        text: '🛵 **साकोली डिलिव्हरी कव्हरेज & वेळ:**\nआम्ही साकोली शहरातील सर्व प्रमुख भागांमध्ये जेवण पोहोचवतो:\n• मेन मार्केट रोड\n• सेंदुरवाफा\n• कुंभी व दिघोरी\n• स्टेशन रोड व बायपास\n⏱️ सरासरी डिलिव्हरी वेळ: **२० ते ३० मिनिटे**!',
+        actions: [
+          { label: '📍 डिलिव्हरी ठिकाण निवडा', onClick: "openLocationModal(); toggleFoodieBot();" }
+        ]
+      };
+    } else {
+      return {
+        text: '🛵 **Sakoli Delivery Coverage & Time:**\nWe deliver hot and fresh food across all parts of Sakoli:\n• Main Market Road\n• Sendurwafa\n• Kumbhli & Dighori\n• Station Road & Bypass\n⏱️ Average delivery speed: **20 to 30 minutes**!',
+        actions: [
+          { label: '📍 Change Location', onClick: "openLocationModal(); toggleFoodieBot();" }
+        ]
+      };
+    }
+  }
+
+  // 8. HOW TO ORDER & PAYMENTS INTENT
+  if (/(how.*(order|buy|place.*order|pay)|order.*(process|step|method|guide)|order kashi|order kaise|payment|cod|cash on delivery|upi|gpay|phonepe|पैसे कसे|पेमेंट|कशी करावी|कसा करू|ऑर्डर कशी)/i.test(lower)) {
+    if (lang === 'mr') {
+      return {
+        text: '📱 **ऑर्डर करण्याची ३ सोपी पावले:**\n1️⃣ **मेनू एक्सप्लोर करा**: आवडते पदार्थ निवडून **+Add** दाबा\n2️⃣ **कार्ट तपासा**: खालील **View Cart** वर टॅप करा\n3️⃣ **पेमेंट करा**: UPI (GPay, PhonePe, Paytm), Cash on Delivery (COD) किंवा वॉलेटने त्वरित ऑर्डर करा!',
+        actions: [
+          { label: '🍔 मेनू उघडा', onClick: "show('customer'); toggleFoodieBot();" },
+          { label: '🛒 कार्ट पहा', onClick: "toggleCartPanel(); toggleFoodieBot();" }
+        ]
+      };
+    } else {
+      return {
+        text: '📱 **Easy 3-Step Ordering:**\n1️⃣ **Browse Menu**: Tap **+Add** on dishes you love\n2️⃣ **Open Cart**: Review items and apply discount coupons\n3️⃣ **Pay & Relax**: Pay via UPI (GPay/PhonePe), Cash on Delivery (COD), or Parcelकर Wallet!',
+        actions: [
+          { label: '🍔 Browse Menu', onClick: "show('customer'); toggleFoodieBot();" },
+          { label: '🛒 View Cart', onClick: "toggleCartPanel(); toggleFoodieBot();" }
+        ]
+      };
+    }
+  }
+
+  // 9. CART INQUIRY INTENT
+  if (/(my cart|view cart|cart total|in cart|कार्ट|गाडी)/i.test(lower)) {
+    const count = (currentCart || []).reduce((s, i) => s + i.qty, 0);
+    const total = (currentCart || []).reduce((s, i) => s + (i.price * i.qty), 0);
+    if (count > 0) {
+      return {
+        text: lang === 'mr' ?
+          `🛒 तुमच्या कार्टमध्ये **${count} पदार्थ** आहेत (एकूण: **₹${total}**). लगेच ऑर्डर पूर्ण करायची आहे का?` :
+          `🛒 You have **${count} items** in your cart (Total: **₹${total}**). Ready to checkout?`,
+        actions: [
+          { label: '🛒 View Cart & Checkout', onClick: "toggleCartPanel(); toggleFoodieBot();" }
+        ]
+      };
+    } else {
+      return {
+        text: lang === 'mr' ?
+          'तुमची कार्ट सध्या रिकामी आहे. आज काय खायला आवडेल?' :
+          'Your cart is currently empty. What would you like to eat today?',
+        actions: [
+          { label: '🍔 Explore Restaurants', onClick: "show('customer'); toggleFoodieBot();" }
+        ]
+      };
+    }
+  }
+
+  // 10. SMART DISH SEARCH & RECOMMENDATION ENGINE
+  let filterVeg = null;
+  if (/(pure veg|vegetarian|शाकाहारी|वेज|only veg)/i.test(lower)) filterVeg = true;
+  if (/(non-veg|nonveg|chicken|mutton|fish|मांसाहारी|नॉनवेज|चिकन|मटण|मासे)/i.test(lower)) filterVeg = false;
+
+  const keywordMap = [
+    { keys: ['biryani', 'biriyani', 'pulao', 'rice', 'khichdi', 'बिर्याणी', 'बिरयानी', 'भात', 'पुलाव'], tag: 'biryani' },
+    { keys: ['thali', 'meal', 'lunch', 'dinner', 'थाळी', 'थाली', 'जेवण'], tag: 'thali' },
+    { keys: ['pizza', 'cheese', 'margherita', 'पिझ्झा', 'पिज्जा'], tag: 'pizza' },
+    { keys: ['burger', 'fries', 'sandwich', 'बर्गर', 'सँडविच'], tag: 'burger' },
+    { keys: ['noodle', 'manchurian', 'chinese', 'chowmein', 'नुडल्स', 'मंचुरियन', 'चायनीज'], tag: 'chinese' },
+    { keys: ['paneer', 'पनीर'], tag: 'paneer' },
+    { keys: ['chicken', 'चिकन'], tag: 'chicken' },
+    { keys: ['mutton', 'मटण', 'मटन'], tag: 'mutton' },
+    { keys: ['fish', 'मासे', 'मछली'], tag: 'fish' },
+    { keys: ['sweet', 'dessert', 'ice cream', 'gulab jamun', 'cake', 'गोड', 'मिठाई', 'गुलाबजाम'], tag: 'dessert' },
+    { keys: ['tea', 'coffee', 'chai', 'samosa', 'poha', 'breakfast', 'नाश्ता', 'चहा', 'कॉफी', 'समोसा'], tag: 'breakfast' },
+    { keys: ['roll', 'kathi roll', 'wrap', 'रोल'], tag: 'roll' },
+    { keys: ['roti', 'naan', 'chapati', 'रोटी', 'नान', 'चपाती'], tag: 'roti' },
+    { keys: ['dal', 'tadka', 'डाळ', 'दाल'], tag: 'dal' }
+  ];
+
+  const matchedTags = [];
+  keywordMap.forEach(km => {
+    if (km.keys.some(k => lower.includes(k))) {
+      matchedTags.push(km.tag);
+    }
+  });
+
+  const allDishes = [];
+  const restaurants = (appData.restaurants || []).filter(r => r.approved !== false);
+  restaurants.forEach(r => {
+    (r.foods || []).forEach(f => {
+      allDishes.push({
+        ...f,
+        restaurantId: r.id,
+        restaurantName: r.name,
+        restaurantRating: r.rating || 4.8
+      });
+    });
+  });
+
+  let scoredDishes = allDishes.map(d => {
+    let score = 0;
+    const nameL = d.name.toLowerCase();
+    const catL = (d.category || '').toLowerCase();
+    const descL = (d.desc || '').toLowerCase();
+
+    if (filterVeg === true && !d.veg) return { ...d, score: -100 };
+    if (filterVeg === false && d.veg) return { ...d, score: -100 };
+
+    matchedTags.forEach(tag => {
+      if (nameL.includes(tag)) score += 5;
+      if (catL.includes(tag)) score += 3;
+      if (descL.includes(tag)) score += 2;
+    });
+
+    // Also match raw words from query
+    const words = lower.split(/\s+/).filter(w => w.length > 2);
+    words.forEach(w => {
+      if (nameL.includes(w)) score += 4;
+      if (catL.includes(w)) score += 2;
+    });
+
+    if (score === 0 && filterVeg !== null && (filterVeg ? d.veg : !d.veg)) {
+      score = 1;
+    }
+
+    return { ...d, score };
+  }).filter(d => d.score > 0);
+
+  scoredDishes.sort((a, b) => b.score - a.score);
+  const topRecommendations = scoredDishes.slice(0, 3);
+
+  if (topRecommendations.length > 0) {
+    let msg = '';
+    if (lang === 'mr') {
+      msg = '🍛 **तुमच्यासाठी साकोलीतील खास शिफारसी (Top Recommendations):**';
+    } else if (lang === 'hi') {
+      msg = '🍛 **आपके लिए साकोली के बेस्ट सुझाव:**';
+    } else {
+      msg = '🍛 **Here are top culinary recommendations for you:**';
+    }
+    return {
+      text: msg,
+      dishes: topRecommendations,
+      actions: [
+        { label: lang === 'mr' ? '🍔 संपूर्ण मेनू पहा' : '🍔 View Full Menu', onClick: "show('customer'); toggleFoodieBot();" }
+      ]
+    };
+  }
+
+  // Broad Fallback with popular dishes
+  const popularDishes = allDishes.slice(0, 2);
+  return {
+    text: lang === 'mr' ?
+      'मी तुम्हाला मदत करण्यास सदैव तयार आहे! साकोलीतील हे लोकप्रिय पदार्थ ट्राय करा किंवा खालील पर्यायांवर क्लिक करा:' :
+      lang === 'hi' ?
+      'मैं आपकी मदद के लिए तैयार हूँ! साकोली के ये प्रसिद्ध व्यंजन देखें या नीचे दिए विकल्प चुनें:' :
+      'I am always here to help! Check out these popular Sakoli choices or select an option below:',
+    dishes: popularDishes,
+    actions: [
+      { label: '🌱 Pure Veg', prompt: 'Suggest best vegetarian dishes' },
+      { label: '⚡ Fast Delivery', prompt: 'Fast delivery under 25 mins' },
+      { label: '🎟️ Active Coupons', prompt: 'What are the active coupons?' }
+    ]
+  };
+}
+
 
 // -------------------------------------------------------------
 // 9H. KITCHEN REVENUE & PEAK ORDERING TRENDS ANALYTICS

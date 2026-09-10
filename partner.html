@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="style.css?v=1789067063526">
+  <link rel="stylesheet" href="style.css?v=1789068060988">
   <style>
     /* Standalone Portal Specialized Accents */
     .portal-badge {
@@ -936,6 +936,8 @@
     <span class="foodiebot-fab-pulse"></span>
     <span class="foodiebot-fab-badge">AI</span>
   </button>
+  <!-- FoodieBot Backdrop -->
+  <div id="foodieBotBackdrop" class="foodiebot-backdrop hidden" onclick="toggleFoodieBot()"></div>
   <!-- Interactive AI FoodieBot & Live Support Drawer -->
   <div id="foodieBotDrawer" class="foodiebot-drawer hidden">
     <!-- Header -->
@@ -962,13 +964,13 @@
       <button type="button" class="quick-prompt-chip" onclick="askFoodieBot('Fast delivery under 25 mins')">⚡ Fast Delivery</button>
       <button type="button" class="quick-prompt-chip" onclick="askFoodieBot('Best Biryani & Thali')">🍛 Biryani & Thali</button>
       <button type="button" class="quick-prompt-chip" onclick="askFoodieBot('Where is my order')">📍 Track Order</button>
-      <button type="button" class="quick-prompt-chip" onclick="askFoodieBot('How does loyalty wallet work')">💳 Wallet & Cash</button>
+      <button type="button" class="quick-prompt-chip" onclick="askFoodieBot('What are the active coupons?')">🎟️ Coupons & Offers</button>
     </div>
-    <!-- Input Footer -->
-    <div class="foodiebot-footer">
-      <input type="text" id="foodieBotInput" class="foodiebot-input" placeholder="Ask FoodieBot anything (e.g. Spiciest paneer, track order)..." onkeydown="if(event.key==='Enter') sendFoodieBotMessage()">
-      <button class="foodiebot-send-btn" onclick="sendFoodieBotMessage()" title="Send">➤</button>
-    </div>
+    <!-- Input Footer Form -->
+    <form class="foodiebot-footer" onsubmit="event.preventDefault(); sendFoodieBotMessage();">
+      <input type="text" id="foodieBotInput" class="foodiebot-input" placeholder="Ask FoodieBot anything (e.g. Spiciest paneer, track order)..." enterkeyhint="send" autocomplete="off">
+      <button type="submit" class="foodiebot-send-btn" title="Send">➤</button>
+    </form>
   </div>
   <!-- MODAL: Parcelकर VIP Gold Club Membership -->
   <div id="membershipModal" class="modal-backdrop hidden">
@@ -1846,7 +1848,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js?v=1789067063526"></script>
+  <script src="app.js?v=1789068060988"></script>
   <script src="translations.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
