@@ -1,11 +1,12 @@
 // ParcelKar V1.0 Progressive Web App Service Worker
-const CACHE_NAME = 'parcelkar-v13.2-cache';
+const CACHE_NAME = 'parcelkar-v14.0-cache';
 const STATIC_ASSETS = [
   './',
   './customer.html',
   './index.html',
   './style.css',
   './app.js',
+  './translations.js',
   './manifest.json',
   './parcelkar-logo.png',
   './icon-192.png',
