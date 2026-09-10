@@ -5913,33 +5913,33 @@ function updateFoodieBotChips() {
 
   if (lang === 'mr') {
     container.innerHTML = `
-      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('माझी ऑर्डर कुठे आहे?')">📦 ऑर्डर ट्रॅक करा</button>
-      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('सर्वोत्तम शाकाहारी जेवण सुचवा')">🌱 शाकाहारी जेवण</button>
-      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('चिकन बिर्याणी आणि थाळी दाखवा')">🍗 चिकन व बिर्याणी</button>
-      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('चालू कूपन कोड काय आहेत?')">🎟️ कूपन कोड्स</button>
-      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('साप्ताहिक लकी स्पिन बद्दल सांगा')">🎰 लकी स्पिन</button>
-      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('ऑर्डर कशी करायची?')">📱 कशी करावी ऑर्डर?</button>
-      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('कस्टमर केअर नंबर')">📞 २४/७ सपोर्ट</button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('माझी ऑर्डर कुठे आहे?')"><span class="foodiebot-chip-icon">📦</span><span>ऑर्डर ट्रॅक करा</span></button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('सर्वोत्तम शाकाहारी जेवण सुचवा')"><span class="foodiebot-chip-icon">🌱</span><span>शाकाहारी जेवण</span></button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('चिकन बिर्याणी आणि थाळी दाखवा')"><span class="foodiebot-chip-icon">🍗</span><span>चिकन व बिर्याणी</span></button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('चालू कूपन कोड काय आहेत?')"><span class="foodiebot-chip-icon">🎟️</span><span>कूपन कोड्स</span></button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('साप्ताहिक लकी स्पिन बद्दल सांगा')"><span class="foodiebot-chip-icon">🎰</span><span>लकी स्पिन</span></button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('ऑर्डर कशी करायची?')"><span class="foodiebot-chip-icon">📱</span><span>कशी करावी ऑर्डर?</span></button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('कस्टमर केअर नंबर')"><span class="foodiebot-chip-icon">📞</span><span>२४/७ सपोर्ट</span></button>
     `;
   } else if (lang === 'hi') {
     container.innerHTML = `
-      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('मेरी आर्डर कहाँ है?')">📦 आर्डर ट्रैक करें</button>
-      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('बेस्ट वेज खाना बताओ')">🌱 वेज खाना</button>
-      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('चिकन बिरयानी और थाली दिखाओ')">🍗 चिकन बिरयानी</button>
-      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('कूपन कोड बताओ')">🎟️ कूपन कोड्स</button>
-      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('लकी स्पिन के बारे में बताओ')">🎰 लकी स्पिन</button>
-      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('आर्डर कैसे करें?')">📱 आर्डर कैसे करें?</button>
-      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('कस्टमर केयर नंबर')">📞 24/7 सपोर्ट</button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('मेरी आर्डर कहाँ है?')"><span class="foodiebot-chip-icon">📦</span><span>आर्डर ट्रैक करें</span></button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('बेस्ट वेज खाना बताओ')"><span class="foodiebot-chip-icon">🌱</span><span>वेज खाना</span></button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('चिकन बिरयानी और थाली दिखाओ')"><span class="foodiebot-chip-icon">🍗</span><span>चिकन बिरयानी</span></button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('कूपन कोड बताओ')"><span class="foodiebot-chip-icon">🎟️</span><span>कूपन कोड्स</span></button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('लकी स्पिन के बारे में बताओ')"><span class="foodiebot-chip-icon">🎰</span><span>लकी स्पिन</span></button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('आर्डर कैसे करें?')"><span class="foodiebot-chip-icon">📱</span><span>आर्डर कैसे करें?</span></button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('कस्टमर केयर नंबर')"><span class="foodiebot-chip-icon">📞</span><span>24/7 सपोर्ट</span></button>
     `;
   } else {
     container.innerHTML = `
-      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('Where is my active order?')">📦 Track Order</button>
-      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('Suggest best vegetarian dishes')">🌱 Pure Veg</button>
-      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('Best Biryani and Thali in Sakoli')">🍛 Biryani & Thali</button>
-      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('What are the active coupons?')">🎟️ Active Coupons</button>
-      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('Tell me about weekly lucky spin')">🎰 Lucky Spin</button>
-      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('How do I place an order?')">📱 How to Order</button>
-      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('Customer support phone number')">📞 24/7 Support</button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('Where is my active order?')"><span class="foodiebot-chip-icon">📦</span><span>Track Order</span></button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('Suggest best vegetarian dishes')"><span class="foodiebot-chip-icon">🌱</span><span>Pure Veg</span></button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('Best Biryani and Thali in Sakoli')"><span class="foodiebot-chip-icon">🍛</span><span>Biryani & Thali</span></button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('What are the active coupons?')"><span class="foodiebot-chip-icon">🎟️</span><span>Active Coupons</span></button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('Tell me about weekly lucky spin')"><span class="foodiebot-chip-icon">🎰</span><span>Lucky Spin</span></button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('How do I place an order?')"><span class="foodiebot-chip-icon">📱</span><span>How to Order</span></button>
+      <button type="button" class="foodiebot-chip" onclick="askFoodieBot('Customer support phone number')"><span class="foodiebot-chip-icon">📞</span><span>24/7 Support</span></button>
     `;
   }
 }
