@@ -60,7 +60,7 @@
         <span>Spin &amp; Win</span>
       </button>
       <!-- Quick Search Button in Header -->
-      <button class="header-search-icon-btn" onclick="focusSearchInput()" title="Search Dishes & Restaurants" style="background: var(--bg-surface-alt, #f1f5f9); border: 1.5px solid var(--border-color, #e2e8f0); color: var(--text-color); border-radius: 999px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; flex-shrink: 0;">
+      <button class="header-search-icon-btn" onclick="openFullScreenSearch()" title="Search Dishes & Restaurants" style="background: var(--bg-surface-alt, #f1f5f9); border: 1.5px solid var(--border-color, #e2e8f0); color: var(--text-color); border-radius: 999px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; flex-shrink: 0;">
         🔍
       </button>
     </div>
@@ -139,6 +139,19 @@
 
     <!-- 1. CUSTOMER PORTAL -->
     <section id="customer" class="panel">
+      <!-- Full-Width Prominent Search Button (Swiggy / Zomato Full Screen Trigger) -->
+      <div class="home-search-hero-bar" onclick="openFullScreenSearch()" role="button" tabindex="0" aria-label="Search dishes and restaurants">
+        <div class="home-search-inner">
+          <span class="home-search-icon">🔍</span>
+          <span class="home-search-placeholder" id="homeSearchAnimatedPlaceholder">Search for 'Biryani', 'Pizza', 'Thali'...</span>
+        </div>
+        <div class="home-search-actions">
+          <button type="button" class="home-search-mic" onclick="event.stopPropagation(); openFullScreenSearch(true);" title="Voice Search" aria-label="Voice Search">
+            🎙️
+          </button>
+        </div>
+      </div>
+
       <!-- Promotional Hero Banner -->
       <div class="hero-banner">
         <div class="hero-content">
@@ -176,7 +189,7 @@
       <div class="search-filter-card">
         <div class="search-input-wrapper">
           <span>🔍</span>
-          <input type="text" id="foodSearchInput" class="search-input" placeholder="Search for dishes, restaurants, or cuisines (e.g. Pizza, Thali, Biryani)...">
+          <input type="text" id="foodSearchInput" class="search-input" placeholder="Search for dishes, restaurants, or cuisines (e.g. Pizza, Thali, Biryani)..." onfocus="openFullScreenSearch()" onclick="openFullScreenSearch()">
           
           <button type="button" id="btnVoiceSearch" class="voice-search-btn" title="Search by Voice">
             🎙️
@@ -1880,6 +1893,174 @@
       </div>
     </div>
   </div>
+  <!-- ============================================================
+       FULL SCREEN SEARCH MODAL (Swiggy / Zomato Full Takeover UX)
+       ============================================================ -->
+  <div id="fullScreenSearchModal" class="fs-search-overlay hidden" role="dialog" aria-modal="true" aria-label="Search Food and Restaurants">
+    <!-- Search Bar Header with Back Button, Input, Clear, and Voice Search -->
+    <div class="fs-search-header">
+      <button class="fs-search-back-btn" onclick="closeFullScreenSearch()" title="Close search (Go Back)" aria-label="Back">
+        ←
+      </button>
+      <div class="fs-search-input-box">
+        <span class="fs-search-icon">🔍</span>
+        <input 
+          type="text" 
+          id="fsSearchInput" 
+          class="fs-search-input" 
+          placeholder="Search for 'Biryani', 'Pizza', 'Thali'..." 
+          autocomplete="off" 
+          autocorrect="off" 
+          spellcheck="false"
+          oninput="handleFsInput(this.value)"
+        >
+        <button id="fsClearBtn" class="fs-clear-btn hidden" onclick="clearFullScreenSearch()" title="Clear text" aria-label="Clear Search">
+          ✕
+        </button>
+      </div>
+      <button id="fsVoiceBtn" class="fs-voice-btn" onclick="triggerFsVoiceSearch()" title="Voice search (Speak dish in Marathi/Hindi/English)" aria-label="Voice Search">
+        <span id="fsVoiceIcon">🎙️</span>
+      </button>
+    </div>
+
+    <!-- Quick Filter Pills Strip -->
+    <div class="fs-filter-strip">
+      <button id="fsPillVeg" class="fs-filter-pill" onclick="toggleFsFilter('veg')">
+        <span class="veg-indicator" style="width: 10px; height: 10px;"></span>
+        <span>Pure Veg</span>
+      </button>
+      <button id="fsPillRating" class="fs-filter-pill" onclick="toggleFsFilter('rating')">
+        <span>⭐</span>
+        <span>4.0+ Rated</span>
+      </button>
+      <button id="fsPillFast" class="fs-filter-pill" onclick="toggleFsFilter('fast')">
+        <span>⚡</span>
+        <span>Fast Delivery (&lt;30m)</span>
+      </button>
+      <button id="fsPillUnder150" class="fs-filter-pill" onclick="toggleFsFilter('under150')">
+        <span>💵</span>
+        <span>Under ₹150</span>
+      </button>
+    </div>
+
+    <!-- Scrollable Search View Body -->
+    <div class="fs-search-body">
+      <!-- 1. Pre-Search View (Recent Searches, Trending Cravings & Popular Stores) -->
+      <div id="fsPreSearchView">
+        <!-- Recent Searches History (Shown if items exist) -->
+        <div id="fsRecentSearchesBlock" class="fs-section hidden">
+          <div class="fs-section-header">
+            <span>Recent Searches</span>
+            <button class="fs-clear-history-btn" onclick="clearFsRecentHistory()">Clear History</button>
+          </div>
+          <div class="fs-recent-chips" id="fsRecentChips"></div>
+        </div>
+
+        <!-- Popular Cravings & Categories Grid -->
+        <div class="fs-section">
+          <div class="fs-section-header">
+            <span>Popular Cravings &amp; Categories</span>
+          </div>
+          <div class="fs-trending-grid">
+            <div class="fs-trending-chip" onclick="searchFsKeyword('Biryani')">
+              <span class="fs-chip-emoji">🍗</span>
+              <span class="fs-chip-title">Biryani</span>
+            </div>
+            <div class="fs-trending-chip" onclick="searchFsKeyword('Pizza')">
+              <span class="fs-chip-emoji">🍕</span>
+              <span class="fs-chip-title">Pizza</span>
+            </div>
+            <div class="fs-trending-chip" onclick="searchFsKeyword('Burger')">
+              <span class="fs-chip-emoji">🍔</span>
+              <span class="fs-chip-title">Burger</span>
+            </div>
+            <div class="fs-trending-chip" onclick="searchFsKeyword('Thali')">
+              <span class="fs-chip-emoji">🍱</span>
+              <span class="fs-chip-title">Thali</span>
+            </div>
+            <div class="fs-trending-chip" onclick="searchFsKeyword('Dosa')">
+              <span class="fs-chip-emoji">🥞</span>
+              <span class="fs-chip-title">Dosa</span>
+            </div>
+            <div class="fs-trending-chip" onclick="searchFsKeyword('Chinese')">
+              <span class="fs-chip-emoji">🍜</span>
+              <span class="fs-chip-title">Chinese</span>
+            </div>
+            <div class="fs-trending-chip" onclick="searchFsKeyword('Momos')">
+              <span class="fs-chip-emoji">🥟</span>
+              <span class="fs-chip-title">Momos</span>
+            </div>
+            <div class="fs-trending-chip" onclick="searchFsKeyword('Rolls')">
+              <span class="fs-chip-emoji">🌯</span>
+              <span class="fs-chip-title">Rolls</span>
+            </div>
+            <div class="fs-trending-chip" onclick="searchFsKeyword('Sandwich')">
+              <span class="fs-chip-emoji">🥪</span>
+              <span class="fs-chip-title">Sandwich</span>
+            </div>
+            <div class="fs-trending-chip" onclick="searchFsKeyword('Pav Bhaji')">
+              <span class="fs-chip-emoji">🍲</span>
+              <span class="fs-chip-title">Pav Bhaji</span>
+            </div>
+            <div class="fs-trending-chip" onclick="searchFsKeyword('Desserts')">
+              <span class="fs-chip-emoji">🍨</span>
+              <span class="fs-chip-title">Desserts</span>
+            </div>
+            <div class="fs-trending-chip" onclick="searchFsKeyword('Chai')">
+              <span class="fs-chip-emoji">☕</span>
+              <span class="fs-chip-title">Chai &amp; Snacks</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top Rated Outlets -->
+        <div class="fs-section">
+          <div class="fs-section-header">
+            <span>⭐ Popular Restaurants Around You</span>
+          </div>
+          <div class="fs-popular-restaurants-list" id="fsPopularRestaurantsList"></div>
+        </div>
+      </div>
+
+      <!-- 2. Live Search Results View (Dishes + Restaurants) -->
+      <div id="fsResultsView" class="hidden">
+        <div class="fs-results-summary" id="fsResultsSummary"></div>
+
+        <!-- Dishes Section -->
+        <div id="fsDishesGroup" class="fs-results-group">
+          <div class="fs-group-title">
+            <span>🍛 Dishes (<span id="fsDishesCount">0</span>)</span>
+          </div>
+          <div class="fs-dishes-list" id="fsDishesList"></div>
+        </div>
+
+        <!-- Restaurants Section -->
+        <div id="fsRestaurantsGroup" class="fs-results-group">
+          <div class="fs-group-title">
+            <span>🏪 Restaurants (<span id="fsRestaurantsCount">0</span>)</span>
+          </div>
+          <div class="fs-restaurants-grid" id="fsRestaurantsList"></div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="fsEmptyState" class="fs-empty-state hidden">
+          <div style="font-size: 48px; margin-bottom: 12px;">🔍</div>
+          <div style="font-size: 16px; font-weight: 800; color: var(--text-color); margin-bottom: 6px;">
+            No matching dishes or restaurants found
+          </div>
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+            Try checking for spelling errors, clearing active filters, or searching for other popular cravings below.
+          </p>
+          <div class="fs-empty-suggestions">
+            <button class="btn-secondary" onclick="searchFsKeyword('Biryani')" style="font-size: 12px; padding: 6px 14px;">🍗 Biryani</button>
+            <button class="btn-secondary" onclick="searchFsKeyword('Pizza')" style="font-size: 12px; padding: 6px 14px;">🍕 Pizza</button>
+            <button class="btn-secondary" onclick="searchFsKeyword('Thali')" style="font-size: 12px; padding: 6px 14px;">🍱 Thali</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Mobile App Bottom Navigation Bar -->
   <nav class="mobile-nav" id="mobileBottomNavBar">
     <button class="mobile-nav-btn active" id="mobNavCustomer" onclick="show('customer')">
@@ -1915,7 +2096,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js"></script>
-  <script src="app.js?v=20260910_2145"></script>
-  <script src="translations.js?v=20260910_2145"></script>
+  <script src="app.js?v=20260910_2245"></script>
+  <script src="translations.js?v=20260910_2245"></script>
 </body>
 </html>

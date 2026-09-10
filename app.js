@@ -4275,16 +4275,518 @@ window.userLogoutAction = userLogoutAction;
 window.openAuth = openAuth;
 window.updateUserBadge = updateUserBadge;
 
-function focusSearchInput() {
-  if (typeof show === 'function') show('customer');
-  const searchInput = document.getElementById('foodSearchInput');
-  if (searchInput) {
-    searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+// -------------------------------------------------------------
+// 9B. FULL SCREEN SEARCH ENGINE (Swiggy / Zomato Style)
+// -------------------------------------------------------------
+let fsFilters = {
+  veg: false,
+  rating: false,
+  fast: false,
+  under150: false
+};
+let fsDebounceTimer = null;
+let fsPlaceholderInterval = null;
+
+function openFullScreenSearch(autoVoice = false, initialQuery = '') {
+  const modal = document.getElementById('fullScreenSearchModal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+
+  const input = document.getElementById('fsSearchInput');
+  if (input) {
+    input.value = initialQuery || '';
     setTimeout(() => {
-      searchInput.focus();
-    }, 250);
+      input.focus();
+      if (initialQuery) {
+        executeFsSearch(initialQuery);
+      }
+    }, 80);
+  }
+
+  renderFsRecentSearches();
+  renderFsPopularRestaurants();
+  updateFsFilterPillsUI();
+
+  if (!initialQuery) {
+    document.getElementById('fsPreSearchView')?.classList.remove('hidden');
+    document.getElementById('fsResultsView')?.classList.add('hidden');
+    document.getElementById('fsClearBtn')?.classList.add('hidden');
+  }
+
+  if (autoVoice) {
+    setTimeout(() => triggerFsVoiceSearch(), 300);
   }
 }
+
+function closeFullScreenSearch() {
+  const modal = document.getElementById('fullScreenSearchModal');
+  if (!modal) return;
+  modal.classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+function clearFullScreenSearch() {
+  const input = document.getElementById('fsSearchInput');
+  if (input) {
+    input.value = '';
+    input.focus();
+  }
+  document.getElementById('fsClearBtn')?.classList.add('hidden');
+  document.getElementById('fsPreSearchView')?.classList.remove('hidden');
+  document.getElementById('fsResultsView')?.classList.add('hidden');
+}
+
+function handleFsInput(val) {
+  const clearBtn = document.getElementById('fsClearBtn');
+  if (clearBtn) {
+    if (val.trim()) clearBtn.classList.remove('hidden');
+    else clearBtn.classList.add('hidden');
+  }
+
+  if (fsDebounceTimer) clearTimeout(fsDebounceTimer);
+  fsDebounceTimer = setTimeout(() => {
+    executeFsSearch(val);
+  }, 120);
+}
+
+function searchFsKeyword(keyword) {
+  const input = document.getElementById('fsSearchInput');
+  if (input) {
+    input.value = keyword;
+    input.focus();
+  }
+  executeFsSearch(keyword);
+}
+
+function toggleFsFilter(type) {
+  if (fsFilters[type] !== undefined) {
+    fsFilters[type] = !fsFilters[type];
+    updateFsFilterPillsUI();
+    const query = document.getElementById('fsSearchInput')?.value || '';
+    executeFsSearch(query);
+  }
+}
+
+function updateFsFilterPillsUI() {
+  const map = {
+    veg: 'fsPillVeg',
+    rating: 'fsPillRating',
+    fast: 'fsPillFast',
+    under150: 'fsPillUnder150'
+  };
+  for (const [key, id] of Object.entries(map)) {
+    const el = document.getElementById(id);
+    if (el) {
+      if (fsFilters[key]) el.classList.add('active');
+      else el.classList.remove('active');
+    }
+  }
+}
+
+function saveFsRecentSearch(term) {
+  if (!term || term.length < 2) return;
+  try {
+    let list = JSON.parse(localStorage.getItem('parcelkar_fs_recent') || '[]');
+    list = list.filter(item => item.toLowerCase() !== term.toLowerCase());
+    list.unshift(term);
+    if (list.length > 8) list = list.slice(0, 8);
+    localStorage.setItem('parcelkar_fs_recent', JSON.stringify(list));
+  } catch (e) {}
+}
+
+function renderFsRecentSearches() {
+  const block = document.getElementById('fsRecentSearchesBlock');
+  const container = document.getElementById('fsRecentChips');
+  if (!block || !container) return;
+
+  try {
+    const list = JSON.parse(localStorage.getItem('parcelkar_fs_recent') || '[]');
+    if (!list || list.length === 0) {
+      block.classList.add('hidden');
+      return;
+    }
+    block.classList.remove('hidden');
+    container.innerHTML = list.map(item => `
+      <button class="fs-recent-chip" onclick="searchFsKeyword('${escapeHtml(item)}')">
+        <span>🕒</span>
+        <span>${escapeHtml(item)}</span>
+      </button>
+    `).join('');
+  } catch (e) {
+    block.classList.add('hidden');
+  }
+}
+
+function clearFsRecentHistory() {
+  localStorage.removeItem('parcelkar_fs_recent');
+  renderFsRecentSearches();
+}
+
+function renderFsPopularRestaurants() {
+  const container = document.getElementById('fsPopularRestaurantsList');
+  if (!container) return;
+
+  const topRest = (appData.restaurants || [])
+    .filter(r => r.approved)
+    .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+    .slice(0, 4);
+
+  container.innerHTML = topRest.map(r => `
+    <div class="fs-rest-card" onclick="closeFullScreenSearch(); show('customer'); scrollToRestaurant(${r.id});">
+      <div class="fs-rest-img-box">
+        <img src="${r.coverImg}" alt="${r.name}" class="fs-rest-img" onerror="this.src='icon-192.png'">
+        <span class="fs-rest-badge ${r.open ? 'open' : ''}">${r.open ? '🟢 Open' : 'Closed'}</span>
+      </div>
+      <div class="fs-rest-info">
+        <div class="fs-rest-name">${r.name}</div>
+        <div class="fs-rest-cuisine">🏷️ ${r.category || r.cuisine || 'Multi-Cuisine'}</div>
+        <div class="fs-rest-meta">
+          <span>⭐ ${r.rating}</span>
+          <span>•</span>
+          <span>⏱️ ${r.prepTime}</span>
+        </div>
+      </div>
+      <button class="btn-secondary" style="padding: 6px 12px; font-size: 11px; font-weight: 700;">Explore ➔</button>
+    </div>
+  `).join('');
+}
+
+function executeFsSearch(rawQuery) {
+  const query = (rawQuery || document.getElementById('fsSearchInput')?.value || '').trim().toLowerCase();
+  const clearBtn = document.getElementById('fsClearBtn');
+  if (clearBtn) {
+    if (query) clearBtn.classList.remove('hidden');
+    else clearBtn.classList.add('hidden');
+  }
+
+  const hasFilter = fsFilters.veg || fsFilters.rating || fsFilters.fast || fsFilters.under150;
+  if (!query && !hasFilter) {
+    document.getElementById('fsPreSearchView')?.classList.remove('hidden');
+    document.getElementById('fsResultsView')?.classList.add('hidden');
+    return;
+  }
+
+  if (query.length >= 2) {
+    saveFsRecentSearch(query);
+  }
+
+  document.getElementById('fsPreSearchView')?.classList.add('hidden');
+  document.getElementById('fsResultsView')?.classList.remove('hidden');
+
+  const favList = appData.currentUser?.favorites || [];
+  const approvedRest = (appData.restaurants || []).filter(r => r.approved);
+
+  // 1. Matching dishes
+  let matchingDishes = [];
+  approvedRest.forEach(r => {
+    (r.foods || []).forEach(f => {
+      let matches = false;
+      if (!query) {
+        matches = true;
+      } else {
+        const dishName = (f.name || '').toLowerCase();
+        const catName = (f.category || '').toLowerCase();
+        const restName = (r.name || '').toLowerCase();
+        const desc = (f.desc || '').toLowerCase();
+        if (dishName.includes(query) || catName.includes(query) || restName.includes(query) || desc.includes(query)) {
+          matches = true;
+        }
+      }
+
+      if (!matches) return;
+
+      const effectivePrice = (typeof getDishEffectivePrice === 'function') ? getDishEffectivePrice(f) : f.price;
+
+      if (fsFilters.veg && !f.veg) return;
+      if (fsFilters.rating && (f.rating || r.rating || 0) < 4.0) return;
+      if (fsFilters.fast && parseInt(r.prepTime || '30') > 30) return;
+      if (fsFilters.under150 && effectivePrice > 150) return;
+
+      matchingDishes.push({
+        food: f,
+        restaurant: r,
+        effectivePrice: effectivePrice,
+        isFav: favList.includes(f.id)
+      });
+    });
+  });
+
+  // 2. Matching restaurants
+  let matchingRestaurants = [];
+  approvedRest.forEach(r => {
+    let matches = false;
+    if (!query) {
+      matches = true;
+    } else {
+      const restName = (r.name || '').toLowerCase();
+      const catName = (r.category || '').toLowerCase();
+      const cuisine = (r.cuisine || '').toLowerCase();
+      if (restName.includes(query) || catName.includes(query) || cuisine.includes(query)) {
+        matches = true;
+      }
+    }
+
+    if (!matches) return;
+
+    if (fsFilters.rating && (r.rating || 0) < 4.0) return;
+    if (fsFilters.fast && parseInt(r.prepTime || '30') > 30) return;
+
+    matchingRestaurants.push(r);
+  });
+
+  // Render Dishes
+  const dishesContainer = document.getElementById('fsDishesList');
+  const dishesGroup = document.getElementById('fsDishesGroup');
+  const dishesCount = document.getElementById('fsDishesCount');
+
+  if (dishesCount) dishesCount.textContent = matchingDishes.length;
+
+  if (matchingDishes.length === 0) {
+    if (dishesGroup) dishesGroup.classList.add('hidden');
+  } else {
+    if (dishesGroup) dishesGroup.classList.remove('hidden');
+    if (dishesContainer) {
+      dishesContainer.innerHTML = matchingDishes.map(({ food: f, restaurant: r, effectivePrice, isFav }) => {
+        const inCartItem = (appData.cart || []).find(c => c.foodId === f.id && c.restaurantId === r.id);
+        const qty = inCartItem ? inCartItem.quantity : 0;
+
+        return `
+          <div class="fs-dish-card">
+            <div class="fs-dish-left">
+              <div class="fs-dish-meta-row">
+                <span class="${f.veg ? 'veg-indicator' : 'nonveg-indicator'}"></span>
+                <span class="fs-dish-cat">${f.category || 'Food'}</span>
+                ${(f.rating || r.rating) ? `<span class="fs-dish-rating">⭐ ${f.rating || r.rating}</span>` : ''}
+              </div>
+              <div class="fs-dish-name">${f.name}</div>
+              <div class="fs-dish-rest-name" onclick="closeFullScreenSearch(); show('customer'); scrollToRestaurant(${r.id});" title="Click to view full restaurant menu">
+                🏪 ${r.name} ➔
+              </div>
+              <div class="fs-dish-price-row">
+                <span class="fs-dish-price">₹${effectivePrice}</span>
+                ${(appData.settings && appData.settings.hideDeliveryCharges) ? `<span class="fs-free-del-tag">✨ Free Del</span>` : ''}
+              </div>
+            </div>
+
+            <div class="fs-dish-right">
+              <div class="fs-dish-img-box">
+                <img src="${f.image || r.coverImg || 'icon-192.png'}" alt="${f.name}" class="fs-dish-img" onerror="this.src='icon-192.png'">
+              </div>
+              <div class="fs-dish-btn-box">
+                ${qty > 0 ? `
+                  <div class="fs-stepper-btn">
+                    <button onclick="updateFsCartQty(${r.id}, ${f.id}, -1)">−</button>
+                    <span>${qty}</span>
+                    <button onclick="updateFsCartQty(${r.id}, ${f.id}, 1)">+</button>
+                  </div>
+                ` : `
+                  <button class="fs-add-btn" onclick="addFsFoodToCart(${r.id}, ${f.id})" ${!r.open || !f.inStock ? 'disabled style="opacity:0.5;"' : ''}>
+                    ${!f.inStock ? 'Sold Out' : '+ ADD'}
+                  </button>
+                `}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  // Render Restaurants
+  const restContainer = document.getElementById('fsRestaurantsList');
+  const restGroup = document.getElementById('fsRestaurantsGroup');
+  const restCount = document.getElementById('fsRestaurantsCount');
+
+  if (restCount) restCount.textContent = matchingRestaurants.length;
+
+  if (matchingRestaurants.length === 0) {
+    if (restGroup) restGroup.classList.add('hidden');
+  } else {
+    if (restGroup) restGroup.classList.remove('hidden');
+    if (restContainer) {
+      restContainer.innerHTML = matchingRestaurants.map(r => `
+        <div class="fs-rest-card" onclick="closeFullScreenSearch(); show('customer'); scrollToRestaurant(${r.id});">
+          <div class="fs-rest-img-box">
+            <img src="${r.coverImg}" alt="${r.name}" class="fs-rest-img" onerror="this.src='icon-192.png'">
+            <span class="fs-rest-badge ${r.open ? 'open' : ''}">${r.open ? '🟢 Open' : 'Closed'}</span>
+          </div>
+          <div class="fs-rest-info">
+            <div class="fs-rest-name">${r.name}</div>
+            <div class="fs-rest-cuisine">🏷️ ${r.category || r.cuisine || 'Multi-Cuisine'}</div>
+            <div class="fs-rest-meta">
+              <span>⭐ ${r.rating}</span>
+              <span>•</span>
+              <span>⏱️ ${r.prepTime}</span>
+              <span>•</span>
+              <span>Min ₹${r.minOrder || 100}</span>
+            </div>
+          </div>
+          <button class="btn-secondary" style="padding: 6px 12px; font-size: 11px; font-weight: 700;">View Menu ➔</button>
+        </div>
+      `).join('');
+    }
+  }
+
+  // Empty State
+  const emptyState = document.getElementById('fsEmptyState');
+  if (emptyState) {
+    if (matchingDishes.length === 0 && matchingRestaurants.length === 0) {
+      emptyState.classList.remove('hidden');
+    } else {
+      emptyState.classList.add('hidden');
+    }
+  }
+
+  // Summary
+  const summary = document.getElementById('fsResultsSummary');
+  if (summary) {
+    const total = matchingDishes.length + matchingRestaurants.length;
+    summary.innerHTML = query 
+      ? `Found <b>${total}</b> items for "<b>${escapeHtml(query)}</b>"` 
+      : `Showing <b>${total}</b> filtered items`;
+  }
+}
+
+function addFsFoodToCart(restaurantId, foodId) {
+  if (typeof openCustomizeModal === 'function') {
+    openCustomizeModal(restaurantId, foodId);
+  } else if (typeof addToCart === 'function') {
+    addToCart(restaurantId, foodId);
+    showToast('Added to Cart! 🛒', 'success');
+  }
+  const query = document.getElementById('fsSearchInput')?.value || '';
+  setTimeout(() => executeFsSearch(query), 100);
+}
+
+function updateFsCartQty(restaurantId, foodId, delta) {
+  const cartItem = (appData.cart || []).find(c => c.foodId === foodId && c.restaurantId === restaurantId);
+  if (!cartItem) return;
+
+  cartItem.quantity += delta;
+  if (cartItem.quantity <= 0) {
+    appData.cart = appData.cart.filter(c => !(c.foodId === foodId && c.restaurantId === restaurantId));
+  }
+  saveState();
+  updateCartBadge();
+  if (typeof renderCartView === 'function') renderCartView();
+  const query = document.getElementById('fsSearchInput')?.value || '';
+  executeFsSearch(query);
+}
+
+function scrollToRestaurant(restaurantId) {
+  setTimeout(() => {
+    const cards = document.querySelectorAll('.restaurant-card');
+    for (const card of cards) {
+      if (card.innerText.includes(appData.restaurants.find(r => r.id === restaurantId)?.name)) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        card.style.transition = 'box-shadow 0.3s, transform 0.3s';
+        card.style.boxShadow = '0 0 0 3px #ff4722';
+        card.style.transform = 'scale(1.02)';
+        setTimeout(() => {
+          card.style.boxShadow = '';
+          card.style.transform = '';
+        }, 1500);
+        break;
+      }
+    }
+  }, 200);
+}
+
+function triggerFsVoiceSearch() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    showToast('Voice search is not supported in this browser. Please type.', 'warning');
+    return;
+  }
+  try {
+    const recognition = new SpeechRecognition();
+    recognition.lang = currentLanguage === 'mr' ? 'mr-IN' : currentLanguage === 'hi' ? 'hi-IN' : 'en-IN';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    const voiceBtn = document.getElementById('fsVoiceBtn');
+    const voiceIcon = document.getElementById('fsVoiceIcon');
+    if (voiceBtn) voiceBtn.classList.add('recording');
+    if (voiceIcon) voiceIcon.textContent = '🔴';
+    showToast('Listening... Speak your dish craving (e.g. Biryani, Pizza)...', 'info');
+
+    recognition.onresult = (event) => {
+      const speechResult = event.results[0][0].transcript;
+      const input = document.getElementById('fsSearchInput');
+      if (input) {
+        input.value = speechResult;
+        executeFsSearch(speechResult);
+      }
+      showToast(`Voice Search: "${speechResult}"`, 'success');
+    };
+
+    recognition.onerror = (event) => {
+      console.warn('Speech recognition error:', event.error);
+      if (event.error !== 'no-speech') {
+        showToast('Could not recognize voice. Please type to search.', 'warning');
+      }
+    };
+
+    recognition.onend = () => {
+      if (voiceBtn) voiceBtn.classList.remove('recording');
+      if (voiceIcon) voiceIcon.textContent = '🎙️';
+    };
+
+    recognition.start();
+  } catch (err) {
+    console.error('Voice search error:', err);
+    showToast('Unable to activate microphone. Please type to search.', 'warning');
+  }
+}
+
+function startAnimatedSearchPlaceholders() {
+  const queries = [
+    'Search for "Biryani"...',
+    'Search for "Pizza"...',
+    'Search for "Paneer Butter Masala"...',
+    'Search for "Crispy Burgers"...',
+    'Search for "South Indian Dosa"...',
+    'Search for "Chinese Hakka Noodles"...',
+    'Search for "Ice Cream & Shakes"...',
+    'Search for "Special Thali"...'
+  ];
+  let idx = 0;
+  if (fsPlaceholderInterval) clearInterval(fsPlaceholderInterval);
+  fsPlaceholderInterval = setInterval(() => {
+    idx = (idx + 1) % queries.length;
+    const heroPlaceholder = document.getElementById('homeSearchAnimatedPlaceholder');
+    if (heroPlaceholder) {
+      heroPlaceholder.style.opacity = '0';
+      setTimeout(() => {
+        heroPlaceholder.textContent = queries[idx];
+        heroPlaceholder.style.opacity = '1';
+      }, 200);
+    }
+    const fsInput = document.getElementById('fsSearchInput');
+    if (fsInput && !fsInput.value && document.activeElement !== fsInput) {
+      fsInput.placeholder = queries[idx];
+    }
+  }, 3000);
+}
+
+function focusSearchInput() {
+  openFullScreenSearch();
+}
+
+window.openFullScreenSearch = openFullScreenSearch;
+window.closeFullScreenSearch = closeFullScreenSearch;
+window.clearFullScreenSearch = clearFullScreenSearch;
+window.handleFsInput = handleFsInput;
+window.searchFsKeyword = searchFsKeyword;
+window.toggleFsFilter = toggleFsFilter;
+window.triggerFsVoiceSearch = triggerFsVoiceSearch;
+window.clearFsRecentHistory = clearFsRecentHistory;
+window.addFsFoodToCart = addFsFoodToCart;
+window.updateFsCartQty = updateFsCartQty;
+window.scrollToRestaurant = scrollToRestaurant;
+window.focusSearchInput = focusSearchInput;
+window.startAnimatedSearchPlaceholders = startAnimatedSearchPlaceholders;
 
 // -------------------------------------------------------------
 // 9B. SHAREABLE TRACKING & SOCIAL DISPATCH
@@ -7592,6 +8094,9 @@ document.addEventListener('DOMContentLoaded', () => {
   selectDeliveryZone('zone_sakoli_1');
   renderCustomerTableBookings();
   renderCustomerView();
+  if (typeof startAnimatedSearchPlaceholders === 'function') {
+    startAnimatedSearchPlaceholders();
+  }
   renderVendorInventory();
   renderAdminDisputes();
   renderAdminSurgeSwitchboard();
