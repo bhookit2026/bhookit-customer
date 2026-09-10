@@ -3831,8 +3831,9 @@ function openModal(modalId) {
   const m = document.getElementById(modalId);
   if (m) {
     m.classList.remove('hidden');
+    m.style.display = 'flex';
     document.body.style.overflow = 'hidden';
-    const modalCard = m.querySelector('.modal-card, .kds-modal-card');
+    const modalCard = m.querySelector('.modal-card, .modal-content, .kds-modal-card');
     if (modalCard) {
       modalCard.scrollTop = 0;
     }
@@ -3841,7 +3842,10 @@ function openModal(modalId) {
 
 function closeModal(modalId) {
   const m = document.getElementById(modalId);
-  if (m) m.classList.add('hidden');
+  if (m) {
+    m.classList.add('hidden');
+    m.style.display = 'none';
+  }
   const anyOpen = document.querySelector('.modal-backdrop:not(.hidden), .modal-overlay:not(.hidden)');
   if (!anyOpen) {
     document.body.style.overflow = '';
@@ -8110,7 +8114,7 @@ function submitVendorLogin(e) {
                        (r.phone && r.phone.replace(/\D/g, '').includes(loginId.replace(/\D/g, ''))) ||
                        (r.email && r.email.toLowerCase() === loginId) ||
                        (String(r.id) === loginId);
-    const matchPin = String(r.vendorPin || '1234') === pin || pin === 'admin123';
+    const matchPin = String(r.vendorPin || '1234') === pin;
     return matchLogin && matchPin;
   });
 
@@ -8175,43 +8179,59 @@ function openCreateVendorCredsModal(restaurantId = null) {
       appData.restaurants.map(r => `<option value="${r.id}" ${restaurantId === r.id ? 'selected' : ''}>${r.name}</option>`).join('');
   }
 
+  const elName = document.getElementById('vcredRestName');
+  const elOwner = document.getElementById('vcredOwnerName');
+  const elLogin = document.getElementById('vcredLoginId');
+  const elPin = document.getElementById('vcredPin');
+  const elCommission = document.getElementById('vcredCommission');
+  const elApproved = document.getElementById('vcredApproved');
+
   if (restaurantId) {
     const r = appData.restaurants.find(x => x.id === restaurantId);
     if (r) {
-      document.getElementById('vcredRestName').value = r.name;
-      document.getElementById('vcredOwnerName').value = r.ownerName || '';
-      document.getElementById('vcredLoginId').value = r.vendorLogin || r.phone || '';
-      document.getElementById('vcredPin').value = r.vendorPin || '1234';
-      document.getElementById('vcredCommission').value = r.commissionRate || 10;
-      document.getElementById('vcredApproved').checked = r.approved !== false;
+      if (elName) elName.value = r.name || '';
+      if (elOwner) elOwner.value = r.ownerName || '';
+      if (elLogin) elLogin.value = r.vendorLogin || r.phone || '';
+      if (elPin) elPin.value = r.vendorPin || '1234';
+      if (elCommission) elCommission.value = r.commissionRate || 10;
+      if (elApproved) elApproved.checked = r.approved !== false;
     }
   } else {
-    document.getElementById('vcredRestName').value = '';
-    document.getElementById('vcredOwnerName').value = '';
-    document.getElementById('vcredLoginId').value = '';
-    document.getElementById('vcredPin').value = Math.floor(1000 + Math.random() * 9000);
-    document.getElementById('vcredCommission').value = 10;
-    document.getElementById('vcredApproved').checked = true;
+    if (elName) elName.value = '';
+    if (elOwner) elOwner.value = '';
+    if (elLogin) elLogin.value = '';
+    if (elPin) elPin.value = Math.floor(1000 + Math.random() * 9000);
+    if (elCommission) elCommission.value = 10;
+    if (elApproved) elApproved.checked = true;
   }
 
   openModal('createVendorCredsModal');
 }
 
 function onVcredSelectChange(val) {
+  const elName = document.getElementById('vcredRestName');
+  const elOwner = document.getElementById('vcredOwnerName');
+  const elLogin = document.getElementById('vcredLoginId');
+  const elPin = document.getElementById('vcredPin');
+  const elCommission = document.getElementById('vcredCommission');
+  const elApproved = document.getElementById('vcredApproved');
+
   if (val === 'NEW') {
-    document.getElementById('vcredRestName').value = '';
-    document.getElementById('vcredOwnerName').value = '';
-    document.getElementById('vcredLoginId').value = '';
-    document.getElementById('vcredPin').value = Math.floor(1000 + Math.random() * 9000);
+    if (elName) elName.value = '';
+    if (elOwner) elOwner.value = '';
+    if (elLogin) elLogin.value = '';
+    if (elPin) elPin.value = Math.floor(1000 + Math.random() * 9000);
+    if (elCommission) elCommission.value = 10;
+    if (elApproved) elApproved.checked = true;
   } else {
     const r = appData.restaurants.find(x => x.id === Number(val));
     if (r) {
-      document.getElementById('vcredRestName').value = r.name;
-      document.getElementById('vcredOwnerName').value = r.ownerName || '';
-      document.getElementById('vcredLoginId').value = r.vendorLogin || r.phone || '';
-      document.getElementById('vcredPin').value = r.vendorPin || '1234';
-      document.getElementById('vcredCommission').value = r.commissionRate || 10;
-      document.getElementById('vcredApproved').checked = r.approved !== false;
+      if (elName) elName.value = r.name || '';
+      if (elOwner) elOwner.value = r.ownerName || '';
+      if (elLogin) elLogin.value = r.vendorLogin || r.phone || '';
+      if (elPin) elPin.value = r.vendorPin || '1234';
+      if (elCommission) elCommission.value = r.commissionRate || 10;
+      if (elApproved) elApproved.checked = r.approved !== false;
     }
   }
 }
@@ -8392,8 +8412,8 @@ function submitAdminLogin(e) {
   const masterLogin = (appData.adminSettings.masterLogin || 'admin@parcelkar.com').toLowerCase();
 
   // 1. Check Super Admin Master Login
-  const isSuperAdminLogin = login === masterLogin || login === 'admin' || login === 'admin@parcelkar.com' || login.startsWith('admin');
-  const isSuperAdminPass = pass === masterPass || pass === 'admin123';
+  const isSuperAdminLogin = login === masterLogin || login === 'admin' || login === 'admin@parcelkar.com';
+  const isSuperAdminPass = pass === masterPass;
 
   if (isSuperAdminLogin && isSuperAdminPass) {
     const sessionData = {
@@ -8428,7 +8448,7 @@ function submitAdminLogin(e) {
   // 2. Check Manager Login (Role-Based Access)
   const manager = (appData.managers || []).find(m => {
     const matchLogin = (m.loginId && m.loginId.toLowerCase() === login) || (m.email && m.email.toLowerCase() === login);
-    const matchPass = m.password === pass || pass === 'admin123';
+    const matchPass = m.password === pass;
     return matchLogin && matchPass;
   });
 
@@ -8532,7 +8552,7 @@ function submitChangeAdminPass(e) {
   const currentPass = appData.adminSettings.masterPassword || 'admin123';
 
   // If old password provided, check if matches
-  if (oldPass && oldPass !== currentPass && oldPass !== 'admin123') {
+  if (oldPass && oldPass !== currentPass) {
     if (errEl) {
       errEl.textContent = '❌ चालू पासवर्ड जुळत नाही (Current password does not match).';
       errEl.style.display = 'block';
@@ -8560,29 +8580,6 @@ function submitChangeAdminPass(e) {
   closeModal('changeAdminPassModal');
   showToast(`✅ पासवर्ड यशस्वीरित्या बदलला! नवीन पासवर्ड: ${newPass}`, 'success');
   alert(`✅ Master Admin Password Updated Successfully!\n\nनवीन पासवर्ड (New Password): ${newPass}\n\nपुढील वेळी लॉगिन करताना हाच पासवर्ड वापरा.`);
-}
-
-function resetAdminPasswordToDefault() {
-  if (!confirm('तुम्हाला Master Admin पासवर्ड रीसेट करून पुन्हा "admin123" करायचा आहे का?\n(Do you want to reset Master Admin password back to default "admin123"?)')) {
-    return;
-  }
-  if (!appData.adminSettings) appData.adminSettings = {};
-  appData.adminSettings.masterPassword = 'admin123';
-  saveState();
-
-  const oldPassEl = document.getElementById('oldAdminPass');
-  const newPassEl = document.getElementById('newAdminPass');
-  const confirmPassEl = document.getElementById('confirmAdminPass');
-  const gatePassEl = document.getElementById('adminAuthPassInput');
-
-  if (oldPassEl) oldPassEl.value = 'admin123';
-  if (newPassEl) newPassEl.value = '';
-  if (confirmPassEl) confirmPassEl.value = '';
-  if (gatePassEl) gatePassEl.value = 'admin123';
-
-  closeModal('changeAdminPassModal');
-  showToast('✅ पासवर्ड रीसेट झाला: admin123', 'success');
-  alert('✅ Master Admin पासवर्ड यशस्वीरित्या रीसेट झाला आहे!\n\nDefault Password: admin123');
 }
 
 // -------------------------------------------------------------
@@ -8657,7 +8654,7 @@ function submitRiderLogin(e) {
     const loginClean = loginId.replace(/\D/g, '');
     const matchId = (r.id && r.id.toLowerCase() === loginId) || (r.name && r.name.toLowerCase().includes(loginId));
     const matchPhone = loginClean && phoneClean.includes(loginClean);
-    const matchPin = String(r.riderPin || '1234') === pin || pin === '1234' || pin === 'admin123';
+    const matchPin = String(r.riderPin || '1234') === pin;
     return (matchId || matchPhone) && matchPin;
   });
 
@@ -8710,25 +8707,33 @@ function openCreateRiderCredsModal(riderId = null) {
   if (!modal) return;
   if (!appData.riders) appData.riders = [];
 
+  const elId = document.getElementById('rcredId');
+  const elName = document.getElementById('rcredName');
+  const elPhone = document.getElementById('rcredPhone');
+  const elEmail = document.getElementById('rcredEmail');
+  const elPin = document.getElementById('rcredPin');
+  const elVehicle = document.getElementById('rcredVehicle');
+  const elApproved = document.getElementById('rcredApproved');
+
   if (riderId) {
     const r = appData.riders.find(x => x.id === riderId);
     if (r) {
-      document.getElementById('rcredId').value = r.id;
-      document.getElementById('rcredName').value = r.name;
-      document.getElementById('rcredPhone').value = r.phone;
-      document.getElementById('rcredEmail').value = r.email || '';
-      document.getElementById('rcredPin').value = r.riderPin || '1234';
-      document.getElementById('rcredVehicle').value = r.vehicle || 'Motorcycle';
-      document.getElementById('rcredApproved').checked = r.approved !== false && r.active !== false;
+      if (elId) elId.value = r.id;
+      if (elName) elName.value = r.name || '';
+      if (elPhone) elPhone.value = r.phone || '';
+      if (elEmail) elEmail.value = r.email || '';
+      if (elPin) elPin.value = r.riderPin || '1234';
+      if (elVehicle) elVehicle.value = r.vehicle || 'Motorcycle';
+      if (elApproved) elApproved.checked = r.approved !== false && r.active !== false;
     }
   } else {
-    document.getElementById('rcredId').value = '';
-    document.getElementById('rcredName').value = '';
-    document.getElementById('rcredPhone').value = '';
-    document.getElementById('rcredEmail').value = '';
-    document.getElementById('rcredPin').value = Math.floor(1000 + Math.random() * 9000);
-    document.getElementById('rcredVehicle').value = 'Motorcycle';
-    document.getElementById('rcredApproved').checked = true;
+    if (elId) elId.value = '';
+    if (elName) elName.value = '';
+    if (elPhone) elPhone.value = '';
+    if (elEmail) elEmail.value = '';
+    if (elPin) elPin.value = Math.floor(1000 + Math.random() * 9000);
+    if (elVehicle) elVehicle.value = 'Motorcycle';
+    if (elApproved) elApproved.checked = true;
   }
   openModal('createRiderCredsModal');
 }
@@ -8946,27 +8951,36 @@ function openCreateManagerModal(managerId = null) {
   if (!modal) return;
   if (!appData.managers) appData.managers = [];
 
+  const elTitle = document.getElementById('mgrModalTitle');
+  const elTarget = document.getElementById('mgrTargetId');
+  const elName = document.getElementById('mgrName');
+  const elEmail = document.getElementById('mgrEmail');
+  const elLogin = document.getElementById('mgrLoginId');
+  const elPassword = document.getElementById('mgrPassword');
+  const elRole = document.getElementById('mgrRoleSelect');
+  const elActive = document.getElementById('mgrActive');
+
   if (managerId) {
     const m = appData.managers.find(x => x.id === managerId);
     if (m) {
-      document.getElementById('mgrModalTitle').textContent = 'Edit Manager & Role Assignment';
-      document.getElementById('mgrTargetId').value = m.id;
-      document.getElementById('mgrName').value = m.name;
-      document.getElementById('mgrEmail').value = m.email;
-      document.getElementById('mgrLoginId').value = m.loginId;
-      document.getElementById('mgrPassword').value = m.password;
-      document.getElementById('mgrRoleSelect').value = m.role || 'operations';
-      document.getElementById('mgrActive').checked = m.active !== false;
+      if (elTitle) elTitle.textContent = 'Edit Manager & Role Assignment';
+      if (elTarget) elTarget.value = m.id;
+      if (elName) elName.value = m.name || '';
+      if (elEmail) elEmail.value = m.email || '';
+      if (elLogin) elLogin.value = m.loginId || '';
+      if (elPassword) elPassword.value = m.password || '';
+      if (elRole) elRole.value = m.role || 'operations';
+      if (elActive) elActive.checked = m.active !== false;
     }
   } else {
-    document.getElementById('mgrModalTitle').textContent = 'Add New Manager & Allocate Role';
-    document.getElementById('mgrTargetId').value = '';
-    document.getElementById('mgrName').value = '';
-    document.getElementById('mgrEmail').value = '';
-    document.getElementById('mgrLoginId').value = '';
-    document.getElementById('mgrPassword').value = 'mgr' + Math.floor(100 + Math.random() * 900);
-    document.getElementById('mgrRoleSelect').value = 'operations';
-    document.getElementById('mgrActive').checked = true;
+    if (elTitle) elTitle.textContent = 'Add New Manager & Allocate Role';
+    if (elTarget) elTarget.value = '';
+    if (elName) elName.value = '';
+    if (elEmail) elEmail.value = '';
+    if (elLogin) elLogin.value = '';
+    if (elPassword) elPassword.value = 'mgr' + Math.floor(100 + Math.random() * 900);
+    if (elRole) elRole.value = 'operations';
+    if (elActive) elActive.checked = true;
   }
   openModal('createManagerModal');
 }
@@ -9071,3 +9085,40 @@ function copyManagerWhatsAppCreds(managerId) {
     prompt('Copy Manager WhatsApp message:', msg);
   }
 }
+
+// -------------------------------------------------------------
+// GLOBAL WINDOW EXPORTS FOR ADMIN PORTAL ACTIONS & MODALS
+// -------------------------------------------------------------
+if (typeof window !== 'undefined') {
+  window.openModal = openModal;
+  window.closeModal = closeModal;
+
+  // Rider Credential Functions
+  window.openCreateRiderCredsModal = openCreateRiderCredsModal;
+  window.saveRiderCredentials = saveRiderCredentials;
+  window.adminToggleRiderApproval = adminToggleRiderApproval;
+  window.adminDeleteRiderCredentials = adminDeleteRiderCredentials;
+  window.copyRiderWhatsAppCreds = copyRiderWhatsAppCreds;
+
+  // Vendor Credential Functions
+  window.openCreateVendorCredsModal = openCreateVendorCredsModal;
+  window.saveVendorCredentials = saveVendorCredentials;
+  window.onVcredSelectChange = onVcredSelectChange;
+  window.adminToggleVendorApproval = adminToggleVendorApproval;
+  window.adminDeleteVendorCredentials = adminDeleteVendorCredentials;
+  window.copyVendorWhatsAppCreds = copyVendorWhatsAppCreds;
+
+  // Manager RBAC Functions
+  window.openCreateManagerModal = openCreateManagerModal;
+  window.saveManagerCredentials = saveManagerCredentials;
+  window.adminDeleteManager = adminDeleteManager;
+  window.adminToggleManagerApproval = adminToggleManagerApproval;
+  window.copyManagerWhatsAppCreds = copyManagerWhatsAppCreds;
+
+  // Admin Master & View Functions
+  window.openChangeAdminPassModal = openChangeAdminPassModal;
+  window.submitChangeAdminPass = submitChangeAdminPass;
+  window.renderAdminManagersTable = renderAdminManagersTable;
+  window.renderAdminView = renderAdminView;
+}
+

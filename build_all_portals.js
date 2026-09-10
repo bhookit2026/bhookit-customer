@@ -270,6 +270,11 @@ const adminModalsHtml = `
           </div>
         </div>
 
+        <div style="margin-bottom: 12px;">
+          <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Email Address (Optional)</label>
+          <input type="email" id="rcredEmail" class="input-field" placeholder="rider@parcelkar.com">
+        </div>
+
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
           <div>
             <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Vehicle Type</label>
