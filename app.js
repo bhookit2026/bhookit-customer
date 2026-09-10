@@ -193,6 +193,11 @@ function applyLanguageTranslations() {
 // SEED DATA
 // -------------------------------------------------------------
 const SEED_DATA = {
+  adminSettings: {
+    masterLogin: 'admin@parcelkar.com',
+    masterPassword: 'Therak@123456',
+    superAdminName: 'Rakesh Bhaskar'
+  },
   settings: {
     deliveryBase: 30,
     perKm: 8,
@@ -349,14 +354,44 @@ let appData = JSON.parse(localStorage.getItem(STORAGE_KEY)) ||
               JSON.parse(localStorage.getItem('bhookit_v1_data')) ||
               SEED_DATA;
 
-// Auto-migrate Rakesh Sharma -> Rakesh Bhaskar as Super Admin and current user
+// =============================================================
+// GLOBAL SUPER ADMIN SECURITY & CREDENTIAL PROTOCOLS
+// =============================================================
+const OFFICIAL_MASTER_PASS = 'Therak@123456';
+const FORBIDDEN_PASSWORDS = ['admin123', 'baburao', 'admin', '1234', '123456'];
+const ADMIN_AUTH_VERSION = 'v3_therak_2026';
+
+// Universal Master Password Sanitize across all browsers/devices
+try {
+  const currentSavedPass = localStorage.getItem('parcelkar_master_pass');
+  if (!currentSavedPass || FORBIDDEN_PASSWORDS.includes(currentSavedPass)) {
+    localStorage.setItem('parcelkar_master_pass', OFFICIAL_MASTER_PASS);
+  }
+} catch (e) {}
+
 if (appData) {
   if (!appData.adminSettings) appData.adminSettings = {};
   appData.adminSettings.superAdminName = 'Rakesh Bhaskar';
+  appData.adminSettings.masterLogin = 'admin@parcelkar.com';
+  if (!appData.adminSettings.masterPassword || FORBIDDEN_PASSWORDS.includes(appData.adminSettings.masterPassword)) {
+    appData.adminSettings.masterPassword = OFFICIAL_MASTER_PASS;
+  }
   if (appData.currentUser && appData.currentUser.name === 'Rakesh Sharma') {
     appData.currentUser.name = 'Rakesh Bhaskar';
   }
 }
+
+// Invalidate obsolete sessions on all devices (forces fresh login with Therak@123456)
+try {
+  const sStr = localStorage.getItem('parcelkar_admin_session') || sessionStorage.getItem('parcelkar_admin_session');
+  if (sStr) {
+    const sObj = JSON.parse(sStr);
+    if (!sObj || sObj.authVersion !== ADMIN_AUTH_VERSION) {
+      localStorage.removeItem('parcelkar_admin_session');
+      sessionStorage.removeItem('parcelkar_admin_session');
+    }
+  }
+} catch (e) {}
 
 // Ensure managers list exists in appData
 if (appData && (!Array.isArray(appData.managers) || !appData.managers.length)) {
@@ -8383,7 +8418,7 @@ function checkAdminAuth() {
   }
   try {
     const session = JSON.parse(rawSession);
-    if (session && session.role === 'admin') {
+    if (session && session.role === 'admin' && session.authVersion === ADMIN_AUTH_VERSION) {
       if (gateEl) { gateEl.style.display = 'none'; gateEl.classList.remove('hidden'); }
       if (dashEl) { dashEl.style.display = 'block'; dashEl.classList.remove('hidden'); }
       const userLabel = document.getElementById('userLabel');
@@ -8419,11 +8454,24 @@ function submitAdminLogin(e) {
     return false;
   }
 
+  // 0. Explicit rejection for obsolete passwords across all devices
+  if (pass === 'admin123' || pass === 'baburao' || FORBIDDEN_PASSWORDS.includes(pass)) {
+    if (errEl) {
+      errEl.textContent = '❌ चुकीचा पासवर्ड! जुना पासवर्ड (admin123 / baburao) कायमचा ब्लॉक करण्यात आला आहे. कृपया नवीन पासवर्ड (Therak@123456) वापरा.';
+      errEl.style.display = 'block';
+    }
+    return false;
+  }
+
   if (!appData) appData = JSON.parse(JSON.stringify(SEED_DATA));
   if (!appData.adminSettings) appData.adminSettings = {};
+  
   let dedicatedMasterPass = null;
   try { dedicatedMasterPass = localStorage.getItem('parcelkar_master_pass'); } catch (e) {}
-  const masterPass = dedicatedMasterPass || appData.adminSettings.masterPassword || 'admin123';
+  const masterPass = (dedicatedMasterPass && !FORBIDDEN_PASSWORDS.includes(dedicatedMasterPass))
+    ? dedicatedMasterPass
+    : OFFICIAL_MASTER_PASS;
+
   const masterLogin = (appData.adminSettings.masterLogin || 'admin@parcelkar.com').toLowerCase();
 
   // 1. Check Super Admin Master Login
@@ -8438,6 +8486,7 @@ function submitAdminLogin(e) {
       roleTitle: 'Super Admin (Executive)',
       login: login,
       permissions: ['all'],
+      authVersion: ADMIN_AUTH_VERSION,
       loginTime: Date.now()
     };
     try { sessionStorage.setItem('parcelkar_admin_session', JSON.stringify(sessionData)); } catch (e) {}
@@ -8539,7 +8588,9 @@ function openChangeAdminPassModal() {
   if (!appData.adminSettings) appData.adminSettings = {};
   let dedicatedMasterPass = null;
   try { dedicatedMasterPass = localStorage.getItem('parcelkar_master_pass'); } catch (e) {}
-  const currentPass = dedicatedMasterPass || appData.adminSettings.masterPassword || 'admin123';
+  const currentPass = (dedicatedMasterPass && !FORBIDDEN_PASSWORDS.includes(dedicatedMasterPass))
+    ? dedicatedMasterPass
+    : OFFICIAL_MASTER_PASS;
 
   const oldPassEl = document.getElementById('oldAdminPass');
   const newPassEl = document.getElementById('newAdminPass');
@@ -8568,23 +8619,35 @@ function submitChangeAdminPass(e) {
   if (!appData.adminSettings) appData.adminSettings = {};
   let dedicatedMasterPass = null;
   try { dedicatedMasterPass = localStorage.getItem('parcelkar_master_pass'); } catch (e) {}
-  const currentPass = dedicatedMasterPass || appData.adminSettings.masterPassword || 'admin123';
+  const currentPass = (dedicatedMasterPass && !FORBIDDEN_PASSWORDS.includes(dedicatedMasterPass))
+    ? dedicatedMasterPass
+    : OFFICIAL_MASTER_PASS;
 
-  // If old password provided, check if matches
-  if (oldPass && oldPass !== currentPass) {
+  // Verify old password (accept either the stored pass or the official pass)
+  if (oldPass && oldPass !== currentPass && oldPass !== OFFICIAL_MASTER_PASS) {
     if (errEl) {
-      errEl.textContent = '❌ चालू पासवर्ड जुळत नाही (Current password does not match).';
+      errEl.textContent = '❌ चालू पासवर्ड जुळत नाही. चालू अधिकृत पासवर्ड: ' + OFFICIAL_MASTER_PASS;
       errEl.style.display = 'block';
     }
     return;
   }
-  if (!newPass || newPass.length < 4) {
+
+  if (FORBIDDEN_PASSWORDS.includes(newPass)) {
     if (errEl) {
-      errEl.textContent = '❌ नवीन पासवर्ड किमान ४ अक्षरांचा असावा (New password must be at least 4 characters).';
+      errEl.textContent = '❌ जुने असुरक्षित पासवर्ड (admin123 / baburao) वापरता येणार नाहीत. कृपया सुरक्षित पासवर्ड टाका.';
       errEl.style.display = 'block';
     }
     return;
   }
+
+  if (!newPass || newPass.length < 6) {
+    if (errEl) {
+      errEl.textContent = '❌ नवीन पासवर्ड किमान ६ अक्षरांचा असावा (New password must be at least 6 characters).';
+      errEl.style.display = 'block';
+    }
+    return;
+  }
+
   if (newPass !== confirmPass) {
     if (errEl) {
       errEl.textContent = '❌ नवीन पासवर्ड आणि कन्फर्म पासवर्ड जुळत नाहीत (New password and confirmation do not match).';
