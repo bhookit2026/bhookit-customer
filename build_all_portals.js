@@ -511,7 +511,7 @@ const vendorAuthGateHtml = `
   <div id="vendorAuthGate" class="portal-auth-gate">
     <div class="portal-auth-card">
       <div style="text-align: center; margin-bottom: 24px;">
-        <img src="parcelkar-logo.png" alt="Parcelकर" style="height: 48px; margin-bottom: 8px; filter: drop-shadow(0 2px 8px rgba(255,71,34,0.3));">
+        <img src="parcelkar-logo.png" alt="Parcelकर" style="height: 60px; margin-bottom: 10px; filter: drop-shadow(0 3px 10px rgba(255,71,34,0.35));">
         <div style="display: inline-block; background: rgba(255,71,34,0.15); border: 1px solid rgba(255,71,34,0.3); color: #ff6b4a; font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">
           🏪 Restaurant Partner Terminal
         </div>
@@ -645,7 +645,7 @@ const riderAuthGateHtml = `
   <div id="riderAuthGate" class="portal-auth-gate">
     <div class="portal-auth-card">
       <div style="text-align: center; margin-bottom: 24px;">
-        <img src="parcelkar-logo.png" alt="Parcelकर" style="height: 48px; margin-bottom: 8px; filter: drop-shadow(0 2px 8px rgba(255,71,34,0.3));">
+        <img src="parcelkar-logo.png" alt="Parcelकर" style="height: 60px; margin-bottom: 10px; filter: drop-shadow(0 3px 10px rgba(255,71,34,0.35));">
         <div style="display: inline-block; background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3); color: #60a5fa; font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">
           🛵 Delivery Fleet Partner
         </div>
@@ -767,7 +767,7 @@ const adminAuthGateHtml = `
   <div id="adminAuthGate" class="portal-auth-gate">
     <div class="portal-auth-card">
       <div style="text-align: center; margin-bottom: 24px;">
-        <img src="parcelkar-logo.png" alt="Parcelकर" style="height: 48px; margin-bottom: 8px; filter: drop-shadow(0 2px 8px rgba(255,71,34,0.3));">
+        <img src="parcelkar-logo.png" alt="Parcelकर" style="height: 60px; margin-bottom: 10px; filter: drop-shadow(0 3px 10px rgba(255,71,34,0.35));">
         <div style="display: inline-block; background: rgba(220,38,38,0.15); border: 1px solid rgba(220,38,38,0.3); color: #f87171; font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">
           🛡️ Master Super Admin Portal
         </div>
