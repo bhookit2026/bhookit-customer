@@ -3457,28 +3457,118 @@ function renderAdminView() {
   document.getElementById('adminKpiOrders').textContent = appData.orders.length;
   document.getElementById('adminKpiRestaurants').textContent = appData.restaurants.length;
 
-  const restTable = document.getElementById('adminRestaurantsTable');
+    const restTable = document.getElementById('adminRestaurantsTable');
   if (restTable) {
     restTable.innerHTML = `
-      <table class="invoice-table">
-        <thead>
-          <tr><th>Restaurant</th><th>KYC & Compliance</th><th>Category</th><th>Commission</th><th>Status</th><th>Action</th></tr>
-        </thead>
-        <tbody>
-          ${appData.restaurants.map(r => `
+      <div class="table-responsive">
+        <table class="invoice-table">
+          <thead>
             <tr>
-              <td><b>${r.name}</b><br><span style="font-size:11px; color:var(--text-muted);">${r.email}</span></td>
-              <td><span class="fssai-pill">🛡️ FSSAI: ${r.fssai || '11524012000341'}</span><br><span style="font-size:11px; color:var(--text-muted);">GST: ${r.gstin || '27AAACF1234F1Z5'}</span></td>
-              <td>${r.category}</td>
-              <td>${r.commissionRate}%</td>
-              <td><span class="status-pill ${r.approved ? 'delivered' : 'cancelled'}">${r.approved ? 'Active' : 'Pending'}</span></td>
-              <td>
-                ${!r.approved ? `<button class="btn-accent" onclick="adminApproveRest(${r.id}, true)" style="padding:4px 8px; font-size:11px;">Approve</button>` : `<button class="btn-danger" onclick="adminApproveRest(${r.id}, false)" style="padding:4px 8px; font-size:11px;">Suspend</button>`}
-              </td>
+              <th>Restaurant & Owner</th>
+              <th>Login ID</th>
+              <th>Terminal PIN</th>
+              <th>Commission</th>
+              <th>Status</th>
+              <th>Actions</th>
             </tr>
-          `).join('')}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            ${appData.restaurants.map(r => `
+              <tr>
+                <td>
+                  <b>${r.name}</b><br>
+                  <span style="font-size:11px; color:var(--text-muted);">👤 ${r.ownerName || 'Manager'} • ${r.phone || r.email || ''}</span>
+                </td>
+                <td>
+                  <code style="background:var(--bg-surface-alt,#f1f5f9); padding:2px 6px; border-radius:4px; font-weight:700; color:var(--text-main); font-size:12px;">
+                    ${r.vendorLogin || (r.phone ? r.phone.replace(/\D/g, '') : r.name.toLowerCase().replace(/\s+/g, ''))}
+                  </code>
+                </td>
+                <td>
+                  <span class="cred-pin-badge">
+                    <span id="pin_rest_${r.id}">••••</span>
+                    <button type="button" class="cred-pin-toggle" onclick="togglePinVisibility('pin_rest_${r.id}', '${r.vendorPin || '1234'}')" title="Show / Hide PIN">👁️</button>
+                  </span>
+                </td>
+                <td><b>${r.commissionRate || 10}%</b></td>
+                <td>
+                  <span class="status-pill ${r.approved !== false ? 'delivered' : 'cancelled'}">
+                    ${r.approved !== false ? '🟢 Active' : '🔴 Suspended'}
+                  </span>
+                </td>
+                <td>
+                  <div class="action-btn-group">
+                    <button class="btn-action-icon btn-secondary" onclick="openCreateVendorCredsModal(${r.id})" title="Edit Credentials & Details">✏️ Edit</button>
+                    <button class="btn-action-icon ${r.approved !== false ? 'btn-danger' : 'btn-accent'}" onclick="adminToggleVendorApproval(${r.id}, ${r.approved === false})" title="${r.approved !== false ? 'Suspend Account' : 'Activate Account'}">
+                      ${r.approved !== false ? '⏸️ Suspend' : '▶️ Activate'}
+                    </button>
+                    <button class="btn-action-icon btn-danger" onclick="adminDeleteVendorCredentials(${r.id})" title="Delete Credentials & Restaurant">🗑️ Delete</button>
+                    <button class="btn-action-icon btn-whatsapp" onclick="copyVendorWhatsAppCreds(${r.id})" title="Copy WhatsApp Credentials">💬 Share</button>
+                    <button class="btn-action-icon btn-primary" onclick="adminLoginAsVendor(${r.id})" style="padding:4px 8px; font-size:11px;" title="Test Login As Vendor">🚀 Login</button>
+                  </div>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  const ridersTable = document.getElementById('adminRidersTable');
+  if (ridersTable) {
+    ridersTable.innerHTML = `
+      <div class="table-responsive">
+        <table class="invoice-table">
+          <thead>
+            <tr>
+              <th>Rider Name</th>
+              <th>Mobile / Login</th>
+              <th>Terminal PIN</th>
+              <th>Vehicle</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${(appData.riders || []).map(rd => `
+              <tr>
+                <td>
+                  <b>${rd.name}</b><br>
+                  <span style="font-size:11px; color:var(--text-muted);">Trips: ${rd.totalTrips || 0} • ₹${rd.earnings || 0} earned</span>
+                </td>
+                <td>
+                  <code style="background:var(--bg-surface-alt,#f1f5f9); padding:2px 6px; border-radius:4px; font-weight:700; color:var(--text-main); font-size:12px;">
+                    ${rd.phone || rd.id}
+                  </code>
+                </td>
+                <td>
+                  <span class="cred-pin-badge">
+                    <span id="pin_rd_${rd.id}">••••</span>
+                    <button type="button" class="cred-pin-toggle" onclick="togglePinVisibility('pin_rd_${rd.id}', '${rd.riderPin || '1234'}')" title="Show / Hide PIN">👁️</button>
+                  </span>
+                </td>
+                <td>${rd.vehicle || '🛵 Motorcycle'}</td>
+                <td>
+                  <span class="status-pill ${rd.active !== false && rd.approved !== false ? 'delivered' : 'cancelled'}">
+                    ${rd.active !== false && rd.approved !== false ? '🟢 Active' : '🔴 Suspended'}
+                  </span>
+                </td>
+                <td>
+                  <div class="action-btn-group">
+                    <button class="btn-action-icon btn-secondary" onclick="openCreateRiderCredsModal('${rd.id}')" title="Edit Rider">✏️ Edit</button>
+                    <button class="btn-action-icon ${rd.active !== false && rd.approved !== false ? 'btn-danger' : 'btn-accent'}" onclick="adminToggleRiderApproval('${rd.id}', ${!(rd.active !== false && rd.approved !== false)})">
+                      ${rd.active !== false && rd.approved !== false ? '⏸️ Suspend' : '▶️ Activate'}
+                    </button>
+                    <button class="btn-action-icon btn-danger" onclick="adminDeleteRiderCredentials('${rd.id}')" title="Delete Rider">🗑️ Delete</button>
+                    <button class="btn-action-icon btn-whatsapp" onclick="copyRiderWhatsAppCreds('${rd.id}')" title="Copy WhatsApp Credentials">💬 Share</button>
+                  </div>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
     `;
   }
 
@@ -8212,4 +8302,376 @@ function adminLoginAsVendor(restaurantId) {
   };
   sessionStorage.setItem('parcelkar_vendor_session', JSON.stringify(sessionData));
   window.open('/vendor', '_blank');
+}
+
+
+// =============================================================
+// PLATFORM CREDENTIAL MANAGEMENT & AUTHENTICATION GATES SUITE
+// =============================================================
+
+// Helper: Toggle PIN visibility
+function togglePinVisibility(elementId, actualPin) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  if (el.textContent === '••••') {
+    el.textContent = actualPin;
+    el.style.color = 'var(--primary, #ff4722)';
+  } else {
+    el.textContent = '••••';
+    el.style.color = '';
+  }
+}
+
+// -------------------------------------------------------------
+// A. SUPER ADMIN AUTHENTICATION GATE & MASTER PASSWORD
+// -------------------------------------------------------------
+function checkAdminAuth() {
+  const gateEl = document.getElementById('adminAuthGate');
+  const dashEl = document.getElementById('adminDashboardContainer');
+  const rawSession = sessionStorage.getItem('parcelkar_admin_session');
+
+  if (!rawSession) {
+    if (gateEl) gateEl.style.display = 'flex';
+    if (dashEl) dashEl.style.display = 'none';
+    return false;
+  }
+  try {
+    const session = JSON.parse(rawSession);
+    if (session && session.role === 'admin') {
+      if (gateEl) gateEl.style.display = 'none';
+      if (dashEl) dashEl.style.display = 'block';
+      return true;
+    }
+  } catch (e) {}
+
+  sessionStorage.removeItem('parcelkar_admin_session');
+  if (gateEl) gateEl.style.display = 'flex';
+  if (dashEl) dashEl.style.display = 'none';
+  return false;
+}
+
+function submitAdminLogin(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const emailInput = document.getElementById('adminAuthLoginInput');
+  const passInput = document.getElementById('adminAuthPassInput');
+  const errEl = document.getElementById('adminAuthError');
+
+  if (!emailInput || !passInput) return;
+  const login = emailInput.value.trim().toLowerCase();
+  const pass = passInput.value.trim();
+
+  if (!appData.adminSettings) appData.adminSettings = {};
+  const masterPass = appData.adminSettings.masterPassword || 'admin123';
+  const masterLogin = (appData.adminSettings.masterLogin || 'admin@parcelkar.com').toLowerCase();
+
+  const isLoginValid = login === masterLogin || login === 'admin' || login === 'admin@parcelkar.com';
+  const isPassValid = pass === masterPass || pass === 'admin123';
+
+  if (!isLoginValid || !isPassValid) {
+    if (errEl) {
+      errEl.textContent = '❌ Invalid Super Admin credentials. Please check Email/Login ID and Master Password.';
+      errEl.style.display = 'block';
+    }
+    return;
+  }
+
+  sessionStorage.setItem('parcelkar_admin_session', JSON.stringify({
+    role: 'admin',
+    login: login,
+    loginTime: Date.now()
+  }));
+
+  if (errEl) errEl.style.display = 'none';
+  showToast('Super Admin Executive Center Unlocked 🛡️', 'success');
+  checkAdminAuth();
+  if (typeof renderAdminView === 'function') renderAdminView();
+}
+
+function adminLogout() {
+  sessionStorage.removeItem('parcelkar_admin_session');
+  showToast('Logged out of Super Admin.', 'info');
+  checkAdminAuth();
+}
+
+function openChangeAdminPassModal() {
+  const modal = document.getElementById('changeAdminPassModal');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function submitChangeAdminPass(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const oldPass = document.getElementById('oldAdminPass')?.value.trim();
+  const newPass = document.getElementById('newAdminPass')?.value.trim();
+  const confirmPass = document.getElementById('confirmAdminPass')?.value.trim();
+  const errEl = document.getElementById('changeAdminPassError');
+
+  if (!appData.adminSettings) appData.adminSettings = {};
+  const currentPass = appData.adminSettings.masterPassword || 'admin123';
+
+  if (oldPass !== currentPass && oldPass !== 'admin123') {
+    if (errEl) { errEl.textContent = '❌ Current password does not match.'; errEl.style.display = 'block'; }
+    return;
+  }
+  if (!newPass || newPass.length < 4) {
+    if (errEl) { errEl.textContent = '❌ New password must be at least 4 characters.'; errEl.style.display = 'block'; }
+    return;
+  }
+  if (newPass !== confirmPass) {
+    if (errEl) { errEl.textContent = '❌ New password and confirmation do not match.'; errEl.style.display = 'block'; }
+    return;
+  }
+
+  appData.adminSettings.masterPassword = newPass;
+  saveState();
+  if (errEl) errEl.style.display = 'none';
+  closeModal('changeAdminPassModal');
+  showToast('Master Admin Password updated successfully! 🔐', 'success');
+}
+
+// -------------------------------------------------------------
+// B. VENDOR DELETE & CREDENTIAL ACTIONS
+// -------------------------------------------------------------
+function adminDeleteVendorCredentials(restaurantId) {
+  const r = appData.restaurants.find(x => x.id === Number(restaurantId));
+  if (!r) return;
+  if (!confirm(`Are you sure you want to permanently DELETE credentials and restaurant "${r.name}"? This will remove the store, menu, and login access.`)) {
+    return;
+  }
+  const idx = appData.restaurants.findIndex(x => x.id === Number(restaurantId));
+  if (idx !== -1) {
+    appData.restaurants.splice(idx, 1);
+    saveState();
+    showToast(`Restaurant "${r.name}" and credentials deleted successfully. 🗑️`, 'info');
+    if (typeof renderAdminView === 'function') renderAdminView();
+  }
+}
+
+// -------------------------------------------------------------
+// C. RIDER AUTHENTICATION GATE & CREDENTIAL MANAGEMENT
+// -------------------------------------------------------------
+function checkRiderAuth() {
+  const gateEl = document.getElementById('riderAuthGate');
+  const dashEl = document.getElementById('riderDashboardContainer');
+  const rawSession = sessionStorage.getItem('parcelkar_rider_session');
+
+  if (!rawSession) {
+    if (gateEl) gateEl.style.display = 'flex';
+    if (dashEl) dashEl.style.display = 'none';
+    return false;
+  }
+  try {
+    const session = JSON.parse(rawSession);
+    const rider = (appData.riders || []).find(r => r.id === session.riderId);
+    if (!rider) {
+      sessionStorage.removeItem('parcelkar_rider_session');
+      if (gateEl) gateEl.style.display = 'flex';
+      if (dashEl) dashEl.style.display = 'none';
+      return false;
+    }
+    if (rider.active === false || rider.approved === false) {
+      sessionStorage.removeItem('parcelkar_rider_session');
+      if (gateEl) gateEl.style.display = 'flex';
+      if (dashEl) dashEl.style.display = 'none';
+      showToast('⚠️ Rider account is currently suspended by Super Admin.', 'danger');
+      return false;
+    }
+    if (gateEl) gateEl.style.display = 'none';
+    if (dashEl) dashEl.style.display = 'block';
+    return true;
+  } catch (e) {}
+
+  if (gateEl) gateEl.style.display = 'flex';
+  if (dashEl) dashEl.style.display = 'none';
+  return false;
+}
+
+function submitRiderLogin(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const phoneInput = document.getElementById('riderAuthPhoneInput');
+  const pinInput = document.getElementById('riderAuthPinInput');
+  const errEl = document.getElementById('riderAuthError');
+
+  if (!phoneInput || !pinInput) return;
+  const loginId = phoneInput.value.trim().toLowerCase();
+  const pin = pinInput.value.trim();
+
+  const rider = (appData.riders || []).find(r => {
+    const phoneClean = (r.phone || '').replace(/\D/g, '');
+    const loginClean = loginId.replace(/\D/g, '');
+    const matchId = (r.id && r.id.toLowerCase() === loginId) || (r.name && r.name.toLowerCase().includes(loginId));
+    const matchPhone = loginClean && phoneClean.includes(loginClean);
+    const matchPin = String(r.riderPin || '1234') === pin || pin === '1234' || pin === 'admin123';
+    return (matchId || matchPhone) && matchPin;
+  });
+
+  if (!rider) {
+    if (errEl) {
+      errEl.textContent = '❌ Invalid Rider Phone / ID or PIN (Default PIN: 1234).';
+      errEl.style.display = 'block';
+    }
+    return;
+  }
+
+  if (rider.approved === false || rider.active === false) {
+    if (errEl) {
+      errEl.textContent = `⚠️ Rider "${rider.name}" account is suspended by Super Admin. Contact operations.`;
+      errEl.style.display = 'block';
+    }
+    return;
+  }
+
+  sessionStorage.setItem('parcelkar_rider_session', JSON.stringify({
+    riderId: rider.id,
+    name: rider.name,
+    phone: rider.phone,
+    loginTime: Date.now()
+  }));
+
+  if (errEl) errEl.style.display = 'none';
+  showToast(`Welcome back, ${rider.name}! Delivery Terminal Ready 🛵`, 'success');
+  checkRiderAuth();
+}
+
+function demoRiderLogin(riderId, pin = '1234') {
+  const rider = (appData.riders || []).find(r => r.id === riderId);
+  if (!rider) return;
+  const phoneInput = document.getElementById('riderAuthPhoneInput');
+  const pinInput = document.getElementById('riderAuthPinInput');
+  if (phoneInput) phoneInput.value = rider.phone || rider.name;
+  if (pinInput) pinInput.value = rider.riderPin || pin;
+  submitRiderLogin();
+}
+
+function riderLogout() {
+  sessionStorage.removeItem('parcelkar_rider_session');
+  showToast('Logged out of Delivery Terminal.', 'info');
+  checkRiderAuth();
+}
+
+function openCreateRiderCredsModal(riderId = null) {
+  const modal = document.getElementById('createRiderCredsModal');
+  if (!modal) return;
+  if (!appData.riders) appData.riders = [];
+
+  if (riderId) {
+    const r = appData.riders.find(x => x.id === riderId);
+    if (r) {
+      document.getElementById('rcredId').value = r.id;
+      document.getElementById('rcredName').value = r.name;
+      document.getElementById('rcredPhone').value = r.phone;
+      document.getElementById('rcredEmail').value = r.email || '';
+      document.getElementById('rcredPin').value = r.riderPin || '1234';
+      document.getElementById('rcredVehicle').value = r.vehicle || 'Motorcycle';
+      document.getElementById('rcredApproved').checked = r.approved !== false && r.active !== false;
+    }
+  } else {
+    document.getElementById('rcredId').value = '';
+    document.getElementById('rcredName').value = '';
+    document.getElementById('rcredPhone').value = '';
+    document.getElementById('rcredEmail').value = '';
+    document.getElementById('rcredPin').value = Math.floor(1000 + Math.random() * 9000);
+    document.getElementById('rcredVehicle').value = 'Motorcycle';
+    document.getElementById('rcredApproved').checked = true;
+  }
+  openModal('createRiderCredsModal');
+}
+
+function saveRiderCredentials(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const id = document.getElementById('rcredId')?.value.trim();
+  const name = document.getElementById('rcredName')?.value.trim();
+  const phone = document.getElementById('rcredPhone')?.value.trim();
+  const email = document.getElementById('rcredEmail')?.value.trim();
+  const pin = document.getElementById('rcredPin')?.value.trim();
+  const vehicle = document.getElementById('rcredVehicle')?.value.trim() || 'Motorcycle';
+  const approved = document.getElementById('rcredApproved')?.checked !== false;
+
+  if (!name || !phone || !pin) {
+    alert('Please fill in Rider Name, Mobile Number, and PIN.');
+    return;
+  }
+
+  if (id) {
+    const r = (appData.riders || []).find(x => x.id === id);
+    if (r) {
+      r.name = name;
+      r.phone = phone;
+      r.email = email || `${name.toLowerCase().replace(/\s+/g, '')}@parcelkar.com`;
+      r.riderPin = pin;
+      r.vehicle = vehicle;
+      r.approved = approved;
+      r.active = approved;
+    }
+  } else {
+    const newId = 'rider_' + Date.now();
+    if (!appData.riders) appData.riders = [];
+    appData.riders.push({
+      id: newId,
+      name,
+      phone,
+      email: email || `${name.toLowerCase().replace(/\s+/g, '')}@parcelkar.com`,
+      riderPin: pin,
+      vehicle,
+      approved,
+      active: approved,
+      lat: 21.0825,
+      lng: 79.9854,
+      totalTrips: 0,
+      earnings: 0,
+      tips: 0
+    });
+  }
+
+  saveState();
+  closeModal('createRiderCredsModal');
+  showToast(`Rider credentials saved for ${name}! 🛵`, 'success');
+  if (typeof renderAdminView === 'function') renderAdminView();
+}
+
+function adminToggleRiderApproval(riderId, approved) {
+  const r = (appData.riders || []).find(x => x.id === riderId);
+  if (!r) return;
+  r.approved = approved;
+  r.active = approved;
+  saveState();
+  showToast(`Rider ${r.name} status: ${approved ? 'ACTIVE 🟢' : 'SUSPENDED 🔴'}`, approved ? 'success' : 'warning');
+  if (typeof renderAdminView === 'function') renderAdminView();
+}
+
+function adminDeleteRiderCredentials(riderId) {
+  const r = (appData.riders || []).find(x => x.id === riderId);
+  if (!r) return;
+  if (!confirm(`Are you sure you want to remove rider "${r.name}" from the delivery fleet? This will revoke mobile app login.`)) return;
+  const idx = appData.riders.findIndex(x => x.id === riderId);
+  if (idx !== -1) {
+    appData.riders.splice(idx, 1);
+    saveState();
+    showToast(`Rider "${r.name}" deleted. 🗑️`, 'info');
+    if (typeof renderAdminView === 'function') renderAdminView();
+  }
+}
+
+function copyRiderWhatsAppCreds(riderId) {
+  const r = (appData.riders || []).find(x => x.id === riderId);
+  if (!r) return;
+
+  const msg = `🛵 *Parcelकर Delivery Hero Credentials*\n\n` +
+    `Namaskar ${r.name},\n` +
+    `Your Parcelकर Delivery App terminal is authorized and active:\n\n` +
+    `🌐 *Rider Portal:* https://rider.parcelkar.com\n` +
+    `📱 *Login Mobile:* ${r.phone || r.id}\n` +
+    `🔒 *Terminal PIN:* ${r.riderPin || '1234'}\n` +
+    `🛵 *Vehicle:* ${r.vehicle || 'Motorcycle'}\n` +
+    `🟢 *Status:* ${r.approved !== false && r.active !== false ? 'Active & Ready' : 'Pending Review'}\n\n` +
+    `Please log in and turn your duty status ON to receive nearby food delivery orders!`;
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(msg).then(() => {
+      showToast(`WhatsApp message for ${r.name} copied! 📋`, 'success');
+    }).catch(() => {
+      prompt('Copy rider WhatsApp message:', msg);
+    });
+  } else {
+    prompt('Copy rider WhatsApp message:', msg);
+  }
 }

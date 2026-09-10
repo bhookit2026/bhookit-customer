@@ -28,35 +28,23 @@
     .badge-rider { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
     .badge-admin { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
     .badge-hub { background: #f3e8ff; color: #6b21a8; border: 1px solid #e9d5ff; }
-    .portal-quick-link {
-      color: var(--text-muted);
-      text-decoration: none;
-      font-size: 12px;
-      font-weight: 600;
-      padding: 6px 12px;
-      border-radius: 6px;
-      transition: all 0.2s;
-    }
-    .portal-quick-link:hover {
-      background: var(--bg-surface-alt, #f1f5f9);
-      color: var(--primary);
-    }
   </style>
 </head>
 <body>
-  <!-- Partner Hub Header -->
+  <!-- Header: Partner Ecosystem Hub Header -->
   <header>
-    <div class="logo-area" onclick="location.href='/partner'" style="cursor: pointer;" title="Parcelकर Partner Gateway">
+    <div class="logo-area" onclick="location.href='/partner'" style="cursor: pointer;" title="Parcelकर Partner Ecosystem">
       <img src="parcelkar-logo.png" alt="Parcelकर Partner" class="brand-logo-img">
       <span class="brand-name-text">Parcel<span class="brand-highlight">कर</span></span>
-      <span class="portal-badge badge-hub">🤝 Partner Hub</span>
+      <span class="portal-badge badge-hub">🚀 Partner Hub</span>
     </div>
 
-    <nav class="nav-center">
-      <a href="/vendor" class="portal-quick-link">🏪 Restaurant Vendor</a>
-      <a href="/rider" class="portal-quick-link">🛵 Delivery Hero</a>
-      <a href="/admin" class="portal-quick-link">🛡️ Master Admin</a>
-    </nav>
+    <!-- Quick Navigation to Portals -->
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <a href="/vendor" class="portal-quick-link" style="color: #ea580c;">🏪 Vendor Terminal ➔</a>
+      <a href="/rider" class="portal-quick-link" style="color: #2563eb;">🛵 Rider App ➔</a>
+      <a href="/admin" class="portal-quick-link" style="color: #dc2626;">🛡️ Operations Admin ➔</a>
+    </div>
 
     <div class="nav-right">
       <button id="themeToggleBtnNav" class="theme-toggle-btn" onclick="toggleTheme()" title="Switch Theme">
@@ -68,94 +56,12 @@
         <option value="mr">🇮🇳 मराठी</option>
         <option value="hi">🇮🇳 हिन्दी</option>
       </select>
-      <button class="btn-primary" onclick="location.href='/'" style="padding: 6px 14px; font-size: 12px;">🍔 Customer App ➔</button>
+
+      <a href="/" class="btn-primary" style="padding: 6px 14px; font-size: 12px; text-decoration: none;">🛍️ Order Food</a>
     </div>
   </header>
 
-  <main class="container" style="max-width: 1100px; margin: 30px auto; padding: 0 16px;">
-    <!-- Hero Banner -->
-    <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #fff; border-radius: 20px; padding: 40px 32px; margin-bottom: 36px; box-shadow: var(--shadow-lg); text-align: center;">
-      <span class="portal-badge badge-vendor" style="margin-bottom: 12px;">🚀 Parcelकर Partner Ecosystem</span>
-      <h1 style="font-size: 32px; font-weight: 800; margin: 12px 0; letter-spacing: -0.5px;">Grow Your Food Business with Parcelकर</h1>
-      <p style="font-size: 15px; opacity: 0.85; max-width: 680px; margin: 0 auto 24px;">Dedicated tools, kitchen management POS, automated rider dispatch, and transparent settlements for local restaurants and courier partners.</p>
-      <div style="display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;">
-        <button class="btn-primary" onclick="show('partnerRegistration')" style="font-size: 14px; padding: 10px 22px;">📝 Register Your Restaurant</button>
-        <button class="btn-secondary" onclick="location.href='/vendor'" style="font-size: 14px; padding: 10px 22px; color: #fff; border-color: rgba(255,255,255,0.3);">🏪 Access Vendor Portal</button>
-        <button class="btn-secondary" onclick="location.href='/rider'" style="font-size: 14px; padding: 10px 22px; color: #fff; border-color: rgba(255,255,255,0.3);">🛵 Access Rider Portal</button>
-      </div>
-    </div>
-
-    <!-- 3 Role Portals Grid -->
-    <h2 style="font-size: 22px; font-weight: 700; margin-bottom: 20px; text-align: center;">Select Your Portal to Continue</h2>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-bottom: 40px;">
-      
-      <!-- Card 1: Restaurant Vendor -->
-      <div style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: var(--shadow-sm); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='none'">
-        <div>
-          <div style="font-size: 36px; margin-bottom: 12px;">🏪</div>
-          <span class="portal-badge badge-vendor">For Food Outlets</span>
-          <h3 style="font-size: 20px; font-weight: 700; margin: 10px 0 8px;">Restaurant Partner Portal</h3>
-          <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px;">
-            Manage your daily incoming customer orders, digital menu items, live kitchen display (KDS), GST-compliant POS billing, and daily sales settlements.
-          </p>
-          <ul style="font-size: 12px; color: var(--text-muted); line-height: 1.8; margin-bottom: 20px; padding-left: 18px;">
-            <li>✓ Live order chime sound & notifications</li>
-            <li>✓ Built-in POS for dine-in & takeaway</li>
-            <li>✓ Instant out-of-stock item toggling</li>
-            <li>✓ Next-day direct bank payouts</li>
-          </ul>
-        </div>
-        <div>
-          <a href="/vendor" class="btn-primary" style="display: block; text-align: center; text-decoration: none; padding: 10px; font-size: 13px;">Open Vendor Portal ➔</a>
-          <button class="btn-secondary" onclick="show('partnerRegistration')" style="width: 100%; margin-top: 8px; padding: 8px; font-size: 12px;">New Partner Sign Up</button>
-        </div>
-      </div>
-
-      <!-- Card 2: Delivery Rider -->
-      <div style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: var(--shadow-sm); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='none'">
-        <div>
-          <div style="font-size: 36px; margin-bottom: 12px;">🛵</div>
-          <span class="portal-badge badge-rider">For Delivery Fleet</span>
-          <h3 style="font-size: 20px; font-weight: 700; margin: 10px 0 8px;">Delivery Hero Portal</h3>
-          <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px;">
-            Turn your bike into earnings. Receive delivery tasks, navigate to restaurant and customer locations with simulated GPS, and collect cash on delivery.
-          </p>
-          <ul style="font-size: 12px; color: var(--text-muted); line-height: 1.8; margin-bottom: 20px; padding-left: 18px;">
-            <li>✓ Flexible duty hours (Online / Offline switch)</li>
-            <li>✓ ₹50 - ₹80 per delivery trip + tips</li>
-            <li>✓ Proof of delivery (POD) & OTP protection</li>
-            <li>✓ Weekly automated rider payouts</li>
-          </ul>
-        </div>
-        <div>
-          <a href="/rider" class="btn-primary" style="display: block; text-align: center; text-decoration: none; padding: 10px; font-size: 13px; background: #2563eb; border-color: #2563eb;">Open Rider Portal ➔</a>
-        </div>
-      </div>
-
-      <!-- Card 3: Master Admin -->
-      <div style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: var(--shadow-sm); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='none'">
-        <div>
-          <div style="font-size: 36px; margin-bottom: 12px;">🛡️</div>
-          <span class="portal-badge badge-admin">Operations & Super Admin</span>
-          <h3 style="font-size: 20px; font-weight: 700; margin: 10px 0 8px;">Master Admin Dashboard</h3>
-          <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px;">
-            Real-time platform command center. Onboard restaurants, inspect rider telemetry, set weather/surge pricing, manage delivery zones, and resolve customer disputes.
-          </p>
-          <ul style="font-size: 12px; color: var(--text-muted); line-height: 1.8; margin-bottom: 20px; padding-left: 18px;">
-            <li>✓ Platform GMV & commission telemetry</li>
-            <li>✓ Delivery zone & surge pricing control</li>
-            <li>✓ Restaurant KYC & menu approvals</li>
-            <li>✓ AI dispute refund resolution system</li>
-          </ul>
-        </div>
-        <div>
-          <a href="/admin" class="btn-primary" style="display: block; text-align: center; text-decoration: none; padding: 10px; font-size: 13px; background: #dc2626; border-color: #dc2626;">Access Admin Center ➔</a>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- Partner Registration Section (Embedded) -->
+  <main class="container">
     <!-- PARTNER REGISTRATION PANEL -->
     <section id="partnerRegistration" class="panel">
       <div class="dashboard-card">
@@ -194,7 +100,6 @@
         </form>
       </div>
     </section>
-
   </main>
 
   <!-- MODAL: Food Item Customization (Add-ons) -->
@@ -1661,12 +1566,40 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <!-- Firebase Compat Scripts -->
 
-  <!-- Scripts -->
+  
+  <!-- Toast Notification Area -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="app.js"></script>
   <script src="translations.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Initialize Auth Gate per portal
+      if ('partnerRegistration' === 'admin') {
+        if (typeof checkAdminAuth === 'function') {
+          const ok = checkAdminAuth();
+          if (ok && typeof renderAdminView === 'function') renderAdminView();
+        }
+      } else if ('partnerRegistration' === 'restaurant') {
+        if (typeof checkVendorAuth === 'function') {
+          const ok = checkVendorAuth();
+          if (ok && typeof initVendorApp === 'function') initVendorApp();
+        }
+      } else if ('partnerRegistration' === 'delivery') {
+        if (typeof checkRiderAuth === 'function') {
+          const ok = checkRiderAuth();
+          if (ok && typeof renderRiderApp === 'function') renderRiderApp();
+        }
+      } else {
+        if (typeof show === 'function') show('partnerRegistration');
+      }
+    });
+  </script>
 </body>
 </html>

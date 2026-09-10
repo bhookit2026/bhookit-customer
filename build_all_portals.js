@@ -1,5 +1,6 @@
 // build_all_portals.js
 // Generates standalone portals: customer.html, vendor.html, rider.html, admin.html, partner.html
+// with complete Authentication Gates and Credential Management Center
 const fs = require('fs');
 
 const sourceHtml = fs.readFileSync('demo_all_in_one.html', 'utf8');
@@ -22,6 +23,47 @@ restaurantSection = restaurantSection.replace('id="restaurant" class="panel hidd
 riderSection = riderSection.replace('id="delivery" class="panel hidden"', 'id="delivery" class="panel"');
 adminSection = adminSection.replace('id="admin" class="panel hidden"', 'id="admin" class="panel"');
 partnerRegSection = partnerRegSection.replace('id="partnerRegistration" class="panel hidden"', 'id="partnerRegistration" class="panel"');
+
+// Inject "Allocate Credentials" button into Admin's Restaurant Management header
+adminSection = adminSection.replace(
+  '<button class="btn-secondary" onclick="openInvitePartnerModal()" style="padding: 4px 12px; font-size: 11px;">+ Invite Partner</button>',
+  '<button class="btn-primary" onclick="openCreateVendorCredsModal()" style="padding: 4px 12px; font-size: 11px; font-weight:700;">➕ Allocate Credentials</button>\n            <button class="btn-secondary" onclick="openInvitePartnerModal()" style="padding: 4px 12px; font-size: 11px;">+ Invite Partner</button>'
+);
+
+// Inject Rider Fleet Credential Center right below Restaurant Management in Admin
+const riderFleetAdminCard = `
+        <!-- Delivery Fleet & Rider Credential Management -->
+        <div class="dashboard-card" style="border-left: 4px solid #3b82f6;">
+          <div class="dashboard-card-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 20px;">🛵</span>
+              <span>Delivery Fleet &amp; Rider Credentials Center</span>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn-primary" onclick="openCreateRiderCredsModal()" style="padding: 4px 12px; font-size: 11px; font-weight: 700;">➕ Add Rider Credentials</button>
+            </div>
+          </div>
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+            Allocate, edit, suspend, and delete login credentials for delivery partners on <a href="https://rider.parcelkar.com" target="_blank" style="color:var(--primary); font-weight:700;">rider.parcelkar.com</a>.
+          </p>
+          <div id="adminRidersTable">
+            <!-- Injected dynamically -->
+          </div>
+        </div>
+`;
+
+if (!adminSection.includes('id="adminRidersTable"')) {
+  adminSection = adminSection.replace(
+    '<!-- Delivery Cities & Geofenced Service Zones Management (Admin Controlled) -->',
+    riderFleetAdminCard + '\n        <!-- Delivery Cities & Geofenced Service Zones Management (Admin Controlled) -->'
+  );
+}
+
+// Inject Change Master Password button in Admin Header area
+adminSection = adminSection.replace(
+  '<button class="btn-secondary" onclick="exportPlatformAuditLog()" style="padding: 8px 14px; color: #fff; border-color: rgba(255,255,255,0.3);">📋 System Audit</button>',
+  '<button class="btn-secondary" onclick="openChangeAdminPassModal()" style="padding: 8px 14px; color: #fff; border-color: rgba(255,255,255,0.3);">🔐 Change Master Password</button>\n            <button class="btn-secondary" onclick="exportPlatformAuditLog()" style="padding: 8px 14px; color: #fff; border-color: rgba(255,255,255,0.3);">📋 System Audit</button>'
+);
 
 const headCommon = (title, desc) => `<!doctype html>
 <html lang="en">
@@ -53,23 +95,13 @@ const headCommon = (title, desc) => `<!doctype html>
     .badge-rider { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
     .badge-admin { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
     .badge-hub { background: #f3e8ff; color: #6b21a8; border: 1px solid #e9d5ff; }
-    .portal-quick-link {
-      color: var(--text-muted);
-      text-decoration: none;
-      font-size: 12px;
-      font-weight: 600;
-      padding: 6px 12px;
-      border-radius: 6px;
-      transition: all 0.2s;
-    }
-    .portal-quick-link:hover {
-      background: var(--bg-surface-alt, #f1f5f9);
-      color: var(--primary);
-    }
   </style>
 </head>`;
 
 const scriptsCommon = (activeInitRole) => `
+  <!-- Toast Notification Area -->
+  <div class="toast-container" id="toastContainer"></div>
+
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
@@ -80,16 +112,24 @@ const scriptsCommon = (activeInitRole) => `
   <script src="translations.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // Ensure the standalone portal is active
-      if (typeof show === 'function') {
-        show('${activeInitRole}');
-      }
-      if ('${activeInitRole}' === 'restaurant' && typeof quickRole === 'function') {
-        quickRole('restaurant', 1);
-      } else if ('${activeInitRole}' === 'delivery' && typeof quickRole === 'function') {
-        quickRole('delivery');
-      } else if ('${activeInitRole}' === 'admin' && typeof quickRole === 'function') {
-        quickRole('admin');
+      // Initialize Auth Gate per portal
+      if ('${activeInitRole}' === 'admin') {
+        if (typeof checkAdminAuth === 'function') {
+          const ok = checkAdminAuth();
+          if (ok && typeof renderAdminView === 'function') renderAdminView();
+        }
+      } else if ('${activeInitRole}' === 'restaurant') {
+        if (typeof checkVendorAuth === 'function') {
+          const ok = checkVendorAuth();
+          if (ok && typeof initVendorApp === 'function') initVendorApp();
+        }
+      } else if ('${activeInitRole}' === 'delivery') {
+        if (typeof checkRiderAuth === 'function') {
+          const ok = checkRiderAuth();
+          if (ok && typeof renderRiderApp === 'function') renderRiderApp();
+        }
+      } else {
+        if (typeof show === 'function') show('${activeInitRole}');
       }
     });
   </script>
@@ -97,77 +137,289 @@ const scriptsCommon = (activeInitRole) => `
 </html>`;
 
 // ============================================================
-// 1. VENDOR PORTAL (vendor.html / partner.parcelkar.com/vendor)
+// CREDENTIAL MODALS FOR ADMIN
 // ============================================================
-const vendorHtml = `${headCommon('Parcelकर Partner — Restaurant Vendor Portal & Kitchen POS', 'Manage orders, digital menu, kitchen KDS, POS billing and daily settlements for your restaurant on Parcelकर.')}
-<body>
-  <!-- Header: Restaurant Partner Dedicated Header -->
-  <header>
-    <div class="logo-area" onclick="location.href='/vendor'" style="cursor: pointer;" title="Parcelकर Restaurant Partner">
-      <img src="parcelkar-logo.png" alt="Parcelकर Partner" class="brand-logo-img">
-      <span class="brand-name-text">Parcel<span class="brand-highlight">कर</span></span>
-      <span class="portal-badge badge-vendor">🏪 Vendor Portal</span>
-    </div>
-
-    <!-- Restaurant Switcher / Active Outlet Selector -->
-    <div style="display: flex; align-items: center; gap: 8px; background: var(--bg-surface-alt, #f8fafc); padding: 4px 12px; border-radius: 8px; border: 1px solid var(--border-color, #e2e8f0);">
-      <span style="font-size: 13px; font-weight: 600;">Outlet:</span>
-      <select id="vendorOutletSelector" onchange="quickRole('restaurant', parseInt(this.value))" style="border: none; background: transparent; font-weight: 700; color: var(--text-color); cursor: pointer; outline: none; font-size: 13px;">
-        <option value="1">Sakoli Corner (Main Market)</option>
-        <option value="2">Aapla Bhojanalay (Highway Express)</option>
-      </select>
-    </div>
-
-    <!-- Center Navigation Actions for Vendor -->
-    <nav class="nav-center">
-      <button class="nav-item-btn active" onclick="show('restaurant')">📋 Kitchen Orders</button>
-      <button class="nav-item-btn" onclick="openKdsModal()" style="background: rgba(234, 88, 12, 0.1); color: #ea580c; border: 1px solid rgba(234, 88, 12, 0.2);">👨‍🍳 Live KDS</button>
-      <button class="nav-item-btn" onclick="openPosModal()" style="background: rgba(79, 70, 229, 0.1); color: #4f46e5; border: 1px solid rgba(79, 70, 229, 0.2);">📠 Quick POS</button>
-      <button class="nav-item-btn" onclick="openAddDishModal()">➕ Add Dish</button>
-    </nav>
-
-    <div class="nav-right">
-      <!-- Audio Chime Toggle -->
-      <button id="audioToggleBtn" class="role-pill" onclick="toggleSystemAudio()" style="margin: 0;">🔊 Sound: ON</button>
-      
-      <!-- Theme & Lang -->
-      <button id="themeToggleBtnNav" class="theme-toggle-btn" onclick="toggleTheme()" title="Switch Theme">
-        <span>🌙</span>
-        <span>Dark</span>
-      </button>
-      <select id="langSelect" class="lang-selector" onchange="setLanguage(this.value)">
-        <option value="en">🇬🇧 English</option>
-        <option value="mr">🇮🇳 मराठी</option>
-        <option value="hi">🇮🇳 हिन्दी</option>
-      </select>
-
-      <!-- Notification Bell -->
-      <div class="notification-wrapper">
-        <button class="notification-btn" onclick="toggleNotificationDrawer()" title="Order Alerts">
-          <span>🔔</span>
-          <span class="notif-badge" id="notifBadge">0</span>
-        </button>
-        <div id="notificationDrawer" class="notification-drawer hidden">
-          <div class="notif-header">
-            <span style="font-weight: 700; font-size: 13px;">🔔 Store Notifications</span>
-            <button class="btn-secondary" onclick="markAllNotificationsRead()" style="padding: 2px 8px; font-size: 11px;">Clear</button>
-          </div>
-          <div id="notificationList" class="notif-list"></div>
+const adminModalsHtml = `
+  <!-- MODAL: Allocate / Edit Restaurant Vendor Credentials -->
+  <div id="createVendorCredsModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 520px;">
+      <button class="modal-close-btn" onclick="closeModal('createVendorCredsModal')">✕</button>
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+        <span style="font-size: 26px;">🔑</span>
+        <div>
+          <h3 class="modal-title" style="margin: 0; font-size: 18px; font-weight: 900;">Allocate / Edit Vendor Credentials</h3>
+          <span style="font-size: 12px; color: var(--text-muted);">Set up restaurant credentials for vendor.parcelkar.com access</span>
         </div>
       </div>
 
-      <!-- User Profile -->
-      <div class="user-profile-badge" id="userProfileArea">
-        <span>🏪</span>
-        <span id="userLabel">Restaurant Manager</span>
-      </div>
-      <button class="btn-secondary" onclick="location.href='/partner'" style="padding: 5px 10px; font-size: 12px;" title="Switch to Partner Hub">Hub ➔</button>
-    </div>
-  </header>
+      <form onsubmit="saveVendorCredentials(event)">
+        <div style="margin-bottom: 12px;">
+          <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Select Outlet Target</label>
+          <select id="vcredRestSelect" class="input-field" onchange="onVcredSelectChange(this.value)" style="font-weight: 700;">
+            <!-- Populated dynamically -->
+          </select>
+        </div>
 
-  <main class="container">
-    ${restaurantSection}
-  </main>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+          <div>
+            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Restaurant Name</label>
+            <input type="text" id="vcredRestName" class="input-field" placeholder="e.g. Sakoli Food Corner" required>
+          </div>
+          <div>
+            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Owner / Manager Name</label>
+            <input type="text" id="vcredOwnerName" class="input-field" placeholder="e.g. Ramesh Patil">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+          <div>
+            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Login ID (or Mobile)</label>
+            <input type="text" id="vcredLoginId" class="input-field" placeholder="e.g. sakoli or 9822334455" required>
+          </div>
+          <div>
+            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: flex; justify-content: space-between; margin-bottom: 4px;">
+              <span>Terminal PIN</span>
+              <a href="javascript:void(0)" onclick="document.getElementById('vcredPin').value = Math.floor(1000 + Math.random()*9000)" style="font-size: 11px; color: var(--primary); font-weight: 700;">🎲 Auto-Generate</a>
+            </label>
+            <input type="text" id="vcredPin" class="input-field" placeholder="4-digit PIN (e.g. 1234)" required maxlength="8">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
+          <div>
+            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Platform Commission (%)</label>
+            <input type="number" id="vcredCommission" class="input-field" min="0" max="50" value="10" required>
+          </div>
+          <div style="display: flex; align-items: center; padding-top: 18px;">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; font-weight: 700;">
+              <input type="checkbox" id="vcredApproved" checked style="width: 18px; height: 18px;">
+              <span>Account Active &amp; Approved</span>
+            </label>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" class="btn-secondary" onclick="closeModal('createVendorCredsModal')">Cancel</button>
+          <button type="submit" class="btn-primary" style="font-weight: 800;">💾 Save &amp; Allocate Credentials</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Allocate / Edit Delivery Rider Credentials -->
+  <div id="createRiderCredsModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 500px;">
+      <button class="modal-close-btn" onclick="closeModal('createRiderCredsModal')">✕</button>
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+        <span style="font-size: 26px;">🛵</span>
+        <div>
+          <h3 class="modal-title" style="margin: 0; font-size: 18px; font-weight: 900;">Allocate / Edit Rider Credentials</h3>
+          <span style="font-size: 12px; color: var(--text-muted);">Configure mobile login for rider.parcelkar.com</span>
+        </div>
+      </div>
+
+      <form onsubmit="saveRiderCredentials(event)">
+        <input type="hidden" id="rcredId">
+        <div style="margin-bottom: 12px;">
+          <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Rider Full Name</label>
+          <input type="text" id="rcredName" class="input-field" placeholder="e.g. Vikram Patil" required>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+          <div>
+            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Mobile Number (Login ID)</label>
+            <input type="text" id="rcredPhone" class="input-field" placeholder="+91 9988771122" required>
+          </div>
+          <div>
+            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: flex; justify-content: space-between; margin-bottom: 4px;">
+              <span>Terminal PIN</span>
+              <a href="javascript:void(0)" onclick="document.getElementById('rcredPin').value = Math.floor(1000 + Math.random()*9000)" style="font-size: 11px; color: var(--primary); font-weight: 700;">🎲 Auto-Generate</a>
+            </label>
+            <input type="text" id="rcredPin" class="input-field" placeholder="4-digit PIN" required maxlength="8">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
+          <div>
+            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Vehicle Type</label>
+            <select id="rcredVehicle" class="input-field">
+              <option value="🛵 Motorcycle">🛵 Motorcycle</option>
+              <option value="⚡ Electric Scooter">⚡ Electric Scooter</option>
+              <option value="🚲 Bicycle">🚲 Bicycle</option>
+            </select>
+          </div>
+          <div style="display: flex; align-items: center; padding-top: 18px;">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; font-weight: 700;">
+              <input type="checkbox" id="rcredApproved" checked style="width: 18px; height: 18px;">
+              <span>Active &amp; Authorized</span>
+            </label>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" class="btn-secondary" onclick="closeModal('createRiderCredsModal')">Cancel</button>
+          <button type="submit" class="btn-primary" style="font-weight: 800;">💾 Save Rider Credentials</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Change Master Admin Password -->
+  <div id="changeAdminPassModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 440px;">
+      <button class="modal-close-btn" onclick="closeModal('changeAdminPassModal')">✕</button>
+      <div style="text-align: center; margin-bottom: 18px;">
+        <span style="font-size: 36px;">🔐</span>
+        <h3 class="modal-title" style="margin-top: 6px; font-size: 18px; font-weight: 900;">Change Master Admin Password</h3>
+        <p style="font-size: 12px; color: var(--text-muted); margin: 0;">Update the master executive password for parcelkar.com/admin</p>
+      </div>
+
+      <div id="changeAdminPassError" style="display: none; background: rgba(239, 68, 68, 0.15); border: 1.5px solid #ef4444; color: #fca5a5; font-size: 12px; font-weight: 600; padding: 8px 12px; border-radius: 8px; margin-bottom: 12px;"></div>
+
+      <form onsubmit="submitChangeAdminPass(event)">
+        <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Current Master Password</label>
+        <input type="password" id="oldAdminPass" class="input-field" placeholder="Default: admin123" required style="margin-bottom: 10px;">
+
+        <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">New Master Password</label>
+        <input type="password" id="newAdminPass" class="input-field" placeholder="Enter new strong password" required minlength="4" style="margin-bottom: 10px;">
+
+        <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Confirm New Password</label>
+        <input type="password" id="confirmAdminPass" class="input-field" placeholder="Re-enter new password" required minlength="4" style="margin-bottom: 16px;">
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" class="btn-secondary" onclick="closeModal('changeAdminPassModal')">Cancel</button>
+          <button type="submit" class="btn-primary" style="font-weight: 800;">🔒 Update Password</button>
+        </div>
+      </form>
+    </div>
+  </div>
+`;
+
+// ============================================================
+// 1. VENDOR PORTAL (vendor.html)
+// ============================================================
+const vendorAuthGateHtml = `
+  <!-- VENDOR AUTHENTICATION GATE -->
+  <div id="vendorAuthGate" class="portal-auth-gate">
+    <div class="portal-auth-card">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <img src="parcelkar-logo.png" alt="Parcelकर" style="height: 48px; margin-bottom: 8px; filter: drop-shadow(0 2px 8px rgba(255,71,34,0.3));">
+        <div style="display: inline-block; background: rgba(255,71,34,0.15); border: 1px solid rgba(255,71,34,0.3); color: #ff6b4a; font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">
+          🏪 Restaurant Partner Terminal
+        </div>
+        <h2 style="font-size: 22px; font-weight: 900; margin: 0 0 6px 0; color: #fff;">Chef &amp; Kitchen Login</h2>
+        <p style="font-size: 12px; color: #94a3b8; margin: 0; line-height: 1.5;">
+          Enter your restaurant Login ID and Terminal PIN allocated by Parcelकर Super Admin.
+        </p>
+      </div>
+
+      <div id="vendorAuthError" style="display: none; background: rgba(239, 68, 68, 0.15); border: 1.5px solid #ef4444; color: #fca5a5; font-size: 12px; font-weight: 600; padding: 10px 14px; border-radius: 10px; margin-bottom: 16px;"></div>
+
+      <form onsubmit="submitVendorLogin(event)">
+        <label style="font-size: 12px; font-weight: 700; color: #cbd5e1; display: block; margin-bottom: 6px;">
+          Restaurant Login ID / Mobile
+        </label>
+        <input type="text" id="vendorAuthLoginInput" placeholder="e.g. sakoli or 9822334455" required autocomplete="username">
+
+        <label style="font-size: 12px; font-weight: 700; color: #cbd5e1; display: block; margin-bottom: 6px;">
+          Terminal PIN / Password
+        </label>
+        <input type="password" id="vendorAuthPinInput" placeholder="4-digit PIN (e.g. 1234)" required autocomplete="current-password">
+
+        <button type="submit" class="btn-primary" style="width: 100%; padding: 12px; font-size: 14px; font-weight: 800; border-radius: 10px; margin-top: 6px; box-shadow: 0 4px 14px rgba(255,71,34,0.35);">
+          🔑 Log In to Kitchen Terminal
+        </button>
+      </form>
+
+      <div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.1);">
+        <div style="font-size: 11px; font-weight: 700; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+          ⚡ Quick Demo Accounts (One-Click Test):
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <div class="demo-login-chip" onclick="demoVendorLogin(1, '1234')">
+            <span>🍔</span>
+            <span style="flex: 1;">Sakoli Food Corner (PIN: 1234)</span>
+            <span style="font-size: 10px; opacity: 0.7;">Click to Login →</span>
+          </div>
+          <div class="demo-login-chip" onclick="demoVendorLogin(2, '1234')">
+            <span>🍛</span>
+            <span style="flex: 1;">Aapla Bhojanalay (PIN: 1234)</span>
+            <span style="font-size: 10px; opacity: 0.7;">Click to Login →</span>
+          </div>
+          <div class="demo-login-chip" onclick="demoVendorLogin(3, '1234')">
+            <span>🍗</span>
+            <span style="flex: 1;">Royal Biryani &amp; Rolls (PIN: 1234)</span>
+            <span style="font-size: 10px; opacity: 0.7;">Click to Login →</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 18px; font-size: 11px; color: #64748b; line-height: 1.4;">
+        🛡️ Credentials allocated &amp; managed by Super Admin.<br>
+        Need credentials? Contact Admin at <a href="/admin" target="_blank" style="color: var(--primary); text-decoration: underline;">parcelkar.com/admin</a>
+      </div>
+    </div>
+  </div>
+`;
+
+const vendorHtml = `${headCommon('Parcelकर Partner — Restaurant Vendor Portal & Kitchen POS', 'Manage orders, digital menu, kitchen KDS, POS billing and daily settlements for your restaurant on Parcelकर.')}
+<body>
+  ${vendorAuthGateHtml}
+
+  <div id="vendorDashboardContainer" style="display: none;">
+    <!-- Header: Restaurant Partner Dedicated Header -->
+    <header>
+      <div class="logo-area" onclick="location.href='/vendor'" style="cursor: pointer;" title="Parcelकर Restaurant Partner">
+        <img src="parcelkar-logo.png" alt="Parcelकर Partner" class="brand-logo-img">
+        <span class="brand-name-text">Parcel<span class="brand-highlight">कर</span></span>
+        <span class="portal-badge badge-vendor">🏪 Vendor Portal</span>
+      </div>
+
+      <!-- Restaurant Switcher / Active Outlet Selector -->
+      <div style="display: flex; align-items: center; gap: 8px; background: var(--bg-surface-alt, #f8fafc); padding: 4px 12px; border-radius: 8px; border: 1px solid var(--border-color, #e2e8f0);">
+        <span style="font-size: 13px; font-weight: 600;">Outlet:</span>
+        <select id="vendorOutletSelector" onchange="quickRole('restaurant', parseInt(this.value))" style="border: none; background: transparent; font-weight: 700; color: var(--text-color); cursor: pointer; outline: none; font-size: 13px;">
+          <option value="1">Sakoli Corner (Main Market)</option>
+          <option value="2">Aapla Bhojanalay (Highway Express)</option>
+        </select>
+      </div>
+
+      <!-- Center Navigation Actions for Vendor -->
+      <nav class="nav-center">
+        <button class="nav-item-btn active" onclick="show('restaurant')">📋 Kitchen Orders</button>
+        <button class="nav-item-btn" onclick="openKdsModal()" style="background: rgba(234, 88, 12, 0.1); color: #ea580c; border: 1px solid rgba(234, 88, 12, 0.2);">👨‍🍳 Live KDS</button>
+        <button class="nav-item-btn" onclick="openPosModal()" style="background: rgba(79, 70, 229, 0.1); color: #4f46e5; border: 1px solid rgba(79, 70, 229, 0.2);">📠 Quick POS</button>
+        <button class="nav-item-btn" onclick="openAddDishModal()">➕ Add Dish</button>
+      </nav>
+
+      <div class="nav-right">
+        <!-- Audio Chime Toggle -->
+        <button id="audioToggleBtn" class="role-pill" onclick="toggleSystemAudio()" style="margin: 0;">🔊 Sound: ON</button>
+        
+        <!-- Theme & Lang -->
+        <button id="themeToggleBtnNav" class="theme-toggle-btn" onclick="toggleTheme()" title="Switch Theme">
+          <span>🌙</span>
+          <span>Dark</span>
+        </button>
+        <select id="langSelect" class="lang-selector" onchange="setLanguage(this.value)">
+          <option value="en">🇬🇧 English</option>
+          <option value="mr">🇮🇳 मराठी</option>
+          <option value="hi">🇮🇳 हिन्दी</option>
+        </select>
+
+        <!-- User Profile -->
+        <div class="user-profile-badge" id="userProfileArea">
+          <span>🏪</span>
+          <span id="userLabel">Restaurant Manager</span>
+        </div>
+        <button class="btn-danger" onclick="vendorLogout()" style="padding: 5px 10px; font-size: 12px;" title="Log out of Terminal">🚪 Logout</button>
+      </div>
+    </header>
+
+    <main class="container">
+      ${restaurantSection}
+    </main>
+  </div>
 
   ${allModals}
 
@@ -178,55 +430,118 @@ fs.writeFileSync('vendor.html', vendorHtml, 'utf8');
 console.log('vendor.html generated!');
 
 // ============================================================
-// 2. RIDER PORTAL (rider.html / partner.parcelkar.com/rider)
+// 2. RIDER PORTAL (rider.html)
 // ============================================================
+const riderAuthGateHtml = `
+  <!-- RIDER AUTHENTICATION GATE -->
+  <div id="riderAuthGate" class="portal-auth-gate">
+    <div class="portal-auth-card">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <img src="parcelkar-logo.png" alt="Parcelकर" style="height: 48px; margin-bottom: 8px; filter: drop-shadow(0 2px 8px rgba(255,71,34,0.3));">
+        <div style="display: inline-block; background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3); color: #60a5fa; font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">
+          🛵 Delivery Fleet Partner
+        </div>
+        <h2 style="font-size: 22px; font-weight: 900; margin: 0 0 6px 0; color: #fff;">Delivery Hero Login</h2>
+        <p style="font-size: 12px; color: #94a3b8; margin: 0; line-height: 1.5;">
+          Enter your registered Rider Mobile Number and Terminal PIN allocated by Super Admin.
+        </p>
+      </div>
+
+      <div id="riderAuthError" style="display: none; background: rgba(239, 68, 68, 0.15); border: 1.5px solid #ef4444; color: #fca5a5; font-size: 12px; font-weight: 600; padding: 10px 14px; border-radius: 10px; margin-bottom: 16px;"></div>
+
+      <form onsubmit="submitRiderLogin(event)">
+        <label style="font-size: 12px; font-weight: 700; color: #cbd5e1; display: block; margin-bottom: 6px;">
+          Rider Mobile Number / Login ID
+        </label>
+        <input type="text" id="riderAuthPhoneInput" placeholder="e.g. 9988771122 or vikram" required autocomplete="username">
+
+        <label style="font-size: 12px; font-weight: 700; color: #cbd5e1; display: block; margin-bottom: 6px;">
+          Terminal PIN
+        </label>
+        <input type="password" id="riderAuthPinInput" placeholder="4-digit PIN (Default: 1234)" required autocomplete="current-password">
+
+        <button type="submit" class="btn-primary" style="width: 100%; padding: 12px; font-size: 14px; font-weight: 800; border-radius: 10px; margin-top: 6px; box-shadow: 0 4px 14px rgba(255,71,34,0.35);">
+          🚀 Log In as Delivery Hero
+        </button>
+      </form>
+
+      <div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.1);">
+        <div style="font-size: 11px; font-weight: 700; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+          ⚡ Quick Demo Accounts:
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <div class="demo-login-chip" onclick="demoRiderLogin('rider_1', '1234')">
+            <span>🛵</span>
+            <span style="flex: 1;">Vikram Rider (PIN: 1234)</span>
+            <span style="font-size: 10px; opacity: 0.7;">Click to Login →</span>
+          </div>
+          <div class="demo-login-chip" onclick="demoRiderLogin('rider_2', '1234')">
+            <span>⚡</span>
+            <span style="flex: 1;">Speedy Rahul (PIN: 1234)</span>
+            <span style="font-size: 10px; opacity: 0.7;">Click to Login →</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 18px; font-size: 11px; color: #64748b; line-height: 1.4;">
+        🛡️ Credentials managed by Super Admin.<br>
+        Need credentials? Contact Admin at <a href="/admin" target="_blank" style="color: var(--primary); text-decoration: underline;">parcelkar.com/admin</a>
+      </div>
+    </div>
+  </div>
+`;
+
 const riderHtml = `${headCommon('Parcelकर Delivery — Rider & Courier Dispatch Partner Portal', 'Delivery partner app for live order pickup, GPS route navigation, proof of delivery and instant daily earnings.')}
 <body>
-  <!-- Header: Delivery Partner Dedicated Header -->
-  <header>
-    <div class="logo-area" onclick="location.href='/rider'" style="cursor: pointer;" title="Parcelकर Delivery Hero">
-      <img src="parcelkar-logo.png" alt="Parcelकर Rider" class="brand-logo-img">
-      <span class="brand-name-text">Parcel<span class="brand-highlight">कर</span></span>
-      <span class="portal-badge badge-rider">🛵 Delivery Hero</span>
-    </div>
+  ${riderAuthGateHtml}
 
-    <!-- Duty Status Switcher -->
-    <div style="display: flex; align-items: center; gap: 10px; background: var(--bg-surface-alt, #f8fafc); padding: 5px 14px; border-radius: 999px; border: 1px solid var(--border-color, #e2e8f0);">
-      <span style="font-size: 13px; font-weight: 700; color: #059669;">● Duty Active</span>
-      <button class="btn-secondary" onclick="toggleRiderDuty()" style="padding: 2px 8px; font-size: 11px; margin: 0;">Toggle Duty</button>
-    </div>
-
-    <nav class="nav-center">
-      <button class="nav-item-btn active" onclick="show('delivery')">🛵 Active Orders</button>
-      <button class="nav-item-btn" onclick="openPodModal('FB-MOCK')">📸 POD Verification</button>
-      <button class="nav-item-btn" onclick="openRiderSosModal()" style="background: rgba(220, 38, 38, 0.1); color: #dc2626; border: 1px solid rgba(220, 38, 38, 0.2);">🚨 SOS Help</button>
-    </nav>
-
-    <div class="nav-right">
-      <!-- Sound & Theme -->
-      <button id="audioToggleBtn" class="role-pill" onclick="toggleSystemAudio()" style="margin: 0;">🔊 Sound: ON</button>
-      <button id="themeToggleBtnNav" class="theme-toggle-btn" onclick="toggleTheme()" title="Switch Theme">
-        <span>🌙</span>
-        <span>Dark</span>
-      </button>
-      <select id="langSelect" class="lang-selector" onchange="setLanguage(this.value)">
-        <option value="en">🇬🇧 English</option>
-        <option value="mr">🇮🇳 मराठी</option>
-        <option value="hi">🇮🇳 हिन्दी</option>
-      </select>
-
-      <!-- Rider Profile -->
-      <div class="user-profile-badge" id="userProfileArea">
-        <span>🛵</span>
-        <span id="userLabel">Rider: Rajesh Patil (ID #R-402)</span>
+  <div id="riderDashboardContainer" style="display: none;">
+    <!-- Header: Delivery Partner Dedicated Header -->
+    <header>
+      <div class="logo-area" onclick="location.href='/rider'" style="cursor: pointer;" title="Parcelकर Delivery Hero">
+        <img src="parcelkar-logo.png" alt="Parcelकर Rider" class="brand-logo-img">
+        <span class="brand-name-text">Parcel<span class="brand-highlight">कर</span></span>
+        <span class="portal-badge badge-rider">🛵 Delivery Hero</span>
       </div>
-      <button class="btn-secondary" onclick="location.href='/partner'" style="padding: 5px 10px; font-size: 12px;" title="Switch to Partner Hub">Hub ➔</button>
-    </div>
-  </header>
 
-  <main class="container">
-    ${riderSection}
-  </main>
+      <!-- Duty Status Switcher -->
+      <div style="display: flex; align-items: center; gap: 10px; background: var(--bg-surface-alt, #f8fafc); padding: 5px 14px; border-radius: 999px; border: 1px solid var(--border-color, #e2e8f0);">
+        <span style="font-size: 13px; font-weight: 700; color: #059669;">● Duty Active</span>
+        <button class="btn-secondary" onclick="toggleRiderDuty()" style="padding: 2px 8px; font-size: 11px; margin: 0;">Toggle Duty</button>
+      </div>
+
+      <nav class="nav-center">
+        <button class="nav-item-btn active" onclick="show('delivery')">🛵 Active Orders</button>
+        <button class="nav-item-btn" onclick="openPodModal('FB-MOCK')">📸 POD Verification</button>
+        <button class="nav-item-btn" onclick="openRiderSosModal()" style="background: rgba(220, 38, 38, 0.1); color: #dc2626; border: 1px solid rgba(220, 38, 38, 0.2);">🚨 SOS Help</button>
+      </nav>
+
+      <div class="nav-right">
+        <!-- Sound & Theme -->
+        <button id="audioToggleBtn" class="role-pill" onclick="toggleSystemAudio()" style="margin: 0;">🔊 Sound: ON</button>
+        <button id="themeToggleBtnNav" class="theme-toggle-btn" onclick="toggleTheme()" title="Switch Theme">
+          <span>🌙</span>
+          <span>Dark</span>
+        </button>
+        <select id="langSelect" class="lang-selector" onchange="setLanguage(this.value)">
+          <option value="en">🇬🇧 English</option>
+          <option value="mr">🇮🇳 मराठी</option>
+          <option value="hi">🇮🇳 हिन्दी</option>
+        </select>
+
+        <!-- Rider Profile -->
+        <div class="user-profile-badge" id="userProfileArea">
+          <span>🛵</span>
+          <span id="userLabel">Rider: Vikram</span>
+        </div>
+        <button class="btn-danger" onclick="riderLogout()" style="padding: 5px 10px; font-size: 12px;" title="Log out of Terminal">🚪 Logout</button>
+      </div>
+    </header>
+
+    <main class="container">
+      ${riderSection}
+    </main>
+  </div>
 
   ${allModals}
 
@@ -237,55 +552,111 @@ fs.writeFileSync('rider.html', riderHtml, 'utf8');
 console.log('rider.html generated!');
 
 // ============================================================
-// 3. ADMIN PORTAL (admin.html / partner.parcelkar.com/admin)
+// 3. ADMIN PORTAL (admin.html)
 // ============================================================
+const adminAuthGateHtml = `
+  <!-- MASTER ADMIN AUTHENTICATION GATE -->
+  <div id="adminAuthGate" class="portal-auth-gate">
+    <div class="portal-auth-card">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <img src="parcelkar-logo.png" alt="Parcelकर" style="height: 48px; margin-bottom: 8px; filter: drop-shadow(0 2px 8px rgba(255,71,34,0.3));">
+        <div style="display: inline-block; background: rgba(220,38,38,0.15); border: 1px solid rgba(220,38,38,0.3); color: #f87171; font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">
+          🛡️ Master Super Admin Portal
+        </div>
+        <h2 style="font-size: 22px; font-weight: 900; margin: 0 0 6px 0; color: #fff;">Executive Login Gate</h2>
+        <p style="font-size: 12px; color: #94a3b8; margin: 0; line-height: 1.5;">
+          Restricted access. Enter your Super Admin credentials to manage platform operations, credentials, and financials.
+        </p>
+      </div>
+
+      <div id="adminAuthError" style="display: none; background: rgba(239, 68, 68, 0.15); border: 1.5px solid #ef4444; color: #fca5a5; font-size: 12px; font-weight: 600; padding: 10px 14px; border-radius: 10px; margin-bottom: 16px;"></div>
+
+      <form onsubmit="submitAdminLogin(event)">
+        <label style="font-size: 12px; font-weight: 700; color: #cbd5e1; display: block; margin-bottom: 6px;">
+          Super Admin Email / Username
+        </label>
+        <input type="text" id="adminAuthLoginInput" placeholder="admin@parcelkar.com or admin" required autocomplete="username" value="admin@parcelkar.com">
+
+        <label style="font-size: 12px; font-weight: 700; color: #cbd5e1; display: block; margin-bottom: 6px;">
+          Master Password / PIN
+        </label>
+        <input type="password" id="adminAuthPassInput" placeholder="Enter Master Password (Default: admin123)" required autocomplete="current-password" value="admin123">
+
+        <button type="submit" class="btn-primary" style="width: 100%; padding: 12px; font-size: 14px; font-weight: 800; border-radius: 10px; margin-top: 6px; box-shadow: 0 4px 14px rgba(255,71,34,0.35);">
+          🔓 Unlock Executive Admin Center
+        </button>
+      </form>
+
+      <div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.1);">
+        <div style="font-size: 11px; font-weight: 700; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+          ⚡ One-Click Master Login:
+        </div>
+        <div class="demo-login-chip" onclick="document.getElementById('adminAuthLoginInput').value='admin@parcelkar.com'; document.getElementById('adminAuthPassInput').value='admin123'; submitAdminLogin();">
+          <span>🛡️</span>
+          <span style="flex: 1;">Super Admin (admin@parcelkar.com / admin123)</span>
+          <span style="font-size: 10px; opacity: 0.7;">Click to Login →</span>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 18px; font-size: 11px; color: #64748b; line-height: 1.4;">
+        🔒 Encrypted session verification. Only authorized personnel may access.
+      </div>
+    </div>
+  </div>
+`;
+
 const adminHtml = `${headCommon('Parcelकर Master Admin — Platform Operations & System Dashboard', 'Master control dashboard for Parcelकर platform: restaurant onboarding, rider telemetry, zone configuration, commission and analytics.')}
 <body>
-  <!-- Header: Master Super Admin Dedicated Header -->
-  <header>
-    <div class="logo-area" onclick="location.href='/admin'" style="cursor: pointer;" title="Parcelकर Master Admin">
-      <img src="parcelkar-logo.png" alt="Parcelकर Admin" class="brand-logo-img">
-      <span class="brand-name-text">Parcel<span class="brand-highlight">कर</span></span>
-      <span class="portal-badge badge-admin">🛡️ Master Admin</span>
-    </div>
+  ${adminAuthGateHtml}
 
-    <!-- Admin Status Banner -->
-    <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: #059669; background: #ecfdf5; padding: 4px 12px; border-radius: 999px; border: 1px solid #a7f3d0;">
-      <span style="display: inline-block; width: 8px; height: 8px; background: #10b981; border-radius: 50%;"></span>
-      <span>Live System: All 5 Delivery Zones Online</span>
-    </div>
-
-    <nav class="nav-center">
-      <button class="nav-item-btn active" onclick="show('admin')">📊 Platform Metrics</button>
-      <button class="nav-item-btn" onclick="openOnboardModal()">➕ Onboard Restaurant</button>
-      <button class="nav-item-btn" onclick="openAddCouponModal()">🏷️ Add Coupon</button>
-      <button class="nav-item-btn" onclick="openAdminZoneModal()">📍 Delivery Zones</button>
-    </nav>
-
-    <div class="nav-right">
-      <button id="themeToggleBtnNav" class="theme-toggle-btn" onclick="toggleTheme()" title="Switch Theme">
-        <span>🌙</span>
-        <span>Dark</span>
-      </button>
-      <select id="langSelect" class="lang-selector" onchange="setLanguage(this.value)">
-        <option value="en">🇬🇧 English</option>
-        <option value="mr">🇮🇳 मराठी</option>
-        <option value="hi">🇮🇳 हिन्दी</option>
-      </select>
-
-      <div class="user-profile-badge" id="userProfileArea">
-        <span>🛡️</span>
-        <span id="userLabel">Super Admin</span>
+  <div id="adminDashboardContainer" style="display: none;">
+    <!-- Header: Master Super Admin Dedicated Header -->
+    <header>
+      <div class="logo-area" onclick="location.href='/admin'" style="cursor: pointer;" title="Parcelकर Master Admin">
+        <img src="parcelkar-logo.png" alt="Parcelकर Admin" class="brand-logo-img">
+        <span class="brand-name-text">Parcel<span class="brand-highlight">कर</span></span>
+        <span class="portal-badge badge-admin">🛡️ Master Admin</span>
       </div>
-      <button class="btn-secondary" onclick="location.href='/partner'" style="padding: 5px 10px; font-size: 12px;" title="Switch to Partner Hub">Hub ➔</button>
-    </div>
-  </header>
 
-  <main class="container">
-    ${adminSection}
-  </main>
+      <!-- Admin Status Banner -->
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: #059669; background: #ecfdf5; padding: 4px 12px; border-radius: 999px; border: 1px solid #a7f3d0;">
+        <span style="display: inline-block; width: 8px; height: 8px; background: #10b981; border-radius: 50%;"></span>
+        <span>Live System: All 5 Delivery Zones Online</span>
+      </div>
+
+      <nav class="nav-center">
+        <button class="nav-item-btn active" onclick="show('admin')">📊 Platform Metrics</button>
+        <button class="nav-item-btn" onclick="openCreateVendorCredsModal()">➕ Allocate Credentials</button>
+        <button class="nav-item-btn" onclick="openAddCouponModal()">🏷️ Add Coupon</button>
+        <button class="nav-item-btn" onclick="openAdminZoneModal()">📍 Delivery Zones</button>
+      </nav>
+
+      <div class="nav-right">
+        <button id="themeToggleBtnNav" class="theme-toggle-btn" onclick="toggleTheme()" title="Switch Theme">
+          <span>🌙</span>
+          <span>Dark</span>
+        </button>
+        <select id="langSelect" class="lang-selector" onchange="setLanguage(this.value)">
+          <option value="en">🇬🇧 English</option>
+          <option value="mr">🇮🇳 मराठी</option>
+          <option value="hi">🇮🇳 हिन्दी</option>
+        </select>
+
+        <div class="user-profile-badge" id="userProfileArea">
+          <span>🛡️</span>
+          <span id="userLabel">Super Admin</span>
+        </div>
+        <button class="btn-danger" onclick="adminLogout()" style="padding: 5px 10px; font-size: 12px;" title="Log out of Super Admin">🚪 Logout</button>
+      </div>
+    </header>
+
+    <main class="container">
+      ${adminSection}
+    </main>
+  </div>
 
   ${allModals}
+  ${adminModalsHtml}
 
   ${scriptsCommon('admin')}
 `;
@@ -294,23 +665,24 @@ fs.writeFileSync('admin.html', adminHtml, 'utf8');
 console.log('admin.html generated!');
 
 // ============================================================
-// 4. PARTNER HUB (partner.html / partner.parcelkar.com)
+// 4. PARTNER HUB (partner.html)
 // ============================================================
 const partnerHtml = `${headCommon('Parcelकर Partner Hub — Restaurant & Delivery Fleet Ecosystem', 'Join Parcelकर partner network. Dedicated portals for restaurants, delivery riders, and operations management in Maharashtra.')}
 <body>
-  <!-- Partner Hub Header -->
+  <!-- Header: Partner Ecosystem Hub Header -->
   <header>
-    <div class="logo-area" onclick="location.href='/partner'" style="cursor: pointer;" title="Parcelकर Partner Gateway">
+    <div class="logo-area" onclick="location.href='/partner'" style="cursor: pointer;" title="Parcelकर Partner Ecosystem">
       <img src="parcelkar-logo.png" alt="Parcelकर Partner" class="brand-logo-img">
       <span class="brand-name-text">Parcel<span class="brand-highlight">कर</span></span>
-      <span class="portal-badge badge-hub">🤝 Partner Hub</span>
+      <span class="portal-badge badge-hub">🚀 Partner Hub</span>
     </div>
 
-    <nav class="nav-center">
-      <a href="/vendor" class="portal-quick-link">🏪 Restaurant Vendor</a>
-      <a href="/rider" class="portal-quick-link">🛵 Delivery Hero</a>
-      <a href="/admin" class="portal-quick-link">🛡️ Master Admin</a>
-    </nav>
+    <!-- Quick Navigation to Portals -->
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <a href="/vendor" class="portal-quick-link" style="color: #ea580c;">🏪 Vendor Terminal ➔</a>
+      <a href="/rider" class="portal-quick-link" style="color: #2563eb;">🛵 Rider App ➔</a>
+      <a href="/admin" class="portal-quick-link" style="color: #dc2626;">🛡️ Operations Admin ➔</a>
+    </div>
 
     <div class="nav-right">
       <button id="themeToggleBtnNav" class="theme-toggle-btn" onclick="toggleTheme()" title="Switch Theme">
@@ -322,109 +694,19 @@ const partnerHtml = `${headCommon('Parcelकर Partner Hub — Restaurant & Del
         <option value="mr">🇮🇳 मराठी</option>
         <option value="hi">🇮🇳 हिन्दी</option>
       </select>
-      <button class="btn-primary" onclick="location.href='/'" style="padding: 6px 14px; font-size: 12px;">🍔 Customer App ➔</button>
+
+      <a href="/" class="btn-primary" style="padding: 6px 14px; font-size: 12px; text-decoration: none;">🛍️ Order Food</a>
     </div>
   </header>
 
-  <main class="container" style="max-width: 1100px; margin: 30px auto; padding: 0 16px;">
-    <!-- Hero Banner -->
-    <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #fff; border-radius: 20px; padding: 40px 32px; margin-bottom: 36px; box-shadow: var(--shadow-lg); text-align: center;">
-      <span class="portal-badge badge-vendor" style="margin-bottom: 12px;">🚀 Parcelकर Partner Ecosystem</span>
-      <h1 style="font-size: 32px; font-weight: 800; margin: 12px 0; letter-spacing: -0.5px;">Grow Your Food Business with Parcelकर</h1>
-      <p style="font-size: 15px; opacity: 0.85; max-width: 680px; margin: 0 auto 24px;">Dedicated tools, kitchen management POS, automated rider dispatch, and transparent settlements for local restaurants and courier partners.</p>
-      <div style="display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;">
-        <button class="btn-primary" onclick="show('partnerRegistration')" style="font-size: 14px; padding: 10px 22px;">📝 Register Your Restaurant</button>
-        <button class="btn-secondary" onclick="location.href='/vendor'" style="font-size: 14px; padding: 10px 22px; color: #fff; border-color: rgba(255,255,255,0.3);">🏪 Access Vendor Portal</button>
-        <button class="btn-secondary" onclick="location.href='/rider'" style="font-size: 14px; padding: 10px 22px; color: #fff; border-color: rgba(255,255,255,0.3);">🛵 Access Rider Portal</button>
-      </div>
-    </div>
-
-    <!-- 3 Role Portals Grid -->
-    <h2 style="font-size: 22px; font-weight: 700; margin-bottom: 20px; text-align: center;">Select Your Portal to Continue</h2>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-bottom: 40px;">
-      
-      <!-- Card 1: Restaurant Vendor -->
-      <div style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: var(--shadow-sm); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='none'">
-        <div>
-          <div style="font-size: 36px; margin-bottom: 12px;">🏪</div>
-          <span class="portal-badge badge-vendor">For Food Outlets</span>
-          <h3 style="font-size: 20px; font-weight: 700; margin: 10px 0 8px;">Restaurant Partner Portal</h3>
-          <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px;">
-            Manage your daily incoming customer orders, digital menu items, live kitchen display (KDS), GST-compliant POS billing, and daily sales settlements.
-          </p>
-          <ul style="font-size: 12px; color: var(--text-muted); line-height: 1.8; margin-bottom: 20px; padding-left: 18px;">
-            <li>✓ Live order chime sound & notifications</li>
-            <li>✓ Built-in POS for dine-in & takeaway</li>
-            <li>✓ Instant out-of-stock item toggling</li>
-            <li>✓ Next-day direct bank payouts</li>
-          </ul>
-        </div>
-        <div>
-          <a href="/vendor" class="btn-primary" style="display: block; text-align: center; text-decoration: none; padding: 10px; font-size: 13px;">Open Vendor Portal ➔</a>
-          <button class="btn-secondary" onclick="show('partnerRegistration')" style="width: 100%; margin-top: 8px; padding: 8px; font-size: 12px;">New Partner Sign Up</button>
-        </div>
-      </div>
-
-      <!-- Card 2: Delivery Rider -->
-      <div style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: var(--shadow-sm); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='none'">
-        <div>
-          <div style="font-size: 36px; margin-bottom: 12px;">🛵</div>
-          <span class="portal-badge badge-rider">For Delivery Fleet</span>
-          <h3 style="font-size: 20px; font-weight: 700; margin: 10px 0 8px;">Delivery Hero Portal</h3>
-          <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px;">
-            Turn your bike into earnings. Receive delivery tasks, navigate to restaurant and customer locations with simulated GPS, and collect cash on delivery.
-          </p>
-          <ul style="font-size: 12px; color: var(--text-muted); line-height: 1.8; margin-bottom: 20px; padding-left: 18px;">
-            <li>✓ Flexible duty hours (Online / Offline switch)</li>
-            <li>✓ ₹50 - ₹80 per delivery trip + tips</li>
-            <li>✓ Proof of delivery (POD) & OTP protection</li>
-            <li>✓ Weekly automated rider payouts</li>
-          </ul>
-        </div>
-        <div>
-          <a href="/rider" class="btn-primary" style="display: block; text-align: center; text-decoration: none; padding: 10px; font-size: 13px; background: #2563eb; border-color: #2563eb;">Open Rider Portal ➔</a>
-        </div>
-      </div>
-
-      <!-- Card 3: Master Admin -->
-      <div style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: var(--shadow-sm); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='none'">
-        <div>
-          <div style="font-size: 36px; margin-bottom: 12px;">🛡️</div>
-          <span class="portal-badge badge-admin">Operations & Super Admin</span>
-          <h3 style="font-size: 20px; font-weight: 700; margin: 10px 0 8px;">Master Admin Dashboard</h3>
-          <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px;">
-            Real-time platform command center. Onboard restaurants, inspect rider telemetry, set weather/surge pricing, manage delivery zones, and resolve customer disputes.
-          </p>
-          <ul style="font-size: 12px; color: var(--text-muted); line-height: 1.8; margin-bottom: 20px; padding-left: 18px;">
-            <li>✓ Platform GMV & commission telemetry</li>
-            <li>✓ Delivery zone & surge pricing control</li>
-            <li>✓ Restaurant KYC & menu approvals</li>
-            <li>✓ AI dispute refund resolution system</li>
-          </ul>
-        </div>
-        <div>
-          <a href="/admin" class="btn-primary" style="display: block; text-align: center; text-decoration: none; padding: 10px; font-size: 13px; background: #dc2626; border-color: #dc2626;">Access Admin Center ➔</a>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- Partner Registration Section (Embedded) -->
+  <main class="container">
     ${partnerRegSection}
-
   </main>
 
   ${allModals}
 
-  <!-- Scripts -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-  <script src="firebase-config.js"></script>
-  <script src="app.js"></script>
-  <script src="translations.js"></script>
-</body>
-</html>`;
+  ${scriptsCommon('partnerRegistration')}
+`;
 
 fs.writeFileSync('partner.html', partnerHtml, 'utf8');
 console.log('partner.html generated!');

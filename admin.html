@@ -28,64 +28,103 @@
     .badge-rider { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
     .badge-admin { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
     .badge-hub { background: #f3e8ff; color: #6b21a8; border: 1px solid #e9d5ff; }
-    .portal-quick-link {
-      color: var(--text-muted);
-      text-decoration: none;
-      font-size: 12px;
-      font-weight: 600;
-      padding: 6px 12px;
-      border-radius: 6px;
-      transition: all 0.2s;
-    }
-    .portal-quick-link:hover {
-      background: var(--bg-surface-alt, #f1f5f9);
-      color: var(--primary);
-    }
   </style>
 </head>
 <body>
-  <!-- Header: Master Super Admin Dedicated Header -->
-  <header>
-    <div class="logo-area" onclick="location.href='/admin'" style="cursor: pointer;" title="Parcelकर Master Admin">
-      <img src="parcelkar-logo.png" alt="Parcelकर Admin" class="brand-logo-img">
-      <span class="brand-name-text">Parcel<span class="brand-highlight">कर</span></span>
-      <span class="portal-badge badge-admin">🛡️ Master Admin</span>
-    </div>
-
-    <!-- Admin Status Banner -->
-    <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: #059669; background: #ecfdf5; padding: 4px 12px; border-radius: 999px; border: 1px solid #a7f3d0;">
-      <span style="display: inline-block; width: 8px; height: 8px; background: #10b981; border-radius: 50%;"></span>
-      <span>Live System: All 5 Delivery Zones Online</span>
-    </div>
-
-    <nav class="nav-center">
-      <button class="nav-item-btn active" onclick="show('admin')">📊 Platform Metrics</button>
-      <button class="nav-item-btn" onclick="openOnboardModal()">➕ Onboard Restaurant</button>
-      <button class="nav-item-btn" onclick="openAddCouponModal()">🏷️ Add Coupon</button>
-      <button class="nav-item-btn" onclick="openAdminZoneModal()">📍 Delivery Zones</button>
-    </nav>
-
-    <div class="nav-right">
-      <button id="themeToggleBtnNav" class="theme-toggle-btn" onclick="toggleTheme()" title="Switch Theme">
-        <span>🌙</span>
-        <span>Dark</span>
-      </button>
-      <select id="langSelect" class="lang-selector" onchange="setLanguage(this.value)">
-        <option value="en">🇬🇧 English</option>
-        <option value="mr">🇮🇳 मराठी</option>
-        <option value="hi">🇮🇳 हिन्दी</option>
-      </select>
-
-      <div class="user-profile-badge" id="userProfileArea">
-        <span>🛡️</span>
-        <span id="userLabel">Super Admin</span>
+  
+  <!-- MASTER ADMIN AUTHENTICATION GATE -->
+  <div id="adminAuthGate" class="portal-auth-gate">
+    <div class="portal-auth-card">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <img src="parcelkar-logo.png" alt="Parcelकर" style="height: 48px; margin-bottom: 8px; filter: drop-shadow(0 2px 8px rgba(255,71,34,0.3));">
+        <div style="display: inline-block; background: rgba(220,38,38,0.15); border: 1px solid rgba(220,38,38,0.3); color: #f87171; font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">
+          🛡️ Master Super Admin Portal
+        </div>
+        <h2 style="font-size: 22px; font-weight: 900; margin: 0 0 6px 0; color: #fff;">Executive Login Gate</h2>
+        <p style="font-size: 12px; color: #94a3b8; margin: 0; line-height: 1.5;">
+          Restricted access. Enter your Super Admin credentials to manage platform operations, credentials, and financials.
+        </p>
       </div>
-      <button class="btn-secondary" onclick="location.href='/partner'" style="padding: 5px 10px; font-size: 12px;" title="Switch to Partner Hub">Hub ➔</button>
-    </div>
-  </header>
 
-  <main class="container">
-    <!-- 7. SUPER ADMIN EXECUTIVE COMMAND CENTER -->
+      <div id="adminAuthError" style="display: none; background: rgba(239, 68, 68, 0.15); border: 1.5px solid #ef4444; color: #fca5a5; font-size: 12px; font-weight: 600; padding: 10px 14px; border-radius: 10px; margin-bottom: 16px;"></div>
+
+      <form onsubmit="submitAdminLogin(event)">
+        <label style="font-size: 12px; font-weight: 700; color: #cbd5e1; display: block; margin-bottom: 6px;">
+          Super Admin Email / Username
+        </label>
+        <input type="text" id="adminAuthLoginInput" placeholder="admin@parcelkar.com or admin" required autocomplete="username" value="admin@parcelkar.com">
+
+        <label style="font-size: 12px; font-weight: 700; color: #cbd5e1; display: block; margin-bottom: 6px;">
+          Master Password / PIN
+        </label>
+        <input type="password" id="adminAuthPassInput" placeholder="Enter Master Password (Default: admin123)" required autocomplete="current-password" value="admin123">
+
+        <button type="submit" class="btn-primary" style="width: 100%; padding: 12px; font-size: 14px; font-weight: 800; border-radius: 10px; margin-top: 6px; box-shadow: 0 4px 14px rgba(255,71,34,0.35);">
+          🔓 Unlock Executive Admin Center
+        </button>
+      </form>
+
+      <div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.1);">
+        <div style="font-size: 11px; font-weight: 700; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+          ⚡ One-Click Master Login:
+        </div>
+        <div class="demo-login-chip" onclick="document.getElementById('adminAuthLoginInput').value='admin@parcelkar.com'; document.getElementById('adminAuthPassInput').value='admin123'; submitAdminLogin();">
+          <span>🛡️</span>
+          <span style="flex: 1;">Super Admin (admin@parcelkar.com / admin123)</span>
+          <span style="font-size: 10px; opacity: 0.7;">Click to Login →</span>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 18px; font-size: 11px; color: #64748b; line-height: 1.4;">
+        🔒 Encrypted session verification. Only authorized personnel may access.
+      </div>
+    </div>
+  </div>
+
+
+  <div id="adminDashboardContainer" style="display: none;">
+    <!-- Header: Master Super Admin Dedicated Header -->
+    <header>
+      <div class="logo-area" onclick="location.href='/admin'" style="cursor: pointer;" title="Parcelकर Master Admin">
+        <img src="parcelkar-logo.png" alt="Parcelकर Admin" class="brand-logo-img">
+        <span class="brand-name-text">Parcel<span class="brand-highlight">कर</span></span>
+        <span class="portal-badge badge-admin">🛡️ Master Admin</span>
+      </div>
+
+      <!-- Admin Status Banner -->
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: #059669; background: #ecfdf5; padding: 4px 12px; border-radius: 999px; border: 1px solid #a7f3d0;">
+        <span style="display: inline-block; width: 8px; height: 8px; background: #10b981; border-radius: 50%;"></span>
+        <span>Live System: All 5 Delivery Zones Online</span>
+      </div>
+
+      <nav class="nav-center">
+        <button class="nav-item-btn active" onclick="show('admin')">📊 Platform Metrics</button>
+        <button class="nav-item-btn" onclick="openCreateVendorCredsModal()">➕ Allocate Credentials</button>
+        <button class="nav-item-btn" onclick="openAddCouponModal()">🏷️ Add Coupon</button>
+        <button class="nav-item-btn" onclick="openAdminZoneModal()">📍 Delivery Zones</button>
+      </nav>
+
+      <div class="nav-right">
+        <button id="themeToggleBtnNav" class="theme-toggle-btn" onclick="toggleTheme()" title="Switch Theme">
+          <span>🌙</span>
+          <span>Dark</span>
+        </button>
+        <select id="langSelect" class="lang-selector" onchange="setLanguage(this.value)">
+          <option value="en">🇬🇧 English</option>
+          <option value="mr">🇮🇳 मराठी</option>
+          <option value="hi">🇮🇳 हिन्दी</option>
+        </select>
+
+        <div class="user-profile-badge" id="userProfileArea">
+          <span>🛡️</span>
+          <span id="userLabel">Super Admin</span>
+        </div>
+        <button class="btn-danger" onclick="adminLogout()" style="padding: 5px 10px; font-size: 12px;" title="Log out of Super Admin">🚪 Logout</button>
+      </div>
+    </header>
+
+    <main class="container">
+      <!-- 7. SUPER ADMIN EXECUTIVE COMMAND CENTER -->
     <section id="admin" class="panel">
       <div class="dashboard-card" style="background: linear-gradient(135deg, #18181b, #27272a); color: #fff;">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
@@ -95,6 +134,7 @@
           </div>
           <div style="display: flex; gap: 8px;">
             <button class="btn-primary" onclick="triggerAdminDataSync()" style="margin: 0; padding: 8px 14px;">🔄 Refresh Realtime Data</button>
+            <button class="btn-secondary" onclick="openChangeAdminPassModal()" style="padding: 8px 14px; color: #fff; border-color: rgba(255,255,255,0.3);">🔐 Change Master Password</button>
             <button class="btn-secondary" onclick="exportPlatformAuditLog()" style="padding: 8px 14px; color: #fff; border-color: rgba(255,255,255,0.3);">📋 System Audit</button>
           </div>
         </div>
@@ -122,13 +162,34 @@
       <div class="dashboard-card">
         <div class="dashboard-card-title" style="display: flex; justify-content: space-between; align-items: center;">
           <span>🍽️ Restaurant Partner Management &amp; KYC</span>
-          <button class="btn-secondary" onclick="openInvitePartnerModal()" style="padding: 4px 12px; font-size: 11px;">+ Invite Partner</button>
+          <button class="btn-primary" onclick="openCreateVendorCredsModal()" style="padding: 4px 12px; font-size: 11px; font-weight:700;">➕ Allocate Credentials</button>
+            <button class="btn-secondary" onclick="openInvitePartnerModal()" style="padding: 4px 12px; font-size: 11px;">+ Invite Partner</button>
         </div>
         <div id="adminRestaurantsTable">
           <!-- Injected dynamically -->
         </div>
       </div>
-      <!-- Delivery Cities & Geofenced Service Zones Management (Admin Controlled) -->
+      
+        <!-- Delivery Fleet & Rider Credential Management -->
+        <div class="dashboard-card" style="border-left: 4px solid #3b82f6;">
+          <div class="dashboard-card-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 20px;">🛵</span>
+              <span>Delivery Fleet &amp; Rider Credentials Center</span>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn-primary" onclick="openCreateRiderCredsModal()" style="padding: 4px 12px; font-size: 11px; font-weight: 700;">➕ Add Rider Credentials</button>
+            </div>
+          </div>
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+            Allocate, edit, suspend, and delete login credentials for delivery partners on <a href="https://rider.parcelkar.com" target="_blank" style="color:var(--primary); font-weight:700;">rider.parcelkar.com</a>.
+          </p>
+          <div id="adminRidersTable">
+            <!-- Injected dynamically -->
+          </div>
+        </div>
+
+        <!-- Delivery Cities & Geofenced Service Zones Management (Admin Controlled) -->
       <div class="dashboard-card" style="border-left: 4px solid #10b981;">
         <div class="dashboard-card-title">
           <div style="display: flex; align-items: center; gap: 8px;">
@@ -317,7 +378,8 @@
         </div>
       </div>
     </section>
-  </main>
+    </main>
+  </div>
 
   <!-- MODAL: Food Item Customization (Add-ons) -->
   <div id="foodCustomizerModal" class="modal-overlay hidden">
@@ -1782,8 +1844,166 @@
   <!-- Leaflet Interactive Maps -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <!-- Firebase Compat Scripts -->
+  
+  <!-- MODAL: Allocate / Edit Restaurant Vendor Credentials -->
+  <div id="createVendorCredsModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 520px;">
+      <button class="modal-close-btn" onclick="closeModal('createVendorCredsModal')">✕</button>
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+        <span style="font-size: 26px;">🔑</span>
+        <div>
+          <h3 class="modal-title" style="margin: 0; font-size: 18px; font-weight: 900;">Allocate / Edit Vendor Credentials</h3>
+          <span style="font-size: 12px; color: var(--text-muted);">Set up restaurant credentials for vendor.parcelkar.com access</span>
+        </div>
+      </div>
+
+      <form onsubmit="saveVendorCredentials(event)">
+        <div style="margin-bottom: 12px;">
+          <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Select Outlet Target</label>
+          <select id="vcredRestSelect" class="input-field" onchange="onVcredSelectChange(this.value)" style="font-weight: 700;">
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+          <div>
+            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Restaurant Name</label>
+            <input type="text" id="vcredRestName" class="input-field" placeholder="e.g. Sakoli Food Corner" required>
+          </div>
+          <div>
+            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Owner / Manager Name</label>
+            <input type="text" id="vcredOwnerName" class="input-field" placeholder="e.g. Ramesh Patil">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+          <div>
+            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Login ID (or Mobile)</label>
+            <input type="text" id="vcredLoginId" class="input-field" placeholder="e.g. sakoli or 9822334455" required>
+          </div>
+          <div>
+            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: flex; justify-content: space-between; margin-bottom: 4px;">
+              <span>Terminal PIN</span>
+              <a href="javascript:void(0)" onclick="document.getElementById('vcredPin').value = Math.floor(1000 + Math.random()*9000)" style="font-size: 11px; color: var(--primary); font-weight: 700;">🎲 Auto-Generate</a>
+            </label>
+            <input type="text" id="vcredPin" class="input-field" placeholder="4-digit PIN (e.g. 1234)" required maxlength="8">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
+          <div>
+            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Platform Commission (%)</label>
+            <input type="number" id="vcredCommission" class="input-field" min="0" max="50" value="10" required>
+          </div>
+          <div style="display: flex; align-items: center; padding-top: 18px;">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; font-weight: 700;">
+              <input type="checkbox" id="vcredApproved" checked style="width: 18px; height: 18px;">
+              <span>Account Active &amp; Approved</span>
+            </label>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" class="btn-secondary" onclick="closeModal('createVendorCredsModal')">Cancel</button>
+          <button type="submit" class="btn-primary" style="font-weight: 800;">💾 Save &amp; Allocate Credentials</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Allocate / Edit Delivery Rider Credentials -->
+  <div id="createRiderCredsModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 500px;">
+      <button class="modal-close-btn" onclick="closeModal('createRiderCredsModal')">✕</button>
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+        <span style="font-size: 26px;">🛵</span>
+        <div>
+          <h3 class="modal-title" style="margin: 0; font-size: 18px; font-weight: 900;">Allocate / Edit Rider Credentials</h3>
+          <span style="font-size: 12px; color: var(--text-muted);">Configure mobile login for rider.parcelkar.com</span>
+        </div>
+      </div>
+
+      <form onsubmit="saveRiderCredentials(event)">
+        <input type="hidden" id="rcredId">
+        <div style="margin-bottom: 12px;">
+          <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Rider Full Name</label>
+          <input type="text" id="rcredName" class="input-field" placeholder="e.g. Vikram Patil" required>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+          <div>
+            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Mobile Number (Login ID)</label>
+            <input type="text" id="rcredPhone" class="input-field" placeholder="+91 9988771122" required>
+          </div>
+          <div>
+            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: flex; justify-content: space-between; margin-bottom: 4px;">
+              <span>Terminal PIN</span>
+              <a href="javascript:void(0)" onclick="document.getElementById('rcredPin').value = Math.floor(1000 + Math.random()*9000)" style="font-size: 11px; color: var(--primary); font-weight: 700;">🎲 Auto-Generate</a>
+            </label>
+            <input type="text" id="rcredPin" class="input-field" placeholder="4-digit PIN" required maxlength="8">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
+          <div>
+            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Vehicle Type</label>
+            <select id="rcredVehicle" class="input-field">
+              <option value="🛵 Motorcycle">🛵 Motorcycle</option>
+              <option value="⚡ Electric Scooter">⚡ Electric Scooter</option>
+              <option value="🚲 Bicycle">🚲 Bicycle</option>
+            </select>
+          </div>
+          <div style="display: flex; align-items: center; padding-top: 18px;">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; font-weight: 700;">
+              <input type="checkbox" id="rcredApproved" checked style="width: 18px; height: 18px;">
+              <span>Active &amp; Authorized</span>
+            </label>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" class="btn-secondary" onclick="closeModal('createRiderCredsModal')">Cancel</button>
+          <button type="submit" class="btn-primary" style="font-weight: 800;">💾 Save Rider Credentials</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Change Master Admin Password -->
+  <div id="changeAdminPassModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 440px;">
+      <button class="modal-close-btn" onclick="closeModal('changeAdminPassModal')">✕</button>
+      <div style="text-align: center; margin-bottom: 18px;">
+        <span style="font-size: 36px;">🔐</span>
+        <h3 class="modal-title" style="margin-top: 6px; font-size: 18px; font-weight: 900;">Change Master Admin Password</h3>
+        <p style="font-size: 12px; color: var(--text-muted); margin: 0;">Update the master executive password for parcelkar.com/admin</p>
+      </div>
+
+      <div id="changeAdminPassError" style="display: none; background: rgba(239, 68, 68, 0.15); border: 1.5px solid #ef4444; color: #fca5a5; font-size: 12px; font-weight: 600; padding: 8px 12px; border-radius: 8px; margin-bottom: 12px;"></div>
+
+      <form onsubmit="submitChangeAdminPass(event)">
+        <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Current Master Password</label>
+        <input type="password" id="oldAdminPass" class="input-field" placeholder="Default: admin123" required style="margin-bottom: 10px;">
+
+        <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">New Master Password</label>
+        <input type="password" id="newAdminPass" class="input-field" placeholder="Enter new strong password" required minlength="4" style="margin-bottom: 10px;">
+
+        <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Confirm New Password</label>
+        <input type="password" id="confirmAdminPass" class="input-field" placeholder="Re-enter new password" required minlength="4" style="margin-bottom: 16px;">
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" class="btn-secondary" onclick="closeModal('changeAdminPassModal')">Cancel</button>
+          <button type="submit" class="btn-primary" style="font-weight: 800;">🔒 Update Password</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
 
   
+  <!-- Toast Notification Area -->
+  <div class="toast-container" id="toastContainer"></div>
+
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
@@ -1794,16 +2014,24 @@
   <script src="translations.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // Ensure the standalone portal is active
-      if (typeof show === 'function') {
-        show('admin');
-      }
-      if ('admin' === 'restaurant' && typeof quickRole === 'function') {
-        quickRole('restaurant', 1);
-      } else if ('admin' === 'delivery' && typeof quickRole === 'function') {
-        quickRole('delivery');
-      } else if ('admin' === 'admin' && typeof quickRole === 'function') {
-        quickRole('admin');
+      // Initialize Auth Gate per portal
+      if ('admin' === 'admin') {
+        if (typeof checkAdminAuth === 'function') {
+          const ok = checkAdminAuth();
+          if (ok && typeof renderAdminView === 'function') renderAdminView();
+        }
+      } else if ('admin' === 'restaurant') {
+        if (typeof checkVendorAuth === 'function') {
+          const ok = checkVendorAuth();
+          if (ok && typeof initVendorApp === 'function') initVendorApp();
+        }
+      } else if ('admin' === 'delivery') {
+        if (typeof checkRiderAuth === 'function') {
+          const ok = checkRiderAuth();
+          if (ok && typeof renderRiderApp === 'function') renderRiderApp();
+        }
+      } else {
+        if (typeof show === 'function') show('admin');
       }
     });
   </script>

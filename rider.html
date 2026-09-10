@@ -28,66 +28,113 @@
     .badge-rider { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
     .badge-admin { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
     .badge-hub { background: #f3e8ff; color: #6b21a8; border: 1px solid #e9d5ff; }
-    .portal-quick-link {
-      color: var(--text-muted);
-      text-decoration: none;
-      font-size: 12px;
-      font-weight: 600;
-      padding: 6px 12px;
-      border-radius: 6px;
-      transition: all 0.2s;
-    }
-    .portal-quick-link:hover {
-      background: var(--bg-surface-alt, #f1f5f9);
-      color: var(--primary);
-    }
   </style>
 </head>
 <body>
-  <!-- Header: Delivery Partner Dedicated Header -->
-  <header>
-    <div class="logo-area" onclick="location.href='/rider'" style="cursor: pointer;" title="Parcelकर Delivery Hero">
-      <img src="parcelkar-logo.png" alt="Parcelकर Rider" class="brand-logo-img">
-      <span class="brand-name-text">Parcel<span class="brand-highlight">कर</span></span>
-      <span class="portal-badge badge-rider">🛵 Delivery Hero</span>
-    </div>
-
-    <!-- Duty Status Switcher -->
-    <div style="display: flex; align-items: center; gap: 10px; background: var(--bg-surface-alt, #f8fafc); padding: 5px 14px; border-radius: 999px; border: 1px solid var(--border-color, #e2e8f0);">
-      <span style="font-size: 13px; font-weight: 700; color: #059669;">● Duty Active</span>
-      <button class="btn-secondary" onclick="toggleRiderDuty()" style="padding: 2px 8px; font-size: 11px; margin: 0;">Toggle Duty</button>
-    </div>
-
-    <nav class="nav-center">
-      <button class="nav-item-btn active" onclick="show('delivery')">🛵 Active Orders</button>
-      <button class="nav-item-btn" onclick="openPodModal('FB-MOCK')">📸 POD Verification</button>
-      <button class="nav-item-btn" onclick="openRiderSosModal()" style="background: rgba(220, 38, 38, 0.1); color: #dc2626; border: 1px solid rgba(220, 38, 38, 0.2);">🚨 SOS Help</button>
-    </nav>
-
-    <div class="nav-right">
-      <!-- Sound & Theme -->
-      <button id="audioToggleBtn" class="role-pill" onclick="toggleSystemAudio()" style="margin: 0;">🔊 Sound: ON</button>
-      <button id="themeToggleBtnNav" class="theme-toggle-btn" onclick="toggleTheme()" title="Switch Theme">
-        <span>🌙</span>
-        <span>Dark</span>
-      </button>
-      <select id="langSelect" class="lang-selector" onchange="setLanguage(this.value)">
-        <option value="en">🇬🇧 English</option>
-        <option value="mr">🇮🇳 मराठी</option>
-        <option value="hi">🇮🇳 हिन्दी</option>
-      </select>
-
-      <!-- Rider Profile -->
-      <div class="user-profile-badge" id="userProfileArea">
-        <span>🛵</span>
-        <span id="userLabel">Rider: Rajesh Patil (ID #R-402)</span>
+  
+  <!-- RIDER AUTHENTICATION GATE -->
+  <div id="riderAuthGate" class="portal-auth-gate">
+    <div class="portal-auth-card">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <img src="parcelkar-logo.png" alt="Parcelकर" style="height: 48px; margin-bottom: 8px; filter: drop-shadow(0 2px 8px rgba(255,71,34,0.3));">
+        <div style="display: inline-block; background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3); color: #60a5fa; font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">
+          🛵 Delivery Fleet Partner
+        </div>
+        <h2 style="font-size: 22px; font-weight: 900; margin: 0 0 6px 0; color: #fff;">Delivery Hero Login</h2>
+        <p style="font-size: 12px; color: #94a3b8; margin: 0; line-height: 1.5;">
+          Enter your registered Rider Mobile Number and Terminal PIN allocated by Super Admin.
+        </p>
       </div>
-      <button class="btn-secondary" onclick="location.href='/partner'" style="padding: 5px 10px; font-size: 12px;" title="Switch to Partner Hub">Hub ➔</button>
-    </div>
-  </header>
 
-  <main class="container">
-    <!-- 6. DELIVERY RIDER PARTNER PORTAL -->
+      <div id="riderAuthError" style="display: none; background: rgba(239, 68, 68, 0.15); border: 1.5px solid #ef4444; color: #fca5a5; font-size: 12px; font-weight: 600; padding: 10px 14px; border-radius: 10px; margin-bottom: 16px;"></div>
+
+      <form onsubmit="submitRiderLogin(event)">
+        <label style="font-size: 12px; font-weight: 700; color: #cbd5e1; display: block; margin-bottom: 6px;">
+          Rider Mobile Number / Login ID
+        </label>
+        <input type="text" id="riderAuthPhoneInput" placeholder="e.g. 9988771122 or vikram" required autocomplete="username">
+
+        <label style="font-size: 12px; font-weight: 700; color: #cbd5e1; display: block; margin-bottom: 6px;">
+          Terminal PIN
+        </label>
+        <input type="password" id="riderAuthPinInput" placeholder="4-digit PIN (Default: 1234)" required autocomplete="current-password">
+
+        <button type="submit" class="btn-primary" style="width: 100%; padding: 12px; font-size: 14px; font-weight: 800; border-radius: 10px; margin-top: 6px; box-shadow: 0 4px 14px rgba(255,71,34,0.35);">
+          🚀 Log In as Delivery Hero
+        </button>
+      </form>
+
+      <div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.1);">
+        <div style="font-size: 11px; font-weight: 700; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+          ⚡ Quick Demo Accounts:
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <div class="demo-login-chip" onclick="demoRiderLogin('rider_1', '1234')">
+            <span>🛵</span>
+            <span style="flex: 1;">Vikram Rider (PIN: 1234)</span>
+            <span style="font-size: 10px; opacity: 0.7;">Click to Login →</span>
+          </div>
+          <div class="demo-login-chip" onclick="demoRiderLogin('rider_2', '1234')">
+            <span>⚡</span>
+            <span style="flex: 1;">Speedy Rahul (PIN: 1234)</span>
+            <span style="font-size: 10px; opacity: 0.7;">Click to Login →</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 18px; font-size: 11px; color: #64748b; line-height: 1.4;">
+        🛡️ Credentials managed by Super Admin.<br>
+        Need credentials? Contact Admin at <a href="/admin" target="_blank" style="color: var(--primary); text-decoration: underline;">parcelkar.com/admin</a>
+      </div>
+    </div>
+  </div>
+
+
+  <div id="riderDashboardContainer" style="display: none;">
+    <!-- Header: Delivery Partner Dedicated Header -->
+    <header>
+      <div class="logo-area" onclick="location.href='/rider'" style="cursor: pointer;" title="Parcelकर Delivery Hero">
+        <img src="parcelkar-logo.png" alt="Parcelकर Rider" class="brand-logo-img">
+        <span class="brand-name-text">Parcel<span class="brand-highlight">कर</span></span>
+        <span class="portal-badge badge-rider">🛵 Delivery Hero</span>
+      </div>
+
+      <!-- Duty Status Switcher -->
+      <div style="display: flex; align-items: center; gap: 10px; background: var(--bg-surface-alt, #f8fafc); padding: 5px 14px; border-radius: 999px; border: 1px solid var(--border-color, #e2e8f0);">
+        <span style="font-size: 13px; font-weight: 700; color: #059669;">● Duty Active</span>
+        <button class="btn-secondary" onclick="toggleRiderDuty()" style="padding: 2px 8px; font-size: 11px; margin: 0;">Toggle Duty</button>
+      </div>
+
+      <nav class="nav-center">
+        <button class="nav-item-btn active" onclick="show('delivery')">🛵 Active Orders</button>
+        <button class="nav-item-btn" onclick="openPodModal('FB-MOCK')">📸 POD Verification</button>
+        <button class="nav-item-btn" onclick="openRiderSosModal()" style="background: rgba(220, 38, 38, 0.1); color: #dc2626; border: 1px solid rgba(220, 38, 38, 0.2);">🚨 SOS Help</button>
+      </nav>
+
+      <div class="nav-right">
+        <!-- Sound & Theme -->
+        <button id="audioToggleBtn" class="role-pill" onclick="toggleSystemAudio()" style="margin: 0;">🔊 Sound: ON</button>
+        <button id="themeToggleBtnNav" class="theme-toggle-btn" onclick="toggleTheme()" title="Switch Theme">
+          <span>🌙</span>
+          <span>Dark</span>
+        </button>
+        <select id="langSelect" class="lang-selector" onchange="setLanguage(this.value)">
+          <option value="en">🇬🇧 English</option>
+          <option value="mr">🇮🇳 मराठी</option>
+          <option value="hi">🇮🇳 हिन्दी</option>
+        </select>
+
+        <!-- Rider Profile -->
+        <div class="user-profile-badge" id="userProfileArea">
+          <span>🛵</span>
+          <span id="userLabel">Rider: Vikram</span>
+        </div>
+        <button class="btn-danger" onclick="riderLogout()" style="padding: 5px 10px; font-size: 12px;" title="Log out of Terminal">🚪 Logout</button>
+      </div>
+    </header>
+
+    <main class="container">
+      <!-- 6. DELIVERY RIDER PARTNER PORTAL -->
     <section id="delivery" class="panel">
       <div class="dashboard-card" style="background: linear-gradient(135deg, #065f46, #047857); color: #fff;">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
@@ -178,7 +225,8 @@
         </div>
       </div>
     </section>
-  </main>
+    </main>
+  </div>
 
   <!-- MODAL: Food Item Customization (Add-ons) -->
   <div id="foodCustomizerModal" class="modal-overlay hidden">
@@ -1645,6 +1693,9 @@
   <!-- Firebase Compat Scripts -->
 
   
+  <!-- Toast Notification Area -->
+  <div class="toast-container" id="toastContainer"></div>
+
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
@@ -1655,16 +1706,24 @@
   <script src="translations.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // Ensure the standalone portal is active
-      if (typeof show === 'function') {
-        show('delivery');
-      }
-      if ('delivery' === 'restaurant' && typeof quickRole === 'function') {
-        quickRole('restaurant', 1);
-      } else if ('delivery' === 'delivery' && typeof quickRole === 'function') {
-        quickRole('delivery');
-      } else if ('delivery' === 'admin' && typeof quickRole === 'function') {
-        quickRole('admin');
+      // Initialize Auth Gate per portal
+      if ('delivery' === 'admin') {
+        if (typeof checkAdminAuth === 'function') {
+          const ok = checkAdminAuth();
+          if (ok && typeof renderAdminView === 'function') renderAdminView();
+        }
+      } else if ('delivery' === 'restaurant') {
+        if (typeof checkVendorAuth === 'function') {
+          const ok = checkVendorAuth();
+          if (ok && typeof initVendorApp === 'function') initVendorApp();
+        }
+      } else if ('delivery' === 'delivery') {
+        if (typeof checkRiderAuth === 'function') {
+          const ok = checkRiderAuth();
+          if (ok && typeof renderRiderApp === 'function') renderRiderApp();
+        }
+      } else {
+        if (typeof show === 'function') show('delivery');
       }
     });
   </script>
