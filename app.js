@@ -199,6 +199,7 @@ const SEED_DATA = {
     superAdminName: 'Rakesh Bhaskar'
   },
   settings: {
+    riderDeliveryCommission: 40,
     deliveryBase: 30,
     perKm: 8,
     gstRate: 5,
@@ -370,6 +371,10 @@ try {
 } catch (e) {}
 
 if (appData) {
+  if (!appData.settings) appData.settings = {};
+  if (appData.settings.riderDeliveryCommission === undefined) {
+    appData.settings.riderDeliveryCommission = 40;
+  }
   if (!appData.adminSettings) appData.adminSettings = {};
   appData.adminSettings.superAdminName = 'Rakesh Bhaskar';
   appData.adminSettings.masterLogin = 'admin@parcelkar.com';
@@ -3477,12 +3482,34 @@ function riderCompleteDelivery(orderId) {
   if (!order) return;
   order.status = 'Delivered';
   order.paymentStatus = 'Paid';
-  appData.riders[0].totalTrips++;
-  appData.riders[0].earnings += order.deliveryFee;
+
+  // Find assigned rider or fallback to active rider
+  let rider = null;
+  if (order.deliveryBoy) {
+    rider = (appData.riders || []).find(r => r.name.toLowerCase() === order.deliveryBoy.toLowerCase() || order.deliveryBoy.toLowerCase().includes(r.name.toLowerCase()));
+  }
+  if (!rider && Array.isArray(appData.riders) && appData.riders.length) {
+    rider = appData.riders[0];
+  }
+
+  const defaultComm = (appData.settings && appData.settings.riderDeliveryCommission !== undefined)
+    ? Number(appData.settings.riderDeliveryCommission)
+    : 40;
+  const riderCommission = (rider && rider.commissionPerDelivery !== null && rider.commissionPerDelivery !== undefined)
+    ? Number(rider.commissionPerDelivery)
+    : defaultComm;
+
+  if (rider) {
+    rider.totalTrips = (Number(rider.totalTrips) || 0) + 1;
+    rider.earnings = (Number(rider.earnings) || 0) + riderCommission;
+  }
+  order.riderPayout = riderCommission;
+
   saveState();
   playSound('chime');
-  showToast(`Order #${order.id} delivered successfully! Payment confirmed.`, 'success');
+  showToast(`🎉 Order #${order.id} delivered! Rider earned ₹${riderCommission} commission 🛵`, 'success');
   renderDeliveryView();
+  if (typeof renderAdminView === 'function') renderAdminView();
 }
 
 // -------------------------------------------------------------
@@ -3496,6 +3523,13 @@ function renderAdminView() {
   if (!Array.isArray(appData.managers)) appData.managers = [];
   if (!Array.isArray(appData.disputes)) appData.disputes = [];
   if (!Array.isArray(appData.deliveryZones)) appData.deliveryZones = [];
+
+  const globalCommInput = document.getElementById('globalRiderCommissionInput');
+  if (globalCommInput) {
+    globalCommInput.value = (appData.settings && appData.settings.riderDeliveryCommission !== undefined)
+      ? appData.settings.riderDeliveryCommission
+      : 40;
+  }
 
   const gmv = appData.orders.filter(o => o.status !== 'Cancelled').reduce((sum, o) => sum + (o.total || 0), 0);
   const subtotal = appData.orders.filter(o => o.status !== 'Cancelled').reduce((sum, o) => sum + (o.subtotal || 0), 0);
@@ -3579,6 +3613,7 @@ function renderAdminView() {
               <th>Mobile / Login</th>
               <th>Terminal PIN</th>
               <th>Vehicle</th>
+              <th>Commission / Trip</th>
               <th>Status</th>
               <th>Actions</th>
             </tr>
@@ -3602,6 +3637,12 @@ function renderAdminView() {
                   </span>
                 </td>
                 <td>${rd.vehicle || '🛵 Motorcycle'}</td>
+                <td>
+                  <span style="font-weight: 800; color: #10b981; font-size: 13px;">
+                    ₹${rd.commissionPerDelivery !== undefined && rd.commissionPerDelivery !== null && rd.commissionPerDelivery !== '' ? rd.commissionPerDelivery : (appData.settings?.riderDeliveryCommission || 40)}
+                  </span>
+                  <span style="font-size: 10px; color: var(--text-muted); display: block;">per delivery</span>
+                </td>
                 <td>
                   <span class="status-pill ${rd.active !== false && rd.approved !== false ? 'delivered' : 'cancelled'}">
                     ${rd.active !== false && rd.approved !== false ? '🟢 Active' : '🔴 Suspended'}
@@ -8797,6 +8838,7 @@ function openCreateRiderCredsModal(riderId = null) {
   const elPin = document.getElementById('rcredPin');
   const elVehicle = document.getElementById('rcredVehicle');
   const elApproved = document.getElementById('rcredApproved');
+  const elComm = document.getElementById('rcredCommission');
 
   if (riderId) {
     const r = appData.riders.find(x => x.id === riderId);
@@ -8808,6 +8850,7 @@ function openCreateRiderCredsModal(riderId = null) {
       if (elPin) elPin.value = r.riderPin || '1234';
       if (elVehicle) elVehicle.value = r.vehicle || 'Motorcycle';
       if (elApproved) elApproved.checked = r.approved !== false && r.active !== false;
+      if (elComm) elComm.value = r.commissionPerDelivery !== undefined && r.commissionPerDelivery !== null ? r.commissionPerDelivery : '';
     }
   } else {
     if (elId) elId.value = '';
@@ -8817,6 +8860,7 @@ function openCreateRiderCredsModal(riderId = null) {
     if (elPin) elPin.value = Math.floor(1000 + Math.random() * 9000);
     if (elVehicle) elVehicle.value = 'Motorcycle';
     if (elApproved) elApproved.checked = true;
+    if (elComm) elComm.value = (appData.settings && appData.settings.riderDeliveryCommission) ? appData.settings.riderDeliveryCommission : 40;
   }
   openModal('createRiderCredsModal');
 }
@@ -8830,6 +8874,8 @@ function saveRiderCredentials(e) {
   const pin = document.getElementById('rcredPin')?.value.trim();
   const vehicle = document.getElementById('rcredVehicle')?.value.trim() || 'Motorcycle';
   const approved = document.getElementById('rcredApproved')?.checked !== false;
+  const commVal = document.getElementById('rcredCommission')?.value.trim();
+  const customComm = (commVal !== undefined && commVal !== '') ? Number(commVal) : null;
 
   if (!name || !phone || !pin) {
     alert('Please fill in Rider Name, Mobile Number, and PIN.');
@@ -8846,6 +8892,7 @@ function saveRiderCredentials(e) {
       r.vehicle = vehicle;
       r.approved = approved;
       r.active = approved;
+      r.commissionPerDelivery = customComm;
     }
   } else {
     const newId = 'rider_' + Date.now();
@@ -8859,6 +8906,7 @@ function saveRiderCredentials(e) {
       vehicle,
       approved,
       active: approved,
+      commissionPerDelivery: customComm,
       lat: 21.0825,
       lng: 79.9854,
       totalTrips: 0,
@@ -9203,5 +9251,24 @@ if (typeof window !== 'undefined') {
   window.submitChangeAdminPass = submitChangeAdminPass;
   window.renderAdminManagersTable = renderAdminManagersTable;
   window.renderAdminView = renderAdminView;
+  window.riderCompleteDelivery = riderCompleteDelivery;
+  window.appData = appData;
 }
 
+
+function saveAdminGlobalRiderCommission() {
+  const input = document.getElementById('globalRiderCommissionInput');
+  if (!input) return;
+  const val = Number(input.value);
+  if (isNaN(val) || val < 0) {
+    showToast('❌ कृपया वैध रक्कम टाका (Please enter a valid amount)', 'danger');
+    return;
+  }
+  if (!appData.settings) appData.settings = {};
+  appData.settings.riderDeliveryCommission = val;
+  saveState();
+  showToast(`✅ रायडर प्रति पार्सल डिलिव्हरी कमिशन सेव्ह झाले: ₹${val}! 💰`, 'success');
+  alert(`✅ Rider Delivery Commission Updated!\n\nनवीन कमिशन दर: ₹${val} प्रति यशस्वी पार्सल डिलिव्हरी\n(New Rate: ₹${val} per successful delivery)\n\nसर्व रायडर्सना डिलिव्हरी पूर्ण झाल्यावर हेच कमिशन जमा होईल.`);
+  if (typeof renderAdminView === 'function') renderAdminView();
+}
+window.saveAdminGlobalRiderCommission = saveAdminGlobalRiderCommission;

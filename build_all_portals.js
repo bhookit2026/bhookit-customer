@@ -46,6 +46,32 @@ const riderFleetAdminCard = `
           <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
             Allocate, edit, suspend, and delete login credentials for delivery partners on <a href="https://rider.parcelkar.com" target="_blank" style="color:var(--primary); font-weight:700;">rider.parcelkar.com</a>.
           </p>
+
+          <!-- RIDER COMMISSION PER PARCEL CONFIGURATION BANNER -->
+          <div style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(16, 185, 129, 0.05)); border: 1.5px solid rgba(59, 130, 246, 0.25); border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="font-size: 26px; background: #eff6ff; border-radius: 10px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(59,130,246,0.15);">
+                💰
+              </div>
+              <div>
+                <div style="font-weight: 800; font-size: 14px; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
+                  <span>Default Rider Commission Per Successful Parcel Delivery</span>
+                  <span style="background: #3b82f6; color: #fff; font-size: 10px; padding: 2px 8px; border-radius: 999px; font-weight: 800; letter-spacing: 0.5px;">ADMIN CONTROLLED</span>
+                </div>
+                <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                  प्रत्येक यशस्वी पार्सल डिलिव्हरी पूर्ण केल्यावर रायडरला मिळणारे ठरलेले कमिशन / मानधन (Flat payout credited per delivered order)
+                </div>
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 8px; background: var(--bg-surface, #fff); padding: 6px 12px; border-radius: 10px; border: 1px solid var(--border-color, #e2e8f0); box-shadow: 0 1px 4px rgba(0,0,0,0.04);">
+              <span style="font-size: 15px; font-weight: 900; color: #10b981;">₹</span>
+              <input type="number" id="globalRiderCommissionInput" class="input-field" style="width: 85px; margin: 0; padding: 5px 8px; font-size: 15px; font-weight: 800; text-align: center; border: 1.5px solid #3b82f6; border-radius: 6px;" min="0" step="5" placeholder="40">
+              <span style="font-size: 12px; font-weight: 700; color: var(--text-muted);">/ parcel</span>
+              <button type="button" class="btn-primary" onclick="saveAdminGlobalRiderCommission()" style="margin: 0; padding: 6px 14px; font-size: 12px; font-weight: 800; background: #3b82f6; border-color: #2563eb;">💾 Save Rate</button>
+            </div>
+          </div>
+
           <div id="adminRidersTable">
             <!-- Injected dynamically -->
           </div>
@@ -273,6 +299,17 @@ const adminModalsHtml = `
         <div style="margin-bottom: 12px;">
           <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Email Address (Optional)</label>
           <input type="email" id="rcredEmail" class="input-field" placeholder="rider@parcelkar.com">
+        </div>
+
+        <div style="margin-bottom: 12px;">
+          <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">
+            💰 Delivery Commission / Payout per Order (₹)
+          </label>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-weight: 800; color: #10b981; font-size: 16px;">₹</span>
+            <input type="number" id="rcredCommission" class="input-field" placeholder="Default: ₹40" min="0" step="5" style="margin: 0; font-weight: 700; width: 140px;">
+            <span style="font-size: 11px; color: var(--text-muted);">(खाली रिकामे ठेवल्यास ग्लोबल डीफॉल्ट दर लागू होईल)</span>
+          </div>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
