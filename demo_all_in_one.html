@@ -172,17 +172,20 @@
           </div>
         </button>
       </div>
-      <!-- Quick Filters & Category Strip -->
-      <div class="search-filter-card">
+      <!-- What's on your mind? / Quick Category & Filter Navigation -->
+      <div class="explore-categories-section">
         <input type="hidden" id="foodSearchInput" value="">
-        <div class="filters-action-row" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
-          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-            <!-- Pure Veg Filter Toggle -->
+        <div class="section-title-row" style="margin-bottom: 10px; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <h2 class="section-title" style="margin: 0; font-size: 18px;">🍽️ What's on your mind?</h2>
+            <p style="font-size: 12px; color: var(--text-muted); margin: 2px 0 0 0;">Browse top categories &amp; cuisines</p>
+          </div>
+          <!-- Clean Floating Filter Row (Pure Veg & Sort) -->
+          <div class="floating-quick-filters">
             <button id="pureVegFilterBtn" class="pure-veg-toggle" onclick="togglePureVegFilter()" title="Filter Pure Vegetarian Dishes Only">
-              <span class="veg-indicator" style="width: 12px; height: 12px;"></span>
+              <span class="veg-indicator" style="width: 10px; height: 10px;"></span>
               <span id="txtPureVegLabel">Pure Veg</span>
             </button>
-            <!-- Sort Dropdown -->
             <select id="foodSortSelect" class="sort-select" onchange="applySorting(this.value)">
               <option value="default">⚡ Featured</option>
               <option value="rating">⭐ Highest Rated</option>
@@ -190,24 +193,20 @@
               <option value="priceLow">💵 Price: Low to High</option>
               <option value="priceHigh">💎 Price: High to Low</option>
             </select>
-            <!-- Delivery Area Quick Selector Button -->
-            <button type="button" class="area-selector-search-btn" onclick="openLocationModal()" title="Change Delivery Area or City">
-              <span>📍</span>
-              <span id="searchAreaLabel">Sakoli (Market)</span>
-              <span style="font-size: 10px; color: var(--primary);">▾</span>
-            </button>
+            <button class="btn-secondary filter-reset-btn" onclick="resetFilters()" title="Reset all filters">✕ Clear</button>
           </div>
-          <button class="btn-secondary" onclick="resetFilters()" style="padding: 6px 14px; font-size: 12px;">Clear</button>
         </div>
+
+        <!-- Clean Horizontally Scrollable Categories (No Desktop Scrollbar) -->
         <div class="category-strip" id="categoryStrip">
           <button class="category-pill active" onclick="filterCategory('All')">✨ All Items</button>
           <button class="category-pill" id="favCategoryPill" onclick="filterCategory('Favorites')">❤️ Favorites (<span id="favCountBadge">0</span>)</button>
           <button class="category-pill" onclick="filterCategory('Fast Food')">🍔 Fast Food</button>
-          <button class="category-pill" onclick="filterCategory('North Indian')">🍛 North Indian</button>
+          <button class="category-pill" onclick="filterCategory('North Indian')">🥘 North Indian</button>
           <button class="category-pill" onclick="filterCategory('South Indian')">🥞 South Indian</button>
-          <button class="category-pill" onclick="filterCategory('Pizza & Burger')">🍕 Pizza & Italian</button>
-          <button class="category-pill" onclick="filterCategory('Chinese')">🍜 Chinese & Momos</button>
-          <button class="category-pill" onclick="filterCategory('Desserts')">🍰 Desserts & Shakes</button>
+          <button class="category-pill" onclick="filterCategory('Pizza & Burger')">🍕 Pizza &amp; Italian</button>
+          <button class="category-pill" onclick="filterCategory('Chinese')">🍜 Chinese &amp; Momos</button>
+          <button class="category-pill" onclick="filterCategory('Desserts')">🍨 Desserts &amp; Shakes</button>
         </div>
       </div>
       <!-- Value Combos & BOGO Deals Carousel -->

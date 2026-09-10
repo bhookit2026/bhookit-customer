@@ -347,6 +347,30 @@ header {
 }
 
 /* Search and Filter Section */
+/* Categories & Quick Filters Section */
+.explore-categories-section {
+  margin-bottom: 24px;
+}
+
+.floating-quick-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filter-reset-btn {
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+}
+
 .search-filter-card {
   background: var(--bg-card);
   border-radius: var(--radius-lg);
@@ -383,35 +407,56 @@ header {
   color: var(--text-main);
 }
 
-/* Category Filter Pills */
+/* Category Filter Pills (Smooth Scroll, No Desktop Scrollbar) */
 .category-strip {
   display: flex;
   gap: 10px;
-  margin-top: 16px;
+  margin-top: 10px;
   overflow-x: auto;
-  padding-bottom: 4px;
+  padding: 4px 2px 8px 2px;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+  -webkit-overflow-scrolling: touch;
+}
+
+.category-strip::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 .category-pill {
-  background: #f1f5f9;
-  border: 1px solid transparent;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
   padding: 8px 16px;
-  border-radius: 25px;
+  border-radius: 999px;
   font-size: 13px;
-  font-weight: 600;
-  color: var(--text-muted);
+  font-weight: 700;
+  color: var(--text-color, #334155);
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   gap: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
-.category-pill:hover, .category-pill.active {
-  background: var(--primary);
+.category-pill:hover {
+  border-color: var(--primary, #ff4722);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+}
+
+.category-pill.active {
+  background: linear-gradient(135deg, #ff4722, #ea580c);
   color: #fff;
-  box-shadow: 0 4px 12px rgba(255, 71, 34, 0.25);
+  border-color: #ff4722;
+  box-shadow: 0 4px 12px rgba(255, 71, 34, 0.3);
+}
+
+[data-theme="dark"] .category-pill {
+  background: #1e293b;
+  border-color: #334155;
+  color: #f1f5f9;
 }
 
 /* Section Header */
