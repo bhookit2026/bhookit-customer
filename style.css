@@ -204,23 +204,7 @@ header {
 }
 
 .cart-indicator-btn {
-  background: var(--primary-light);
-  color: var(--primary);
-  border: 1px solid rgba(255,71,34,0.2);
-  padding: 8px 16px;
-  border-radius: 30px;
-  font-weight: 700;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.cart-indicator-btn:hover {
-  background: var(--primary);
-  color: #fff;
+  display: none !important;
 }
 
 .cart-count-badge {
@@ -6890,6 +6874,73 @@ html, body {
   background: #2d3b55 !important;
   color: #ffffff !important;
   border-color: #475569 !important;
+}
+
+/* ============================================================= */
+/* DEDICATED ACCOUNT PANEL, SPIN & WIN, AND LANGUAGE STYLES     */
+/* ============================================================= */
+.account-page-wrapper {
+  animation: fadeIn 0.25s ease-out;
+}
+
+.spin-and-win-account-card {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.spin-and-win-account-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(236, 72, 153, 0.25) !important;
+}
+
+.spin-and-win-account-card .spin-btn-glow {
+  animation: pulseGlow 2s infinite ease-in-out;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 4px 14px rgba(236, 72, 153, 0.4); }
+  50% { box-shadow: 0 4px 22px rgba(236, 72, 153, 0.7); }
+}
+
+.language-account-card .lang-choice-btn {
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: 1.5px solid var(--border);
+}
+
+.language-account-card .lang-choice-btn:hover {
+  border-color: var(--primary);
+  background: rgba(255, 71, 34, 0.05);
+}
+
+.language-account-card .lang-choice-btn.active-lang {
+  border: 2px solid var(--primary) !important;
+  background: rgba(255, 71, 34, 0.1) !important;
+  color: var(--primary) !important;
+  font-weight: 800 !important;
+}
+
+[data-theme="dark"] .spin-and-win-account-card {
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(139, 92, 246, 0.2)) !important;
+  border-color: rgba(236, 72, 153, 0.5) !important;
+}
+
+[data-theme="dark"] .language-account-card {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+[data-theme="dark"] .language-account-card .lang-choice-btn {
+  background: #0f172a !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .language-account-card .lang-choice-btn.active-lang {
+  border-color: var(--primary) !important;
+  background: rgba(255, 71, 34, 0.2) !important;
+  color: #ff7a59 !important;
 }
 
 

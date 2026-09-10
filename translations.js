@@ -43,7 +43,11 @@ const TRANSLATIONS = {
     wallet: 'Wallet',
     favorites: 'Favorites',
     tableBookings: 'Table Reservations',
-    redeemWallet: 'Redeem Wallet'
+    redeemWallet: 'Redeem Wallet',
+    spinAndWin: 'Spin & Win Rewards',
+    spinAndWinDesc: 'Spin daily lucky wheel for instant discounts & wallet cash',
+    appLanguage: 'App Language',
+    chooseLanguage: 'Select your preferred display language'
   },
   mr: {
     systemTitle: 'पार्सलकर सिस्टीम',
@@ -89,7 +93,11 @@ const TRANSLATIONS = {
     wallet: 'वॉलेट',
     favorites: 'आवडते पदार्थ',
     tableBookings: 'टेबल बुकिंग्स',
-    redeemWallet: 'वॉलेट वापरा'
+    redeemWallet: 'वॉलेट वापरा',
+    spinAndWin: 'स्पिन आणि विन रिवॉर्ड्स',
+    spinAndWinDesc: 'दररोज लकी व्हील फिरवा आणि त्वरित डिस्काउंट व वॉलेट कॅश मिळवा',
+    appLanguage: 'ॲप भाषा',
+    chooseLanguage: 'तुमची पसंतीची भाषा निवडा'
   },
   hi: {
     systemTitle: 'पार्सलकर सिस्टम',
@@ -135,6 +143,10 @@ const TRANSLATIONS = {
     wallet: 'वॉलेट',
     favorites: 'पसंदीदा व्यंजन',
     tableBookings: 'टेबल बुकिंग',
-    redeemWallet: 'वॉलेट उपयोग करें'
+    redeemWallet: 'वॉलेट उपयोग करें',
+    spinAndWin: 'स्पिन और जीतें',
+    spinAndWinDesc: 'रोजाना लकी व्हील घुमाएं और पाएं इंस्टेंट डिस्काउंट और वॉलेट कैश',
+    appLanguage: 'ऐप की भाषा',
+    chooseLanguage: 'अपनी पसंदीदा भाषा चुनें'
   }
 };

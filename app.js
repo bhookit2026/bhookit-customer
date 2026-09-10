@@ -165,7 +165,18 @@ function setLanguage(lang) {
   if (langSel) langSel.value = lang;
   const accountLangSel = document.getElementById('accountLangSelect');
   if (accountLangSel) accountLangSel.value = lang;
+  
+  // Update active pill button state
+  document.querySelectorAll('.lang-choice-btn').forEach(btn => {
+    btn.classList.remove('active-lang');
+    if (btn.getAttribute('data-lang') === lang) {
+      btn.classList.add('active-lang');
+    }
+  });
+
   applyLanguageTranslations();
+  if (typeof renderAccountView === 'function') renderAccountView();
+  if (typeof renderAuthModalContent === 'function') renderAuthModalContent();
   showToast(`Language set to ${lang === 'mr' ? 'मराठी' : lang === 'hi' ? 'हिंदी' : 'English'}`, 'info');
 }
 
@@ -1474,6 +1485,7 @@ function show(panelId) {
     customer: 'navCustomer',
     orders: 'navOrders',
     track: 'navTrack',
+    account: 'navAccount',
     restaurant: 'navRestaurant',
     delivery: 'navDelivery',
     admin: 'navAdmin'
@@ -1490,7 +1502,8 @@ function show(panelId) {
     orders: 'mobNavOrders',
     track: 'mobNavTrack',
     restaurant: 'mobNavRestaurant',
-    cart: 'mobNavCart'
+    cart: 'mobNavCart',
+    account: 'mobNavAuthBtn'
   };
   if (mobNavMap[panelId]) {
     const mobBtn = document.getElementById(mobNavMap[panelId]);
@@ -1504,6 +1517,7 @@ function show(panelId) {
   if (panelId === 'cart') renderCartView();
   if (panelId === 'orders') renderOrdersView();
   if (panelId === 'track') renderTrackingView();
+  if (panelId === 'account') renderAccountView();
   if (panelId === 'restaurant') renderRestaurantView();
   if (panelId === 'delivery') renderDeliveryView();
   if (panelId === 'admin') renderAdminView();
@@ -4399,9 +4413,200 @@ function renderAuthModalContent() {
   }
 }
 
+// -------------------------------------------------------------
+// DEDICATED ACCOUNT VIEW (PANEL & MODAL SYNC)
+// -------------------------------------------------------------
+function renderAccountView() {
+  const container = document.getElementById('accountViewContainer');
+  if (!container) return;
+
+  const isUser = !!appData.currentUser;
+  const user = appData.currentUser || { name: 'Guest User', email: 'guest@parcelkar.com', phone: '', address: '' };
+  const walletBal = (typeof appData.walletBalance === 'number') ? appData.walletBalance : (user.walletBalance || 250);
+
+  let html = '';
+
+  if (isUser) {
+    html = `
+      <div class="account-page-wrapper" style="max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px;">
+        <!-- Profile Header Card -->
+        <div class="dashboard-card" style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-sm);">
+          <div style="display: flex; align-items: center; gap: 14px;">
+            <div style="width: 58px; height: 58px; border-radius: 50%; background: linear-gradient(135deg, #ff4722, #ea580c); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 28px; box-shadow: 0 4px 14px rgba(255,71,34,0.3); flex-shrink: 0;">
+              👤
+            </div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <h2 style="margin: 0; font-size: 19px; font-weight: 800; color: var(--text-main); font-family: var(--font-heading);">${user.name}</h2>
+                <span class="vip-tag-gold" style="font-size: 10px; padding: 2px 8px; border-radius: 999px;">👑 VIP Member</span>
+              </div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">${user.email} • +91 ${user.phone || '9876543210'}</div>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">📍 ${user.address || 'Sakoli, Maharashtra'}</div>
+            </div>
+          </div>
+          <button class="btn-secondary" onclick="openAuth()" style="padding: 6px 12px; font-size: 11px; white-space: nowrap;">✏️ Edit</button>
+        </div>
+
+        <!-- Wallet Card -->
+        <div class="dashboard-card" style="padding: 16px 20px; background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(5,150,105,0.04)); border: 1.5px solid rgba(16,185,129,0.3); border-radius: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 26px;">💳</span>
+            <div>
+              <div style="font-size: 12px; font-weight: 700; color: #059669;">Parcelकर Wallet Balance</div>
+              <div style="font-size: 20px; font-weight: 900; color: #059669;">₹${walletBal}</div>
+            </div>
+          </div>
+          <button class="btn-primary" onclick="openWalletModal()" style="padding: 8px 16px; font-size: 12px; font-weight: 700; background: #059669; border-color: #059669;">+ Add Money</button>
+        </div>
+
+        <!-- 🎰 SPIN & WIN REWARDS SECTION -->
+        <div class="dashboard-card spin-and-win-account-card" style="padding: 18px 20px; background: linear-gradient(135deg, rgba(236, 72, 153, 0.12), rgba(139, 92, 246, 0.12)); border: 1.5px solid rgba(236, 72, 153, 0.4); border-radius: 16px; box-shadow: 0 4px 16px rgba(236, 72, 153, 0.15); display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 14px; min-width: 220px; flex: 1;">
+            <div style="width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #ec4899, #8b5cf6); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 12px rgba(236, 72, 153, 0.35); flex-shrink: 0;">
+              🎰
+            </div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 15px; font-weight: 800; color: #ec4899;">${typeof t === 'function' ? t('spinAndWin') : 'Spin & Win Rewards'}</span>
+                <span style="font-size: 9px; font-weight: 800; color: #fff; background: #ec4899; padding: 1px 6px; border-radius: 999px; text-transform: uppercase;">Daily Free</span>
+              </div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">${typeof t === 'function' ? t('spinAndWinDesc') : 'Spin daily lucky wheel for instant discounts & wallet cash'}</div>
+            </div>
+          </div>
+          <button class="btn-primary spin-btn-glow" onclick="openGamificationModal()" style="padding: 10px 20px; font-size: 13px; font-weight: 800; background: linear-gradient(135deg, #ec4899, #8b5cf6); border: none; border-radius: 12px; cursor: pointer; white-space: nowrap;">
+            🎰 Spin &amp; Win Now ➔
+          </button>
+        </div>
+
+        <!-- 🌐 APP LANGUAGE SELECTION SECTION -->
+        <div class="dashboard-card language-account-card" style="padding: 18px 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-sm);">
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+            <span style="font-size: 22px;">🌐</span>
+            <div>
+              <div style="font-size: 14px; font-weight: 800; color: var(--text-main);">${typeof t === 'function' ? t('appLanguage') : 'App Language'} / भाषा निवडा / भाषा चुनें</div>
+              <div style="font-size: 11px; color: var(--text-muted);">${typeof t === 'function' ? t('chooseLanguage') : 'Select your preferred display language'}</div>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+            <button type="button" data-lang="en" class="btn-secondary lang-choice-btn ${currentLanguage === 'en' ? 'active-lang' : ''}" onclick="setLanguage('en')" style="padding: 10px; font-size: 12px; font-weight: 700; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+              <span>🇬🇧</span> English
+            </button>
+            <button type="button" data-lang="mr" class="btn-secondary lang-choice-btn ${currentLanguage === 'mr' ? 'active-lang' : ''}" onclick="setLanguage('mr')" style="padding: 10px; font-size: 12px; font-weight: 700; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+              <span>🇮🇳</span> मराठी
+            </button>
+            <button type="button" data-lang="hi" class="btn-secondary lang-choice-btn ${currentLanguage === 'hi' ? 'active-lang' : ''}" onclick="setLanguage('hi')" style="padding: 10px; font-size: 12px; font-weight: 700; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+              <span>🇮🇳</span> हिन्दी
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Navigation Shortcuts -->
+        <div class="dashboard-card" style="padding: 16px 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 10px;">
+          <div style="font-size: 13px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Quick Shortcuts</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <button class="btn-secondary" onclick="show('orders')" style="padding: 12px; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 8px; justify-content: flex-start; border-radius: 10px;">
+              <span>📦</span> ${typeof t === 'function' ? t('navOrders') : 'My Orders'}
+            </button>
+            <button class="btn-secondary" onclick="show('track')" style="padding: 12px; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 8px; justify-content: flex-start; border-radius: 10px;">
+              <span>📍</span> ${typeof t === 'function' ? t('navTrack') : 'Live Tracking'}
+            </button>
+            <button class="btn-secondary" onclick="openMembershipModal()" style="padding: 12px; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 8px; justify-content: flex-start; border-radius: 10px;">
+              <span>👑</span> VIP Gold Club
+            </button>
+            <button class="btn-secondary" onclick="openGroupOrderModal()" style="padding: 12px; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 8px; justify-content: flex-start; border-radius: 10px;">
+              <span>👥</span> Group Orders
+            </button>
+          </div>
+        </div>
+
+        <!-- Logout Action -->
+        <button class="btn-secondary" onclick="userLogoutAction()" style="padding: 12px; font-size: 13px; font-weight: 700; color: var(--danger); border-color: rgba(239, 68, 68, 0.3); border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 6px;">
+          <span>🚪</span> ${typeof t === 'function' ? t('logout') : 'Logout from Account'}
+        </button>
+      </div>
+    `;
+  } else {
+    // Guest view with Login form, plus Spin & Win and Language
+    html = `
+      <div class="account-page-wrapper" style="max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px;">
+        <div class="dashboard-card" style="padding: 24px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; text-align: center;">
+          <div style="width: 60px; height: 60px; margin: 0 auto 12px; border-radius: 50%; background: rgba(255, 71, 34, 0.1); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 28px;">
+            👤
+          </div>
+          <h2 style="margin: 0; font-size: 20px; font-weight: 800; color: var(--text-main); font-family: var(--font-heading);">Customer Login / Sign Up</h2>
+          <p style="font-size: 13px; color: var(--text-muted); margin: 6px 0 18px 0;">Sign in to save delivery addresses, view invoices, and track orders live.</p>
+
+          <div style="display: flex; flex-direction: column; gap: 12px; text-align: left;">
+            <div>
+              <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Email Address</label>
+              <input type="email" id="accPageLoginEmail" class="input-field" placeholder="e.g. user@demo.com" style="width: 100%;" value="customer@bhookit.com">
+            </div>
+            <div>
+              <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Password</label>
+              <input type="password" id="accPageLoginPass" class="input-field" placeholder="Password (min 6 chars)" style="width: 100%;" value="pass123">
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 6px;">
+              <button class="btn-primary" onclick="userLoginAction('accPageLoginEmail', 'accPageLoginPass')" style="flex: 1; padding: 12px; font-weight: 800; font-size: 14px;">🔑 Login</button>
+              <button class="btn-secondary" onclick="userSignupAction('accPageLoginEmail', 'accPageLoginPass')" style="flex: 1; padding: 12px; font-weight: 700; font-size: 14px;">✨ Sign Up</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 🎰 SPIN & WIN REWARDS SECTION -->
+        <div class="dashboard-card spin-and-win-account-card" style="padding: 18px 20px; background: linear-gradient(135deg, rgba(236, 72, 153, 0.12), rgba(139, 92, 246, 0.12)); border: 1.5px solid rgba(236, 72, 153, 0.4); border-radius: 16px; box-shadow: 0 4px 16px rgba(236, 72, 153, 0.15); display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 14px; min-width: 220px; flex: 1;">
+            <div style="width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #ec4899, #8b5cf6); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 12px rgba(236, 72, 153, 0.35); flex-shrink: 0;">
+              🎰
+            </div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 15px; font-weight: 800; color: #ec4899;">${typeof t === 'function' ? t('spinAndWin') : 'Spin & Win Rewards'}</span>
+                <span style="font-size: 9px; font-weight: 800; color: #fff; background: #ec4899; padding: 1px 6px; border-radius: 999px; text-transform: uppercase;">Daily Free</span>
+              </div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">${typeof t === 'function' ? t('spinAndWinDesc') : 'Spin daily lucky wheel for instant discounts & wallet cash'}</div>
+            </div>
+          </div>
+          <button class="btn-primary spin-btn-glow" onclick="openGamificationModal()" style="padding: 10px 20px; font-size: 13px; font-weight: 800; background: linear-gradient(135deg, #ec4899, #8b5cf6); border: none; border-radius: 12px; cursor: pointer; white-space: nowrap;">
+            🎰 Spin &amp; Win Now ➔
+          </button>
+        </div>
+
+        <!-- 🌐 APP LANGUAGE SELECTION SECTION -->
+        <div class="dashboard-card language-account-card" style="padding: 18px 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-sm);">
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+            <span style="font-size: 22px;">🌐</span>
+            <div>
+              <div style="font-size: 14px; font-weight: 800; color: var(--text-main);">${typeof t === 'function' ? t('appLanguage') : 'App Language'} / भाषा निवडा / भाषा चुनें</div>
+              <div style="font-size: 11px; color: var(--text-muted);">${typeof t === 'function' ? t('chooseLanguage') : 'Select your preferred display language'}</div>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+            <button type="button" data-lang="en" class="btn-secondary lang-choice-btn ${currentLanguage === 'en' ? 'active-lang' : ''}" onclick="setLanguage('en')" style="padding: 10px; font-size: 12px; font-weight: 700; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+              <span>🇬🇧</span> English
+            </button>
+            <button type="button" data-lang="mr" class="btn-secondary lang-choice-btn ${currentLanguage === 'mr' ? 'active-lang' : ''}" onclick="setLanguage('mr')" style="padding: 10px; font-size: 12px; font-weight: 700; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+              <span>🇮🇳</span> मराठी
+            </button>
+            <button type="button" data-lang="hi" class="btn-secondary lang-choice-btn ${currentLanguage === 'hi' ? 'active-lang' : ''}" onclick="setLanguage('hi')" style="padding: 10px; font-size: 12px; font-weight: 700; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+              <span>🇮🇳</span> हिन्दी
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  container.innerHTML = html;
+}
+
 function openAuth() {
-  renderAuthModalContent();
-  openModal('authModal');
+  const accPanel = document.getElementById('account');
+  if (accPanel) {
+    show('account');
+  } else {
+    renderAuthModalContent();
+    openModal('authModal');
+  }
 }
 
 function userLogoutAction() {
@@ -4409,14 +4614,15 @@ function userLogoutAction() {
     appData.currentUser = null;
     if (typeof saveState === 'function') saveState();
     updateUserBadge();
+    if (typeof renderAccountView === 'function') renderAccountView();
     closeModal('authModal');
     showToast('Logged out successfully.', 'info');
   }
 }
 
-function userLoginAction() {
-  const email = document.getElementById('loginEmail')?.value.trim();
-  const pass = document.getElementById('loginPass')?.value;
+function userLoginAction(emailId = 'loginEmail', passId = 'loginPass') {
+  const email = document.getElementById(emailId)?.value.trim() || document.getElementById('loginEmail')?.value.trim();
+  const pass = document.getElementById(passId)?.value || document.getElementById('loginPass')?.value;
   if (!email || !pass) return alert('Please enter email and password.');
 
   appData.currentUser = {
@@ -4429,12 +4635,13 @@ function userLoginAction() {
 
   saveState();
   updateUserBadge();
+  if (typeof renderAccountView === 'function') renderAccountView();
   closeModal('authModal');
   showToast(`Welcome back, ${appData.currentUser.name}!`, 'success');
 }
 
-function userSignupAction() {
-  userLoginAction();
+function userSignupAction(emailId = 'loginEmail', passId = 'loginPass') {
+  userLoginAction(emailId, passId);
 }
 
 function updateUserBadge() {
@@ -4452,9 +4659,9 @@ function updateUserBadge() {
     btn.textContent = isUser ? (typeof t === 'function' ? t('logout') : 'Logout') : (typeof t === 'function' ? t('login') : 'Login');
     btn.onclick = isUser ? () => {
       userLogoutAction();
-    } : openAuth;
+    } : () => show('account');
   }
-  // Mobile navigation button ALWAYS shows Account
+  // Mobile navigation button ALWAYS shows Account and opens Account panel
   if (mobText) {
     mobText.textContent = typeof t === 'function' ? (t('account') || 'Account') : 'Account';
   }
@@ -4462,10 +4669,11 @@ function updateUserBadge() {
     mobIcon.textContent = '👤';
   }
   if (mobBtn) {
-    mobBtn.onclick = openAuth;
+    mobBtn.onclick = () => show('account');
   }
 }
 
+window.renderAccountView = renderAccountView;
 window.renderAuthModalContent = renderAuthModalContent;
 window.userLogoutAction = userLogoutAction;
 window.openAuth = openAuth;
