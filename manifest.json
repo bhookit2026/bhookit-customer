@@ -1,7 +1,7 @@
 {
-  "name": "BhookIt — Order Food Online | Fast Delivery",
-  "short_name": "BhookIt",
-  "description": "Order from the best restaurants near you. Fast delivery, live tracking, UPI payment — only on BhookIt.",
+  "name": "Parcelकर — Order Food Online | Fast Delivery",
+  "short_name": "Parcelकर",
+  "description": "Order from the best restaurants near you. Fast delivery, live tracking, UPI payment — only on Parcelकर.",
   "start_url": "./customer.html",
   "scope": "./",
   "display": "standalone",

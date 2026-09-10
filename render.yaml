@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: bhookit-customer
+    name: parcelkar-customer
     runtime: node
     plan: free
     buildCommand: npm install

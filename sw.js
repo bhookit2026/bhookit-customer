@@ -1,5 +1,5 @@
-// BhookIt V1.0 Progressive Web App Service Worker
-const CACHE_NAME = 'bhookit-v12.7-cache';
+// ParcelKar V1.0 Progressive Web App Service Worker
+const CACHE_NAME = 'parcelkar-v13.2-cache';
 const STATIC_ASSETS = [
   './',
   './customer.html',
@@ -7,7 +7,7 @@ const STATIC_ASSETS = [
   './style.css',
   './app.js',
   './manifest.json',
-  './bhookit-logo.png',
+  './parcelkar-logo.png',
   './icon-192.png',
   './icon-512.png',
   './favicon.png',

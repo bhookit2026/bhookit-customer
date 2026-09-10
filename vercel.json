@@ -8,7 +8,15 @@
       "destination": "/vendor.html"
     },
     {
+      "source": "/vendor/(.*)",
+      "destination": "/vendor.html"
+    },
+    {
       "source": "/rider",
+      "destination": "/rider.html"
+    },
+    {
+      "source": "/rider/(.*)",
       "destination": "/rider.html"
     },
     {
@@ -16,7 +24,15 @@
       "destination": "/admin.html"
     },
     {
+      "source": "/admin/(.*)",
+      "destination": "/admin.html"
+    },
+    {
       "source": "/partner",
+      "destination": "/partner.html"
+    },
+    {
+      "source": "/partner/(.*)",
       "destination": "/partner.html"
     },
     {

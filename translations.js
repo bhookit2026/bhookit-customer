@@ -1,6 +1,6 @@
 const TRANSLATIONS = {
   en: {
-    systemTitle: 'FoodBank V11 System',
+    systemTitle: 'Parcelकर System',
     demoMode: 'Interactive Demo Mode',
     navExplore: '🍽️ Explore Food',
     navOrders: '📦 My Orders',
@@ -45,7 +45,7 @@ const TRANSLATIONS = {
     redeemWallet: 'Redeem Wallet'
   },
   mr: {
-    systemTitle: 'फूडबँक V11 सिस्टीम',
+    systemTitle: 'पार्सलकर सिस्टीम',
     demoMode: 'डेमो मोड सक्रिय',
     navExplore: '🍽️ मेनू शोधा',
     navOrders: '📦 माझ्या ऑर्डर्स',
@@ -90,7 +90,7 @@ const TRANSLATIONS = {
     redeemWallet: 'वॉलेट वापरा'
   },
   hi: {
-    systemTitle: 'फूडबैंक V11 सिस्टम',
+    systemTitle: 'पार्सलकर सिस्टम',
     demoMode: 'डेमो मोड सक्रिय',
     navExplore: '🍽️ भोजन खोजें',
     navOrders: '📦 मेरी ऑर्डर्स',

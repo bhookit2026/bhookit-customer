@@ -48,12 +48,14 @@ const customerHtml = `<!doctype html>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#ff4722">
-  <title>BhookIt — Order Food Online | Fast Delivery to Your Doorstep</title>
-  <meta name="description" content="Order from the best restaurants in Sakoli and nearby areas. Fresh food, lightning-fast delivery, live order tracking, and exclusive deals — only on BhookIt.">
-  <meta name="keywords" content="food delivery, order food online, Sakoli food, BhookIt, restaurant delivery, online food order">
-  <meta property="og:title" content="BhookIt — Good Food, Faster To You">
+  <title>Parcelकर — Order Food Online | Fast Delivery to Your Doorstep</title>
+  <meta name="description" content="Order from the best restaurants in Sakoli and nearby areas. Fresh food, lightning-fast delivery, live order tracking, and exclusive deals — only on Parcelकर.">
+  <meta name="keywords" content="food delivery, order food online, Sakoli food, Parcelकर, restaurant delivery, online food order">
+  <meta property="og:title" content="Parcelकर — Good Food, Faster To You">
   <meta property="og:description" content="Order from top restaurants in your city. Fast delivery, live tracking, UPI payment.">
-  <meta property="og:image" content="bhookit-logo.png">
+  <meta property="og:image" content="parcelkar-logo.png">
+  <meta property="og:url" content="https://parcelkar.com/">
+  <link rel="canonical" href="https://parcelkar.com/">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="apple-touch-icon" href="icon-192.png">
@@ -62,13 +64,14 @@ const customerHtml = `<!doctype html>
 </head>
 <body>
   <!-- ==========================================
-       BHOOKIT CUSTOMER APP — PUBLIC FACING
+       PARCELKAR CUSTOMER APP — PUBLIC FACING
        ========================================== -->
 
   <!-- Main Navigation Header (Customer Only) -->
   <header>
-    <div class="logo-area" onclick="show('customer')" title="BhookIt - Good Food Faster To You">
-      <img src="bhookit-logo.png" alt="BhookIt - Good Food Faster To You" class="brand-logo-img">
+    <div class="logo-area" onclick="show('customer')" title="Parcelकर - Good Food Faster To You">
+      <img src="parcelkar-logo.png" alt="Parcelकर" class="brand-logo-img">
+      <span class="brand-name-text">Parcel<span class="brand-highlight">कर</span></span>
     </div>
     <!-- Delivery Area & City Selector -->
     <div class="header-location-picker" id="headerLocationBtn" onclick="openLocationModal()" title="Click to Change Delivery Area or City">
@@ -117,7 +120,7 @@ const customerHtml = `<!doctype html>
       <!-- Lucky Spin -->
       <button class="role-pill" onclick="openGamificationModal()" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); color: #fff; border-color: #ec4899;">🎰 Spin & Win</button>
       <!-- Loyalty Wallet -->
-      <button class="wallet-nav-btn" onclick="openWalletModal()" title="BhookIt Loyalty Wallet">
+      <button class="wallet-nav-btn" onclick="openWalletModal()" title="Parcelकर Loyalty Wallet">
         <span>💳</span>
         <span>₹<b id="navWalletBalance">250</b></span>
       </button>

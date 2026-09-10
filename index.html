@@ -4,33 +4,46 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#ff4722">
-  <title>BhookIt — Order Food Online | Fast Delivery to Your Doorstep</title>
-  <meta name="description" content="Order from the best restaurants in Sakoli and nearby areas. Fresh food, lightning-fast delivery, live order tracking, and exclusive deals — only on BhookIt.">
-  <meta name="keywords" content="food delivery, order food online, Sakoli food, BhookIt, restaurant delivery, online food order">
-  <meta property="og:title" content="BhookIt — Good Food, Faster To You">
+  <title>Parcelकर — Order Food Online | Fast Delivery to Your Doorstep</title>
+  <meta name="description" content="Order from the best restaurants in Sakoli and nearby areas. Fresh food, lightning-fast delivery, live order tracking, and exclusive deals — only on Parcelकर.">
+  <meta name="keywords" content="food delivery, order food online, Sakoli food, Parcelकर, restaurant delivery, online food order">
+  <meta property="og:title" content="Parcelकर — Good Food, Faster To You">
   <meta property="og:description" content="Order from top restaurants in your city. Fast delivery, live tracking, UPI payment.">
-  <meta property="og:image" content="bhookit-logo.png">
+  <meta property="og:image" content="parcelkar-logo.png">
+  <meta property="og:url" content="https://parcelkar.com/">
+  <link rel="canonical" href="https://parcelkar.com/">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="style.css">
   <script>
-    // Subdomain helper: If opened on partner.bhookit.com at root, redirect to partner hub
-    if (window.location.hostname.startsWith('partner.') && (window.location.pathname === '/' || window.location.pathname === '')) {
-      window.location.replace('/partner');
+    // Subdomain routing for Parcelकर portals
+    const host = window.location.hostname;
+    const path = window.location.pathname;
+    if (path === '/' || path === '' || path === '/index.html' || path === '/customer.html') {
+      if (host.startsWith('vendor.')) {
+        window.location.replace('/vendor');
+      } else if (host.startsWith('rider.')) {
+        window.location.replace('/rider');
+      } else if (host.startsWith('admin.')) {
+        window.location.replace('/admin');
+      } else if (host.startsWith('partner.')) {
+        window.location.replace('/partner');
+      }
     }
   </script>
 </head>
 <body>
   <!-- ==========================================
-       BHOOKIT CUSTOMER APP — PUBLIC FACING
+       PARCELKAR CUSTOMER APP — PUBLIC FACING
        ========================================== -->
 
   <!-- Main Navigation Header (Customer Only) -->
   <header>
-    <div class="logo-area" onclick="show('customer')" title="BhookIt - Good Food Faster To You">
-      <img src="bhookit-logo.png" alt="BhookIt - Good Food Faster To You" class="brand-logo-img">
+    <div class="logo-area" onclick="show('customer')" title="Parcelकर - Good Food Faster To You">
+      <img src="parcelkar-logo.png" alt="Parcelकर" class="brand-logo-img">
+      <span class="brand-name-text">Parcel<span class="brand-highlight">कर</span></span>
     </div>
     <!-- Delivery Area & City Selector + Spin & Win + Search Button -->
     <div class="header-location-group" style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
@@ -89,7 +102,7 @@
       </button>
 
       <!-- Loyalty Wallet -->
-      <button class="wallet-nav-btn" onclick="openWalletModal()" title="BhookIt Loyalty Wallet">
+      <button class="wallet-nav-btn" onclick="openWalletModal()" title="Parcelकर Loyalty Wallet">
         <span>💳</span>
         <span>₹<b id="navWalletBalance">250</b></span>
       </button>
@@ -112,9 +125,9 @@
     <!-- PWA Install Banner -->
     <div id="pwaBanner" class="pwa-install-banner hidden">
       <div style="display: flex; align-items: center; gap: 12px;">
-        <img src="icon-192.png" style="width: 44px; height: 44px; border-radius: 12px; box-shadow: var(--shadow-sm); object-fit: cover;" alt="BhookIt App">
+        <img src="icon-192.png" style="width: 44px; height: 44px; border-radius: 12px; box-shadow: var(--shadow-sm); object-fit: cover;" alt="Parcelकर App">
         <div>
-          <div style="font-weight: 700; font-size: 14px;">Install BhookIt App on your Phone 📱</div>
+          <div style="font-weight: 700; font-size: 14px;">Install Parcelकर App on your Phone 📱</div>
           <div style="font-size: 12px; opacity: 0.85;">Order faster, browse menus offline, and get live GPS courier updates!</div>
         </div>
       </div>
@@ -134,7 +147,7 @@
           <p class="hero-desc">Discover top-rated cuisines, fast local delivery, and live route tracking right to your doorstep.</p>
           <div class="coupon-promo-pill">
             <span>🎉 Use coupon code</span>
-            <span class="coupon-code-tag">BHOOKIT20</span>
+            <span class="coupon-code-tag">PARCELKAR20</span>
             <span>for 20% OFF (Min ₹200)</span>
           </div>
         </div>
@@ -145,7 +158,7 @@
           <div class="vip-banner-left">
             <span class="vip-crown-icon">👑</span>
             <div>
-              <div class="vip-banner-title">BhookIt VIP Gold Club <span class="vip-tag-gold" id="vipStatusTag">₹99/mo</span></div>
+              <div class="vip-banner-title">Parcelकर VIP Gold Club <span class="vip-tag-gold" id="vipStatusTag">₹99/mo</span></div>
               <div class="vip-banner-desc">Unlimited ₹0 Free Delivery on orders &gt; ₹199 &amp; 15% Instant Cashback</div>
             </div>
           </div>
@@ -348,7 +361,7 @@
           </div>
           <!-- Coupon code input -->
           <div class="coupon-input-group">
-            <input type="text" id="couponInput" class="coupon-input" placeholder="Promo Code (try BHOOKIT20 or JB10)">
+            <input type="text" id="couponInput" class="coupon-input" placeholder="Promo Code (try PARCELKAR20 or JB10)">
             <button class="btn-apply-coupon" onclick="applyCouponCode()">Apply</button>
           </div>
           <div id="couponMessage" style="font-size: 12px; margin-top: -8px; margin-bottom: 12px;"></div>
@@ -439,7 +452,7 @@
     </section>
     <!-- App Footer -->
     <footer class="app-footer" style="margin-top: 50px; padding: 28px 16px; border-top: 1px solid var(--border-color); text-align: center; font-size: 13px; color: var(--text-muted);">
-      <p style="font-weight: 600; margin-bottom: 4px;">© 2026 BhookIt — Fast Food Delivery</p>
+      <p style="font-weight: 600; margin-bottom: 4px;">© 2026 Parcelकर — Fast Food Delivery</p>
       <p style="font-size: 12px; opacity: 0.8; margin-bottom: 6px;">Good Food, Faster To You</p>
       <p style="font-size: 11px; opacity: 0.85;">Developed by <strong style="color: var(--primary, #ff4722);">JBDigital</strong></p>
     </footer>
@@ -501,7 +514,7 @@
         <div class="invoice-box">
           <div class="invoice-header">
             <div>
-              <h2 style="font-family: var(--font-heading); color: var(--primary);">BhookIt Delivery</h2>
+              <h2 style="font-family: var(--font-heading); color: var(--primary);">Parcelकर Delivery</h2>
               <p style="font-size: 11px; color: #64748b;">Tax Invoice / Cash Receipt<br>GSTIN: 27AABCF1234F1Z5</p>
             </div>
             <div style="text-align: right;">
@@ -536,7 +549,7 @@
             <div style="font-size: 15px; font-weight: 800; color: #0f172a; margin-top: 4px;">Grand Total: ₹<span id="invGrandTotal">0</span></div>
           </div>
           <p style="font-size: 10px; color: #94a3b8; text-align: center; margin-top: 14px;">
-            This is a computer generated tax invoice issued under BhookIt Multi-Restaurant System.
+            This is a computer generated tax invoice issued under Parcelकर Multi-Restaurant System.
           </p>
         </div>
       </div>
@@ -594,7 +607,7 @@
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
         <div>
           <label style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Partner Email</label>
-          <input type="email" id="newRestEmail" class="input-field" placeholder="vendor@bhookit.com">
+          <input type="email" id="newRestEmail" class="input-field" placeholder="vendor@parcelkar.com">
         </div>
         <div>
           <label style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Cuisine Category</label>
@@ -649,7 +662,7 @@
         <button class="modal-close-btn" style="background: rgba(255,255,255,0.2); color: #fff; top: 14px; right: 14px;" onclick="cancelGatewayPayment()">✕</button>
         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
           <span style="font-size: 24px;">🔒</span>
-          <h3 style="font-family: var(--font-heading); font-size: 18px; margin: 0; color: #fff;">BhookIt Secure Pay</h3>
+          <h3 style="font-family: var(--font-heading); font-size: 18px; margin: 0; color: #fff;">Parcelकर Secure Pay</h3>
         </div>
         <p style="font-size: 12px; opacity: 0.8; margin: 0;">Razorpay & UPI Verified Gateway</p>
         <div style="margin-top: 14px; font-size: 26px; font-weight: 800; font-family: var(--font-heading); color: #38bdf8;">
@@ -792,7 +805,7 @@
     <div class="modal-card" style="max-width: 440px;">
       <div class="modal-header" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: #fff;">
         <div>
-          <h3 class="modal-title" style="color: #fff; font-size: 16px;">💬 BhookIt Live Support</h3>
+          <h3 class="modal-title" style="color: #fff; font-size: 16px;">💬 Parcelकर Live Support</h3>
           <span style="font-size: 11px; opacity: 0.8;">24/7 Virtual Concierge & Rider Dispatch Desk</span>
         </div>
         <button class="modal-close-btn" style="color: #fff;" onclick="closeModal('supportChatModal')">×</button>
@@ -800,7 +813,7 @@
       <div class="chat-container">
         <div class="chat-history" id="supportChatHistory">
           <div class="chat-msg bot">
-            Hello! 👋 I'm BhookIt's order concierge. How can I assist you with your active delivery today?
+            Hello! 👋 I'm Parcelकर's order concierge. How can I assist you with your active delivery today?
           </div>
         </div>
         <div class="chat-quick-chips">
@@ -821,7 +834,7 @@
     <div class="modal-card" style="max-width: 460px;">
       <div class="modal-header" style="background: linear-gradient(135deg, #064e3b, #047857); color: #fff;">
         <div>
-          <h3 class="modal-title" style="color: #fff; font-size: 18px;">💳 BhookIt Cash Wallet</h3>
+          <h3 class="modal-title" style="color: #fff; font-size: 18px;">💳 Parcelकर Cash Wallet</h3>
           <span style="font-size: 11px; opacity: 0.85;">Loyalty Rewards, Instant Refunds & 5% Cashback</span>
         </div>
         <button class="modal-close-btn" style="color: #fff;" onclick="closeModal('walletModal')">×</button>
@@ -942,7 +955,7 @@
           <div style="display: flex; align-items: center; gap: 8px;">
             <span style="font-size: 26px;">🍽️</span>
             <div>
-              <h3 style="font-family: var(--font-heading); font-size: 18px; margin: 0; color: #fff;">BhookIt Table Pass</h3>
+              <h3 style="font-family: var(--font-heading); font-size: 18px; margin: 0; color: #fff;">Parcelकर Table Pass</h3>
               <p style="font-size: 11px; opacity: 0.85; margin: 0;">Guaranteed Dine-In Seating Confirmation</p>
             </div>
           </div>
@@ -1004,7 +1017,7 @@
           <div style="display: flex; align-items: center; gap: 8px;">
             <span style="font-size: 22px;">🖥️</span>
             <div>
-              <h3 style="font-size: 16px; font-weight: 800; margin: 0; color: #fff;">BhookIt POS Terminal</h3>
+              <h3 style="font-size: 16px; font-weight: 800; margin: 0; color: #fff;">Parcelकर POS Terminal</h3>
               <span style="font-size: 11px; opacity: 0.8;">Station: POS-01 • Cashier: Rakesh</span>
             </div>
           </div>
@@ -1161,7 +1174,7 @@
         </div>
         <div style="text-align: center; margin-top: 10px; font-size: 9px; line-height: 1.3;">
           <div>*** THANK YOU FOR DINING WITH US ***</div>
-          <div>Powered by BhookIt All-in-One POS System</div>
+          <div>Powered by Parcelकर All-in-One POS System</div>
         </div>
       </div>
       <div style="padding: 10px 14px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; gap: 8px;">
@@ -1185,7 +1198,7 @@
         <span style="font-size: 24px;">🎁</span>
         <div style="font-size: 12px; color: #166534;">
           <b>Earn ₹20 Instant Wallet Cashback!</b><br>
-          Submit a verified rating and get rewarded in your BhookIt wallet.
+          Submit a verified rating and get rewarded in your Parcelकर wallet.
         </div>
       </div>
       <input type="hidden" id="ratingTargetOrderId" value="">
@@ -1318,7 +1331,7 @@
       <button class="foodiebot-send-btn" onclick="sendFoodieBotMessage()" title="Send">➤</button>
     </div>
   </div>
-  <!-- MODAL: BhookIt VIP Gold Club Membership -->
+  <!-- MODAL: Parcelकर VIP Gold Club Membership -->
   <div id="membershipModal" class="modal-backdrop hidden">
     <div class="modal-card vip-modal-card" style="max-width: 520px; padding: 0; overflow: hidden;">
       <!-- VIP Luxury Header -->
@@ -1326,7 +1339,7 @@
         <div style="display: flex; align-items: center; gap: 12px;">
           <span class="vip-crown-large">👑</span>
           <div>
-            <h3 style="margin: 0; font-size: 20px; font-weight: 900; color: #fff; letter-spacing: 0.5px;">BhookIt VIP Gold Club</h3>
+            <h3 style="margin: 0; font-size: 20px; font-weight: 900; color: #fff; letter-spacing: 0.5px;">Parcelकर VIP Gold Club</h3>
             <span style="font-size: 12px; color: #fde68a;">Exclusive Dining Privileges &amp; Zero Delivery Fees</span>
           </div>
         </div>
@@ -1474,7 +1487,7 @@
         <div style="display: flex; align-items: center; gap: 12px;">
           <span style="font-size: 26px;">👨‍🍳</span>
           <div>
-            <h3 style="margin: 0; font-size: 18px; font-weight: 900; color: #fff; letter-spacing: 0.5px;">BhookIt Live Kitchen KDS</h3>
+            <h3 style="margin: 0; font-size: 18px; font-weight: 900; color: #fff; letter-spacing: 0.5px;">Parcelकर Live Kitchen KDS</h3>
             <span style="font-size: 11px; color: #94a3b8;">Real-Time Chef Expedition &amp; Station Kanban</span>
           </div>
         </div>
@@ -1618,7 +1631,7 @@
           <div class="wa-avatar">🍔</div>
           <div>
             <div style="display: flex; align-items: center; gap: 4px;">
-              <span class="wa-profile-name">BhookIt Delivery Bot</span>
+              <span class="wa-profile-name">Parcelकर Delivery Bot</span>
               <span class="wa-verified-badge" title="Verified Business">✓</span>
             </div>
             <div class="wa-status-text">Official Business Account • Online</div>

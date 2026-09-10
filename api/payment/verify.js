@@ -1,6 +1,6 @@
 const crypto = require('crypto');
 
-const RZP_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || 'bhookit_rzp_mock_secret_key_2026';
+const RZP_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || 'parcelkar_rzp_mock_secret_key_2026';
 
 function parseJsonBody(req) {
   return new Promise((resolve, reject) => {
@@ -53,7 +53,7 @@ module.exports = async function verify(req, res) {
         status: 'captured',
         transaction_id: razorpay_payment_id,
         order_id: razorpay_order_id,
-        message: 'Payment verified successfully and funds captured by BhookIt Gateway.'
+        message: 'Payment verified successfully and funds captured by ParcelKar Gateway.'
       });
     }
     return res.status(400).json({ verified: false, error: 'Signature mismatch' });

@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#ff4722">
-  <title>BhookIt Master Admin — Platform Operations & System Dashboard</title>
-  <meta name="description" content="Master control dashboard for BhookIt platform: restaurant onboarding, rider telemetry, zone configuration, commission and analytics.">
+  <title>Parcelकर Master Admin — Platform Operations & System Dashboard</title>
+  <meta name="description" content="Master control dashboard for Parcelकर platform: restaurant onboarding, rider telemetry, zone configuration, commission and analytics.">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="apple-touch-icon" href="icon-192.png">
@@ -46,8 +46,9 @@
 <body>
   <!-- Header: Master Super Admin Dedicated Header -->
   <header>
-    <div class="logo-area" onclick="location.href='/admin'" style="cursor: pointer;" title="BhookIt Master Admin">
-      <img src="bhookit-logo.png" alt="BhookIt Admin" class="brand-logo-img">
+    <div class="logo-area" onclick="location.href='/admin'" style="cursor: pointer;" title="Parcelकर Master Admin">
+      <img src="parcelkar-logo.png" alt="Parcelकर Admin" class="brand-logo-img">
+      <span class="brand-name-text">Parcel<span class="brand-highlight">कर</span></span>
       <span class="portal-badge badge-admin">🛡️ Master Admin</span>
     </div>
 
@@ -84,6 +85,7 @@
   </header>
 
   <main class="container">
+    <!-- 7. SUPER ADMIN EXECUTIVE COMMAND CENTER -->
     <section id="admin" class="panel">
       <div class="dashboard-card" style="background: linear-gradient(135deg, #18181b, #27272a); color: #fff;">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
@@ -120,10 +122,7 @@
       <div class="dashboard-card">
         <div class="dashboard-card-title" style="display: flex; justify-content: space-between; align-items: center;">
           <span>🍽️ Restaurant Partner Management &amp; KYC</span>
-          <div style="display: flex; gap: 8px;">
-            <button class="btn-primary" onclick="openCreateVendorCredsModal()" style="padding: 4px 12px; font-size: 11px; font-weight: 700;">➕ Allocate Credentials</button>
-            <button class="btn-secondary" onclick="openInvitePartnerModal()" style="padding: 4px 12px; font-size: 11px;">+ Invite Partner</button>
-          </div>
+          <button class="btn-secondary" onclick="openInvitePartnerModal()" style="padding: 4px 12px; font-size: 11px;">+ Invite Partner</button>
         </div>
         <div id="adminRestaurantsTable">
           <!-- Injected dynamically -->
@@ -149,46 +148,6 @@
         </div>
         <div id="adminDeliveryZonesTable" class="table-responsive">
           <!-- Injected dynamically -->
-        </div>
-      </div>
-      <!-- Payment Gateways & Cash on Delivery (COD) Controls -->
-      <div class="dashboard-card" style="border-left: 4px solid #10b981;">
-        <div class="dashboard-card-title">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 20px;">💳</span>
-            <span>Payment Methods &amp; Cash on Delivery (COD) Controls</span>
-          </div>
-          <span class="badge" id="adminCodStatusBadge" style="background: #dcfce7; color: #15803d; font-weight: 700;">COD: Enabled 🟢</span>
-        </div>
-        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">
-          Enable or disable Cash on Delivery (COD) platform-wide. When disabled, customers must pay online via UPI, GooglePay, PhonePe, or Cards.
-        </p>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px;">
-          <!-- COD Toggle Card -->
-          <div style="background: var(--bg); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 14px; display: flex; flex-direction: column; justify-content: space-between;">
-            <div>
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                <span style="font-weight: 800; font-size: 14px;">💵 Cash on Delivery (COD)</span>
-                <input type="checkbox" id="toggleCodPayment" onchange="toggleCodPaymentSetting(this.checked)" checked style="width: 22px; height: 22px; cursor: pointer; accent-color: #10b981;">
-              </div>
-              <div style="font-size: 12px; color: var(--text-muted);">
-                Allows customers to pay via cash upon food arrival. Delivery riders collect the physical cash.
-              </div>
-            </div>
-            <div style="margin-top: 10px; font-size: 11px; font-weight: 700; color: #10b981;" id="adminCodHintText">
-              ● Status: Active &amp; Available for customers
-            </div>
-          </div>
-          <!-- Online UPI Card -->
-          <div style="background: var(--bg); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 14px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-              <span style="font-weight: 800; font-size: 14px;">⚡ Instant UPI (GPay/PhonePe/Paytm)</span>
-              <span class="badge" style="background: #dbeafe; color: #1e40af; font-weight: 700;">Always Active</span>
-            </div>
-            <div style="font-size: 12px; color: var(--text-muted);">
-              Direct bank-to-bank UPI transfers to verified merchant ID <b style="color: var(--primary);">bhookit@axl</b>.
-            </div>
-          </div>
         </div>
       </div>
       <!-- Dynamic Surge & Weather Dispatch Switchboard -->
@@ -358,7 +317,6 @@
         </div>
       </div>
     </section>
-    <!-- PARTNER REGISTRATION PANEL -->
   </main>
 
   <!-- MODAL: Food Item Customization (Add-ons) -->
@@ -412,7 +370,7 @@
         <div class="invoice-box">
           <div class="invoice-header">
             <div>
-              <h2 style="font-family: var(--font-heading); color: var(--primary);">BhookIt Delivery</h2>
+              <h2 style="font-family: var(--font-heading); color: var(--primary);">Parcelकर Delivery</h2>
               <p style="font-size: 11px; color: #64748b;">Tax Invoice / Cash Receipt<br>GSTIN: 27AABCF1234F1Z5</p>
             </div>
             <div style="text-align: right;">
@@ -447,7 +405,7 @@
             <div style="font-size: 15px; font-weight: 800; color: #0f172a; margin-top: 4px;">Grand Total: ₹<span id="invGrandTotal">0</span></div>
           </div>
           <p style="font-size: 10px; color: #94a3b8; text-align: center; margin-top: 14px;">
-            This is a computer generated tax invoice issued under BhookIt Multi-Restaurant System.
+            This is a computer generated tax invoice issued under Parcelकर Multi-Restaurant System.
           </p>
         </div>
       </div>
@@ -505,7 +463,7 @@
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
         <div>
           <label style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Partner Email</label>
-          <input type="email" id="newRestEmail" class="input-field" placeholder="vendor@bhookit.com">
+          <input type="email" id="newRestEmail" class="input-field" placeholder="vendor@parcelkar.com">
         </div>
         <div>
           <label style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Cuisine Category</label>
@@ -560,7 +518,7 @@
         <button class="modal-close-btn" style="background: rgba(255,255,255,0.2); color: #fff; top: 14px; right: 14px;" onclick="cancelGatewayPayment()">✕</button>
         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
           <span style="font-size: 24px;">🔒</span>
-          <h3 style="font-family: var(--font-heading); font-size: 18px; margin: 0; color: #fff;">BhookIt Secure Pay</h3>
+          <h3 style="font-family: var(--font-heading); font-size: 18px; margin: 0; color: #fff;">Parcelकर Secure Pay</h3>
         </div>
         <p style="font-size: 12px; opacity: 0.8; margin: 0;">Razorpay & UPI Verified Gateway</p>
         <div style="margin-top: 14px; font-size: 26px; font-weight: 800; font-family: var(--font-heading); color: #38bdf8;">
@@ -703,7 +661,7 @@
     <div class="modal-card" style="max-width: 440px;">
       <div class="modal-header" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: #fff;">
         <div>
-          <h3 class="modal-title" style="color: #fff; font-size: 16px;">💬 BhookIt Live Support</h3>
+          <h3 class="modal-title" style="color: #fff; font-size: 16px;">💬 Parcelकर Live Support</h3>
           <span style="font-size: 11px; opacity: 0.8;">24/7 Virtual Concierge & Rider Dispatch Desk</span>
         </div>
         <button class="modal-close-btn" style="color: #fff;" onclick="closeModal('supportChatModal')">×</button>
@@ -711,7 +669,7 @@
       <div class="chat-container">
         <div class="chat-history" id="supportChatHistory">
           <div class="chat-msg bot">
-            Hello! 👋 I'm BhookIt's order concierge. How can I assist you with your active delivery today?
+            Hello! 👋 I'm Parcelकर's order concierge. How can I assist you with your active delivery today?
           </div>
         </div>
         <div class="chat-quick-chips">
@@ -732,7 +690,7 @@
     <div class="modal-card" style="max-width: 460px;">
       <div class="modal-header" style="background: linear-gradient(135deg, #064e3b, #047857); color: #fff;">
         <div>
-          <h3 class="modal-title" style="color: #fff; font-size: 18px;">💳 BhookIt Cash Wallet</h3>
+          <h3 class="modal-title" style="color: #fff; font-size: 18px;">💳 Parcelकर Cash Wallet</h3>
           <span style="font-size: 11px; opacity: 0.85;">Loyalty Rewards, Instant Refunds & 5% Cashback</span>
         </div>
         <button class="modal-close-btn" style="color: #fff;" onclick="closeModal('walletModal')">×</button>
@@ -853,7 +811,7 @@
           <div style="display: flex; align-items: center; gap: 8px;">
             <span style="font-size: 26px;">🍽️</span>
             <div>
-              <h3 style="font-family: var(--font-heading); font-size: 18px; margin: 0; color: #fff;">BhookIt Table Pass</h3>
+              <h3 style="font-family: var(--font-heading); font-size: 18px; margin: 0; color: #fff;">Parcelकर Table Pass</h3>
               <p style="font-size: 11px; opacity: 0.85; margin: 0;">Guaranteed Dine-In Seating Confirmation</p>
             </div>
           </div>
@@ -915,7 +873,7 @@
           <div style="display: flex; align-items: center; gap: 8px;">
             <span style="font-size: 22px;">🖥️</span>
             <div>
-              <h3 style="font-size: 16px; font-weight: 800; margin: 0; color: #fff;">BhookIt POS Terminal</h3>
+              <h3 style="font-size: 16px; font-weight: 800; margin: 0; color: #fff;">Parcelकर POS Terminal</h3>
               <span style="font-size: 11px; opacity: 0.8;">Station: POS-01 • Cashier: Rakesh</span>
             </div>
           </div>
@@ -1072,7 +1030,7 @@
         </div>
         <div style="text-align: center; margin-top: 10px; font-size: 9px; line-height: 1.3;">
           <div>*** THANK YOU FOR DINING WITH US ***</div>
-          <div>Powered by BhookIt All-in-One POS System</div>
+          <div>Powered by Parcelकर All-in-One POS System</div>
         </div>
       </div>
       <div style="padding: 10px 14px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; gap: 8px;">
@@ -1096,7 +1054,7 @@
         <span style="font-size: 24px;">🎁</span>
         <div style="font-size: 12px; color: #166534;">
           <b>Earn ₹20 Instant Wallet Cashback!</b><br>
-          Submit a verified rating and get rewarded in your BhookIt wallet.
+          Submit a verified rating and get rewarded in your Parcelकर wallet.
         </div>
       </div>
       <input type="hidden" id="ratingTargetOrderId" value="">
@@ -1229,7 +1187,7 @@
       <button class="foodiebot-send-btn" onclick="sendFoodieBotMessage()" title="Send">➤</button>
     </div>
   </div>
-  <!-- MODAL: BhookIt VIP Gold Club Membership -->
+  <!-- MODAL: Parcelकर VIP Gold Club Membership -->
   <div id="membershipModal" class="modal-backdrop hidden">
     <div class="modal-card vip-modal-card" style="max-width: 520px; padding: 0; overflow: hidden;">
       <!-- VIP Luxury Header -->
@@ -1237,7 +1195,7 @@
         <div style="display: flex; align-items: center; gap: 12px;">
           <span class="vip-crown-large">👑</span>
           <div>
-            <h3 style="margin: 0; font-size: 20px; font-weight: 900; color: #fff; letter-spacing: 0.5px;">BhookIt VIP Gold Club</h3>
+            <h3 style="margin: 0; font-size: 20px; font-weight: 900; color: #fff; letter-spacing: 0.5px;">Parcelकर VIP Gold Club</h3>
             <span style="font-size: 12px; color: #fde68a;">Exclusive Dining Privileges &amp; Zero Delivery Fees</span>
           </div>
         </div>
@@ -1385,7 +1343,7 @@
         <div style="display: flex; align-items: center; gap: 12px;">
           <span style="font-size: 26px;">👨‍🍳</span>
           <div>
-            <h3 style="margin: 0; font-size: 18px; font-weight: 900; color: #fff; letter-spacing: 0.5px;">BhookIt Live Kitchen KDS</h3>
+            <h3 style="margin: 0; font-size: 18px; font-weight: 900; color: #fff; letter-spacing: 0.5px;">Parcelकर Live Kitchen KDS</h3>
             <span style="font-size: 11px; color: #94a3b8;">Real-Time Chef Expedition &amp; Station Kanban</span>
           </div>
         </div>
@@ -1529,7 +1487,7 @@
           <div class="wa-avatar">🍔</div>
           <div>
             <div style="display: flex; align-items: center; gap: 4px;">
-              <span class="wa-profile-name">BhookIt Delivery Bot</span>
+              <span class="wa-profile-name">Parcelकर Delivery Bot</span>
               <span class="wa-verified-badge" title="Verified Business">✓</span>
             </div>
             <div class="wa-status-text">Official Business Account • Online</div>
@@ -1849,74 +1807,5 @@
       }
     });
   </script>
-
-  <!-- ========================================================= -->
-  <!-- MODAL: Allocate / Create Vendor Credentials (Admin)       -->
-  <!-- ========================================================= -->
-  <div id="createVendorCredsModal" class="modal-overlay hidden">
-    <div class="modal-content" style="max-width: 520px;">
-      <button class="modal-close-btn" onclick="closeModal('createVendorCredsModal')">✕</button>
-      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
-        <span style="font-size: 26px;">🔑</span>
-        <div>
-          <h3 class="modal-title" style="margin: 0; font-size: 18px; font-weight: 900;">Allocate / Create Vendor Credentials</h3>
-          <span style="font-size: 12px; color: var(--text-muted);">Set up restaurant credentials for partner.bhookit.com/vendor access</span>
-        </div>
-      </div>
-
-      <form onsubmit="saveVendorCredentials(event)">
-        <div style="margin-bottom: 12px;">
-          <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Select Outlet Target</label>
-          <select id="vcredRestSelect" class="input-field" onchange="onVcredSelectChange(this.value)" style="font-weight: 700;">
-            <!-- Populated dynamically -->
-          </select>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
-          <div>
-            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Restaurant Name</label>
-            <input type="text" id="vcredRestName" class="input-field" placeholder="e.g. Sakoli Food Corner" required>
-          </div>
-          <div>
-            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Owner / Manager Name</label>
-            <input type="text" id="vcredOwnerName" class="input-field" placeholder="e.g. Ramesh Patil">
-          </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
-          <div>
-            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Login ID (or Mobile)</label>
-            <input type="text" id="vcredLoginId" class="input-field" placeholder="e.g. sakoli or 9822334455" required>
-          </div>
-          <div>
-            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: flex; justify-content: space-between; margin-bottom: 4px;">
-              <span>Terminal PIN</span>
-              <a href="javascript:void(0)" onclick="document.getElementById('vcredPin').value = Math.floor(1000 + Math.random()*9000)" style="font-size: 11px; color: var(--primary); font-weight: 700;">🎲 Auto-Generate</a>
-            </label>
-            <input type="text" id="vcredPin" class="input-field" placeholder="4-digit PIN (e.g. 1234)" required maxlength="8">
-          </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
-          <div>
-            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Platform Fee / Commission (%)</label>
-            <input type="number" id="vcredCommission" class="input-field" value="10" min="0" max="50">
-          </div>
-          <div style="display: flex; align-items: center; padding-top: 18px;">
-            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; cursor: pointer;">
-              <input type="checkbox" id="vcredApproved" checked style="width: 18px; height: 18px; accent-color: #10b981;">
-              <span>Approve (Active) 🟢</span>
-            </label>
-          </div>
-        </div>
-
-        <div style="display: flex; justify-content: flex-end; gap: 10px;">
-          <button type="button" class="btn-secondary" onclick="closeModal('createVendorCredsModal')">Cancel</button>
-          <button type="submit" class="btn-primary" style="font-weight: 800;">💾 Save &amp; Allocate Credentials</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
 </body>
 </html>

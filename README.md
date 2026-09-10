@@ -1,4 +1,4 @@
-# BhookIt V1.4 — Multi-Restaurant Food Ordering & Management System
+# Parcelकर V1.4 — Multi-Restaurant Food Ordering & Management System
 
 Enterprise-grade multi-vendor food delivery and restaurant orchestration platform featuring real-world GPS tracking, Dine-in Table Reservations, Customer Loyalty Wallet with 5% Cashback, Pure Veg Filter, Razorpay/UPI payment simulation, Delivery OTP verification, PWA mobile suite, Saved Address manager, in-app notifications drawer, 24/7 support assistant, and sleek Dark/Light theme switching.
 
@@ -66,7 +66,7 @@ Enterprise-grade multi-vendor food delivery and restaurant orchestration platfor
     - Quick feedback chips (*Super Fast Delivery ⚡*, *Hot & Fresh 🍲*, *Neat Packaging 📦*, *Polite Rider 🚴*).
     - Dynamic restaurant rating recalculation and persistence.
 
-14. **Dine-In Table Reservation System (BhookIt Table Pass)**:
+14. **Dine-In Table Reservation System (Parcelकर Table Pass)**:
     - Dedicated `[🍽️ Book Table]` button on all partner restaurant profiles.
     - Customizable booking form: Date, Time slot chips (Lunch/Dinner), Guest counter (1-10+), Seating zone (AC Family, Window side, Rooftop, Garden), and occasion notes.
     - Printable VIP Table Confirmation Pass with Booking ID (`TB-XXXXX`).
@@ -90,10 +90,26 @@ Enterprise-grade multi-vendor food delivery and restaurant orchestration platfor
 Run the built-in Node.js server:
 
 ```bash
-node server.js
+npm start
+# or: node server.js
 ```
 
 Open `http://localhost:8080/` in your browser.
+
+### 🌐 Standalone Portals & Domains
+
+| Portal | Production Domain | Local Path |
+| :--- | :--- | :--- |
+| **Customer App** | `https://parcelkar.com/` | `http://localhost:8080/` |
+| **Partner Hub** | `https://partner.parcelkar.com/` | `http://localhost:8080/partner` |
+| **Vendor Terminal** | `https://vendor.parcelkar.com/` | `http://localhost:8080/vendor` |
+| **Rider App** | `https://rider.parcelkar.com/` | `http://localhost:8080/rider` |
+| **Operations Admin** | `https://admin.parcelkar.com/` | `http://localhost:8080/admin` |
+
+To regenerate standalone portals at any time:
+```bash
+npm run build
+```
 
 ---
 
@@ -102,9 +118,9 @@ Open `http://localhost:8080/` in your browser.
 Use the top Quick Role Switcher bar or these credentials:
 - **Customer**: `rakesh.user@demo.com`
 - **Restaurant Vendors**:
-  - *Sakoli Food Corner* (`sakoli@bhookit.com`)
-  - *Aapla Bhojanalay* (`aapla@bhookit.com`)
-  - *Royal Biryani & Rolls* (`biryani@bhookit.com`)
-  - *Sweet Treats & Shakes* (`sweets@bhookit.com`)
+  - *Sakoli Food Corner* (`sakoli@parcelkar.com`)
+  - *Aapla Bhojanalay* (`aapla@parcelkar.com`)
+  - *Royal Biryani & Rolls* (`biryani@parcelkar.com`)
+  - *Sweet Treats & Shakes* (`sweets@parcelkar.com`)
 - **Delivery Partner**: `Vikram Rider`
-- **Coupons**: `BHOOKIT20` (20% OFF), `JB10` (10% OFF), `WELCOME50` (Flat ₹50 OFF)
+- **Coupons**: `PARCELKAR20` (20% OFF), `JB10` (10% OFF), `WELCOME50` (Flat ₹50 OFF)

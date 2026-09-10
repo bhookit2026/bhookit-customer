@@ -1,5 +1,5 @@
 /**
- * BhookIt V1 — Multi-Restaurant System
+ * Parcelकर V1 — Multi-Restaurant System
  * High-Performance Node.js Backend Server & REST API
  * Features: Static file server, Payment Gateway simulation (Razorpay/UPI),
  * and Order Verification API.
@@ -11,8 +11,8 @@ const path = require('path');
 const crypto = require('crypto');
 
 const PORT = process.env.PORT || 8080;
-const RZP_KEY_ID = process.env.RAZORPAY_KEY_ID || 'rzp_test_BhookIt_Demo';
-const RZP_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || 'bhookit_rzp_mock_secret_key_2026';
+const RZP_KEY_ID = process.env.RAZORPAY_KEY_ID || 'rzp_test_Parcelकर_Demo';
+const RZP_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || 'parcelkar_rzp_mock_secret_key_2026';
 
 const MIME_TYPES = {
   '.html': 'text/html',
@@ -83,7 +83,7 @@ async function handleRequest(req, res) {
   if (pathname === '/api/health' && req.method === 'GET') {
     return sendJson(res, 200, {
       status: 'healthy',
-      system: 'BhookIt V1 Engine',
+      system: 'Parcelकर V1 Engine',
       version: '11.2.0',
       timestamp: new Date().toISOString()
     });
@@ -147,7 +147,7 @@ async function handleRequest(req, res) {
           status: 'captured',
           transaction_id: razorpay_payment_id,
           order_id: razorpay_order_id,
-          message: 'Payment verified successfully and funds captured by BhookIt Gateway.'
+          message: 'Payment verified successfully and funds captured by Parcelकर Gateway.'
         });
       } else {
         return sendJson(res, 400, { verified: false, error: 'Signature mismatch' });
@@ -185,10 +185,17 @@ async function handleRequest(req, res) {
   // -----------------------------------------------------------
   const host = (req.headers.host || '').toLowerCase();
   const isPartnerDomain = host.startsWith('partner.');
+  const isVendorDomain = host.startsWith('vendor.');
+  const isRiderDomain = host.startsWith('rider.');
+  const isAdminDomain = host.startsWith('admin.');
 
   let targetFile = pathname;
   if (pathname === '/') {
-    targetFile = isPartnerDomain ? 'partner.html' : 'customer.html';
+    if (isVendorDomain) targetFile = 'vendor.html';
+    else if (isRiderDomain) targetFile = 'rider.html';
+    else if (isAdminDomain) targetFile = 'admin.html';
+    else if (isPartnerDomain) targetFile = 'partner.html';
+    else targetFile = 'customer.html';
   } else if (pathname === '/vendor' || pathname === '/vendor/') {
     targetFile = 'vendor.html';
   } else if (pathname === '/rider' || pathname === '/rider/') {
@@ -221,7 +228,7 @@ async function handleRequest(req, res) {
 
 if (require.main === module) {
   server.listen(PORT, () => {
-    console.log(`BhookIt V1 Server & REST API running at http://localhost:${PORT}/`);
+    console.log(`Parcelकर V1 Server & REST API running at http://localhost:${PORT}/`);
   });
 }
 

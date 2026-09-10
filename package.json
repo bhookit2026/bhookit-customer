@@ -1,6 +1,11 @@
 {
-  "name": "bhookit-customer",
+  "name": "parcelkar-customer",
   "version": "1.0.0",
   "private": true,
-  "description": "BhookIt customer web app (static + serverless API on Vercel; server.js is used by Render)"
+  "description": "ParcelKar platform & all portals (static + serverless API on Vercel; server.js is used by Render)",
+  "scripts": {
+    "start": "node server.js",
+    "build": "node build_all_portals.js",
+    "verify": "node verify_rename.js"
+  }
 }

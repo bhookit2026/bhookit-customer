@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 
-const RZP_KEY_ID = process.env.RAZORPAY_KEY_ID || 'rzp_test_BhookIt_Demo';
-const RZP_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || 'bhookit_rzp_mock_secret_key_2026';
+const RZP_KEY_ID = process.env.RAZORPAY_KEY_ID || 'rzp_test_ParcelKar_Demo';
+const RZP_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || 'parcelkar_rzp_mock_secret_key_2026';
 
 function parseJsonBody(req) {
   return new Promise((resolve, reject) => {

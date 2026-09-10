@@ -1,19 +1,19 @@
 /**
- * BhookIt V1 — Multi-Restaurant Food Ordering & Management System
+ * Parcelकर V1 — Multi-Restaurant Food Ordering & Management System
  * Phase 1 & Phase 2 Integrated Engine
  * Features: Multi-vendor, Live Route Tracking, GST Invoices,
  * WhatsApp Notifications, Voice Kitchen Alerts, & Multi-Language (EN/MR/HI)
  */
 
 // Storage Key & Default Seed Data
-const STORAGE_KEY = 'bhookit_v11_data_v2';
+const STORAGE_KEY = 'parcelkar_v11_data_v2';
 
 // -------------------------------------------------------------
 // MULTI-LANGUAGE TRANSLATION DICTIONARY
 // -------------------------------------------------------------
 const TRANSLATIONS = {
   en: {
-    systemTitle: 'BhookIt V1 System',
+    systemTitle: 'Parcelकर V1 System',
     demoMode: 'Interactive Demo Mode',
     navExplore: '🍔 Explore Food',
     navOrders: '📦 My Orders',
@@ -58,7 +58,7 @@ const TRANSLATIONS = {
     redeemWallet: 'Redeem Wallet'
   },
   mr: {
-    systemTitle: 'भूकीट सिस्टीम',
+    systemTitle: 'पार्सलकर सिस्टीम',
     demoMode: 'डेमो मोड सक्रिय',
     navExplore: '🍔 मेनू शोधा',
     navOrders: '📦 माझ्या ऑर्डर्स',
@@ -103,7 +103,7 @@ const TRANSLATIONS = {
     redeemWallet: 'वॉलेट वापरा'
   },
   hi: {
-    systemTitle: 'भूकीट सिस्टम',
+    systemTitle: 'पार्सलकर सिस्टम',
     demoMode: 'डेमो मोड सक्रिय',
     navExplore: '🍔 मेन्यू खोजें',
     navOrders: '📦 मेरे ऑर्डर्स',
@@ -149,7 +149,7 @@ const TRANSLATIONS = {
   }
 };
 
-let currentLanguage = localStorage.getItem('bhookit_lang') || 'en';
+let currentLanguage = localStorage.getItem('parcelkar_lang') || 'en';
 
 function t(key) {
   return (TRANSLATIONS[currentLanguage] && TRANSLATIONS[currentLanguage][key]) || TRANSLATIONS.en[key] || key;
@@ -157,7 +157,7 @@ function t(key) {
 
 function setLanguage(lang) {
   currentLanguage = lang;
-  localStorage.setItem('bhookit_lang', lang);
+  localStorage.setItem('parcelkar_lang', lang);
   const langSel = document.getElementById('langSelect');
   if (langSel) langSel.value = lang;
   applyLanguageTranslations();
@@ -200,6 +200,7 @@ const SEED_DATA = {
     platformFee: 5,
     defaultCommission: 10,
     coupons: {
+      PARCELKAR20: { type: 'percent', value: 20, min: 200, label: '20% OFF up to ₹100' },
       BHOOKIT20: { type: 'percent', value: 20, min: 200, label: '20% OFF up to ₹100' },
       JB10: { type: 'percent', value: 10, min: 150, label: '10% OFF on all orders' },
       WELCOME50: { type: 'flat', value: 50, min: 250, label: 'Flat ₹50 OFF' }
@@ -217,7 +218,7 @@ const SEED_DATA = {
   },
   notifications: [
     { id: 'notif_1', icon: '🛵', text: 'Order #FB-98210 is Out for Delivery with Vikram Rider!', time: '10m ago', unread: true },
-    { id: 'notif_2', icon: '🎉', text: 'Use coupon BHOOKIT20 to get 20% discount on today\'s lunch.', time: '1h ago', unread: true },
+    { id: 'notif_2', icon: '🎉', text: 'Use coupon PARCELKAR20 to get 20% discount on today\'s lunch.', time: '1h ago', unread: true },
     { id: 'notif_3', icon: '🍲', text: 'Sakoli Food Corner just added new dishes to their menu.', time: '3h ago', unread: false }
   ],
   restaurants: [
@@ -227,7 +228,7 @@ const SEED_DATA = {
       ownerName: 'Ramesh Patil',
       vendorLogin: 'sakoli',
       vendorPin: '1234',
-      email: 'sakoli@bhookit.com',
+      email: 'sakoli@parcelkar.com',
       phone: '+91 9822334455',
       category: 'Fast Food',
       rating: 4.8,
@@ -250,7 +251,7 @@ const SEED_DATA = {
       ownerName: 'Sunil Shinde',
       vendorLogin: 'aapla',
       vendorPin: '1234',
-      email: 'aapla@bhookit.com',
+      email: 'aapla@parcelkar.com',
       phone: '+91 9822112233',
       category: 'North Indian',
       rating: 4.9,
@@ -273,7 +274,7 @@ const SEED_DATA = {
       ownerName: 'Mohd. Imran',
       vendorLogin: 'royal',
       vendorPin: '1234',
-      email: 'biryani@bhookit.com',
+      email: 'biryani@parcelkar.com',
       phone: '+91 9899887766',
       category: 'North Indian',
       rating: 4.7,
@@ -292,7 +293,7 @@ const SEED_DATA = {
     {
       id: 4,
       name: 'Sweet Treats & Shakes',
-      email: 'sweets@bhookit.com',
+      email: 'sweets@parcelkar.com',
       phone: '+91 9877665544',
       category: 'Desserts',
       rating: 4.9,
@@ -311,7 +312,7 @@ const SEED_DATA = {
   ],
   riders: [
     { id: 'rider_1', name: 'Vikram Rider', email: 'rider@jbfood.local', phone: '+91 9988771122', active: true, lat: 21.0825, lng: 79.9854, totalTrips: 18, earnings: 940, tips: 120 },
-    { id: 'rider_2', name: 'Speedy Rahul', email: 'rahul@bhookit.com', phone: '+91 9988773344', active: true, lat: 21.0860, lng: 79.9910, totalTrips: 14, earnings: 780, tips: 90 }
+    { id: 'rider_2', name: 'Speedy Rahul', email: 'rahul@parcelkar.com', phone: '+91 9988773344', active: true, lat: 21.0860, lng: 79.9910, totalTrips: 14, earnings: 780, tips: 90 }
   ],
   orders: [
     {
@@ -376,7 +377,10 @@ const SEED_DATA = {
 };
 
 // Application State
-let appData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || SEED_DATA;
+let appData = JSON.parse(localStorage.getItem(STORAGE_KEY)) ||
+              JSON.parse(localStorage.getItem('bhookit_v11_data_v2')) ||
+              JSON.parse(localStorage.getItem('bhookit_v1_data')) ||
+              SEED_DATA;
 
 // Ensure KYC & FSSAI attributes exist on all restaurants
 if (appData && appData.restaurants) {
@@ -392,7 +396,7 @@ if (appData) {
   if (!appData.notifications || !appData.notifications.length) {
     appData.notifications = [
       { id: 'notif_1', icon: '🛵', text: 'Order #FB-98210 is Out for Delivery with Vikram Rider!', time: '10m ago', unread: true },
-      { id: 'notif_2', icon: '🎉', text: 'Use coupon BHOOKIT20 to get 20% discount on today\'s lunch.', time: '1h ago', unread: true },
+      { id: 'notif_2', icon: '🎉', text: 'Use coupon PARCELKAR20 to get 20% discount on today\'s lunch.', time: '1h ago', unread: true },
       { id: 'notif_3', icon: '🍲', text: 'Sakoli Food Corner just added new dishes to their menu.', time: '3h ago', unread: false }
     ];
   }
@@ -721,7 +725,7 @@ function sendRiderWhatsApp(orderId) {
   const order = appData.orders.find(o => o.id === orderId);
   if (!order) return;
 
-  const message = `🛵 *BHOOKIT DISPATCH - DELIVERY TASK*%0A%0A` +
+  const message = `🛵 *PARCELKAR DISPATCH - DELIVERY TASK*%0A%0A` +
     `📦 *Order #${order.id}*%0A` +
     `🏪 *Pickup Store:* ${order.restaurantName}%0A` +
     `📍 *Drop Destination:* ${order.customer.address}%0A` +
@@ -742,7 +746,7 @@ function sendSettlementWhatsApp(restaurantId) {
   const comm = Math.round(gross * (rest.commissionRate / 100));
   const payable = gross - comm;
 
-  const message = `💰 *BHOOKIT SETTLEMENT STATEMENT*%0A%0A` +
+  const message = `💰 *PARCELKAR SETTLEMENT STATEMENT*%0A%0A` +
     `🏪 *Restaurant Partner:* ${rest.name}%0A` +
     `📅 *Statement Date:* ${new Date().toLocaleDateString()}%0A%0A` +
     `📈 *Total Gross Orders:* ₹${gross}%0A` +
@@ -773,12 +777,12 @@ function showToast(message, type = 'info') {
 // -------------------------------------------------------------
 function exportOrdersCSV(vendorId = null) {
   let orders = appData.orders;
-  let filenamePrefix = 'bhookit-all-orders';
+  let filenamePrefix = 'parcelkar-all-orders';
 
   if (vendorId !== null) {
     orders = orders.filter(o => o.restaurantId === Number(vendorId));
     const rest = appData.restaurants.find(r => r.id === Number(vendorId));
-    filenamePrefix = `bhookit-${(rest?.name || 'vendor').toLowerCase().replace(/\s+/g, '-')}-orders`;
+    filenamePrefix = `parcelkar-${(rest?.name || 'vendor').toLowerCase().replace(/\s+/g, '-')}-orders`;
   }
 
   if (!orders.length) {
@@ -898,7 +902,7 @@ function exportSettlementCSV() {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.setAttribute('href', url);
-  link.setAttribute('download', `bhookit-vendor-settlement-ledger-${new Date().toISOString().slice(0, 10)}.csv`);
+  link.setAttribute('download', `parcelkar-vendor-settlement-ledger-${new Date().toISOString().slice(0, 10)}.csv`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -915,8 +919,11 @@ let deferredPwaPrompt = null;
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then(reg => console.log('ServiceWorker registered:', reg.scope))
+    navigator.serviceWorker.register('./sw.js?v=13.1')
+      .then(reg => {
+        console.log('ServiceWorker registered:', reg.scope);
+        reg.update();
+      })
       .catch(err => console.log('ServiceWorker registration error:', err));
   });
 }
@@ -927,7 +934,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
   const pwaPill = document.getElementById('pwaInstallPill');
   const pwaBanner = document.getElementById('pwaBanner');
   if (pwaPill) pwaPill.style.display = 'inline-block';
-  if (pwaBanner && !sessionStorage.getItem('bhookit_pwa_dismissed')) {
+  if (pwaBanner && !sessionStorage.getItem('parcelkar_pwa_dismissed')) {
     pwaBanner.classList.remove('hidden');
   }
 });
@@ -937,20 +944,20 @@ function triggerPwaInstall() {
     deferredPwaPrompt.prompt();
     deferredPwaPrompt.userChoice.then((choiceResult) => {
       if (choiceResult.outcome === 'accepted') {
-        showToast('🎉 BhookIt App installed successfully!', 'success');
+        showToast('🎉 Parcelकर App installed successfully!', 'success');
         dismissPwaBanner();
       }
       deferredPwaPrompt = null;
     });
   } else {
-    showToast('To install BhookIt: tap browser menu (⋮) and choose "Add to Home screen" or "Install" 📲', 'info');
+    showToast('To install Parcelकर: tap browser menu (⋮) and choose "Add to Home screen" or "Install" 📲', 'info');
   }
 }
 
 function dismissPwaBanner() {
   const pwaBanner = document.getElementById('pwaBanner');
   if (pwaBanner) pwaBanner.classList.add('hidden');
-  sessionStorage.setItem('bhookit_pwa_dismissed', 'true');
+  sessionStorage.setItem('parcelkar_pwa_dismissed', 'true');
 }
 
 // -------------------------------------------------------------
@@ -1035,7 +1042,7 @@ function submitOrderReview() {
 // DARK / LIGHT THEME ENGINE
 // -------------------------------------------------------------
 function initTheme() {
-  const savedTheme = localStorage.getItem('bhookit_theme') || 'light';
+  const savedTheme = localStorage.getItem('parcelkar_theme') || 'light';
   document.documentElement.setAttribute('data-theme', savedTheme);
   updateThemeButton(savedTheme);
 }
@@ -1044,7 +1051,7 @@ function toggleTheme() {
   const current = document.documentElement.getAttribute('data-theme') || 'light';
   const next = current === 'dark' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', next);
-  localStorage.setItem('bhookit_theme', next);
+  localStorage.setItem('parcelkar_theme', next);
   updateThemeButton(next);
   showToast(`Switched to ${next === 'dark' ? '🌙 Dark Mode' : '☀️ Light Mode'}`, 'info');
   playSound('chime');
@@ -1845,7 +1852,7 @@ function processWalletTopup() {
   updateWalletUI();
   updateBillTotals();
   playSound('delivered');
-  showToast(`🎉 ₹${amt} added to your BhookIt Wallet successfully!`, 'success');
+  showToast(`🎉 ₹${amt} added to your Parcelकर Wallet successfully!`, 'success');
 }
 
 function toggleWalletRedemption() {
@@ -2062,7 +2069,7 @@ function setDeliveryScheduleMode(mode) {
 let pendingOrderForPayment = null;
 let currentRzpOrderId = null;
 let pendingUpiPayment = null;
-const BHOOKIT_UPI_VPA = 'bhookit@axl';
+const PARCELKAR_UPI_VPA = 'parcelkar@axl';
 
 async function submitOrder() {
   if (!currentCart.length) {
@@ -2247,7 +2254,7 @@ function switchGatewayTab(tab) {
 function cancelGatewayPayment() {
   closeModal('paymentGatewayModal');
   pendingUpiPayment = null;
-  sessionStorage.removeItem('bhookit_pending_upi');
+  sessionStorage.removeItem('parcelkar_pending_upi');
   showToast('Payment cancelled by user. You can retry or choose Cash on Delivery.', 'warning');
 }
 
@@ -2259,8 +2266,8 @@ function payWithUpiApp(scheme) {
   }
   const o = pendingOrderForPayment;
   const am = Math.max(1, Math.round(o.total));
-  const tn = 'BhookItOrder-' + o.id + '-' + Date.now().toString(36).toUpperCase();
-  const base = `pa=${BHOOKIT_UPI_VPA}&pn=BhookIt&am=${am}&cu=INR&tn=${tn}`;
+  const tn = 'ParcelकरOrder-' + o.id + '-' + Date.now().toString(36).toUpperCase();
+  const base = `pa=${PARCELKAR_UPI_VPA}&pn=Parcelकर&am=${am}&cu=INR&tn=${tn}`;
   const urlMap = {
     gpay: `tez://upi/?${base}`,
     phonepe: `phonepe://pay?${base}`,
@@ -2269,7 +2276,7 @@ function payWithUpiApp(scheme) {
   const url = urlMap[scheme] || urlMap.upi;
 
   pendingUpiPayment = { order: o, ref: o.id, scheme };
-  sessionStorage.setItem('bhookit_pending_upi', JSON.stringify({ ref: o.id, am, tn }));
+  sessionStorage.setItem('parcelkar_pending_upi', JSON.stringify({ ref: o.id, am, tn }));
 
   const actionArea = document.getElementById('gatewayActionArea');
   const procState = document.getElementById('gatewayProcessingState');
@@ -2307,7 +2314,7 @@ function confirmUpiPaid() {
   finalizeOrderPlacement(o);
   pendingOrderForPayment = null;
   pendingUpiPayment = null;
-  sessionStorage.removeItem('bhookit_pending_upi');
+  sessionStorage.removeItem('parcelkar_pending_upi');
   showToast('Payment received via UPI ✓', 'success');
 }
 
@@ -2417,7 +2424,7 @@ function finalizeOrderPlacement(newOrder) {
       amount: cashback,
       date: new Date().toLocaleDateString('en-IN')
     });
-    pushNotification('💰', isVip ? `👑 ₹${cashback} VIP Gold 15% Cashback credited!` : `₹${cashback} Cashback credited to your BhookIt Wallet!`);
+    pushNotification('💰', isVip ? `👑 ₹${cashback} VIP Gold 15% Cashback credited!` : `₹${cashback} Cashback credited to your Parcelकर Wallet!`);
   }
 
   saveState();
@@ -2843,7 +2850,7 @@ function cancelOrder(orderId) {
   playSound('classic_bell');
   speakVoiceAlert(`Attention ${order.restaurantName}! Order #${order.id} has been cancelled by customer.`);
 
-  pushNotification('❌', `Order #${order.id} cancelled.${refundAmt > 0 ? ` ₹${refundAmt} refunded instantly to your BhookIt Wallet!` : ''}`);
+  pushNotification('❌', `Order #${order.id} cancelled.${refundAmt > 0 ? ` ₹${refundAmt} refunded instantly to your Parcelकर Wallet!` : ''}`);
   saveState();
 
   showToast(`Order #${order.id} cancelled. ${refundAmt > 0 ? `₹${refundAmt} credited to wallet!` : ''} Supplies restored.`, 'warning');
@@ -3125,7 +3132,7 @@ function startLiveRiderSimulation(orderId) {
       if (btn) btn.disabled = false;
       playSound('chime');
       showToast('🎉 Your food has been delivered! Enjoy your meal.', 'success');
-      speakVoiceAlert('Your food has been delivered! Enjoy your meal from BhookIt.');
+      speakVoiceAlert('Your food has been delivered! Enjoy your meal from Parcelकर.');
     }
   }, 1500);
 }
@@ -3796,7 +3803,7 @@ function updateUserBadge() {
   }
   if (mobBtn) {
     mobBtn.onclick = isUser ? () => {
-      if (confirm('Do you want to log out from BhookIt?')) {
+      if (confirm('Do you want to log out from Parcelकर?')) {
         appData.currentUser = null;
         if (typeof saveState === 'function') saveState();
         updateUserBadge();
@@ -3839,13 +3846,13 @@ function shareOrderWhatsApp(orderId) {
   if (!order) return;
   const trackingUrl = `${window.location.origin}${window.location.pathname}?track=${order.id}`;
   const text = encodeURIComponent(
-    `🍔 *BhookIt Order Confirmation #${order.id}*\n` +
+    `🍔 *Parcelकर Order Confirmation #${order.id}*\n` +
     `🏪 *Restaurant:* ${order.restaurantName}\n` +
     `📦 *Items:* ${order.items.map(i => `${i.qty}x ${i.name}`).join(', ')}\n` +
     `💰 *Total Paid:* ₹${order.total} (${order.payment})\n` +
     `🔐 *Delivery OTP:* ${order.deliveryOtp || '4829'}\n` +
     `📍 *Live Tracking URL:* ${trackingUrl}\n\n` +
-    `_Thank you for ordering with BhookIt!_`
+    `_Thank you for ordering with Parcelकर!_`
   );
   window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
 }
@@ -4416,7 +4423,7 @@ function submitOrderReview() {
   saveState();
   closeModal('ratingModal');
   playSound('delivered');
-  showToast(`🎉 Review saved! ₹20 bonus added to your BhookIt wallet.`, 'success');
+  showToast(`🎉 Review saved! ₹20 bonus added to your Parcelकर wallet.`, 'success');
   updateWalletUI();
   renderOrdersView();
   renderTrackingView();
@@ -4582,7 +4589,7 @@ function sendFoodieBotMessage() {
     // 2. Loyalty wallet intent
     if (lower.includes('wallet') || lower.includes('cash') || lower.includes('balance') || lower.includes('money')) {
       const bal = appData.currentUser?.walletBalance || 0;
-      addBotMessage(`💳 Your BhookIt Wallet has ₹${bal} available.\nYou get 5% instant cashback on every meal order and ₹20 bonus on verified reviews!`);
+      addBotMessage(`💳 Your Parcelकर Wallet has ₹${bal} available.\nYou get 5% instant cashback on every meal order and ₹20 bonus on verified reviews!`);
       return;
     }
 
@@ -4866,7 +4873,7 @@ function activateVipMembership() {
   appData.currentUser.walletLedger.unshift({
     id: 'tx_vip_' + Date.now(),
     type: 'debit',
-    title: `👑 BhookIt VIP Gold Membership (${selectedVipPlanDuration.toUpperCase()})`,
+    title: `👑 Parcelकर VIP Gold Membership (${selectedVipPlanDuration.toUpperCase()})`,
     amount: selectedVipPlanCost,
     date: new Date().toLocaleDateString('en-IN')
   });
@@ -4875,8 +4882,8 @@ function activateVipMembership() {
   updateVipBannerUI();
   updateBillTotals();
   playSound('delivered');
-  pushNotification('👑', 'Welcome to BhookIt VIP Gold Club! Enjoy ₹0 delivery and 15% cashback.');
-  showToast('🎉 Congratulations! You are now a BhookIt VIP Gold Member!', 'success');
+  pushNotification('👑', 'Welcome to Parcelकर VIP Gold Club! Enjoy ₹0 delivery and 15% cashback.');
+  showToast('🎉 Congratulations! You are now a Parcelकर VIP Gold Member!', 'success');
   setTimeout(() => closeModal('membershipModal'), 1200);
 }
 
@@ -4907,7 +4914,7 @@ function copyGroupOrderLink() {
 function shareGroupOrderWhatsApp() {
   const total = groupOrderState.members.reduce((sum, m) => sum + m.total, 0);
   const link = `${window.location.origin}${window.location.pathname}?party=${groupOrderState.roomCode}`;
-  const text = encodeURIComponent(`🍔 Hey! Join our BhookIt Group Order party room ${groupOrderState.roomCode}! Current total is ₹${total}. Tap link to add your favorite dishes: ${link}`);
+  const text = encodeURIComponent(`🍔 Hey! Join our Parcelकर Group Order party room ${groupOrderState.roomCode}! Current total is ₹${total}. Tap link to add your favorite dishes: ${link}`);
   window.open(`https://wa.me/?text=${text}`, '_blank');
 }
 
@@ -4966,8 +4973,8 @@ function sendGroupUpiWhatsApp(idx) {
   const perPerson = Math.round(total / groupOrderState.members.length);
   const due = groupOrderState.splitMode === 'equal' ? perPerson : m.total;
 
-  const upiLink = `upi://pay?pa=${BHOOKIT_UPI_VPA}&pn=BhookIt&am=${due}&cu=INR&tn=BhookItGroupOrder`;
-  const text = encodeURIComponent(`Hi ${m.name}, your share for the BhookIt Group Order (${groupOrderState.roomCode}) is ₹${due}. Tap to pay via UPI: ${upiLink}`);
+  const upiLink = `upi://pay?pa=${PARCELKAR_UPI_VPA}&pn=Parcelकर&am=${due}&cu=INR&tn=ParcelकरGroupOrder`;
+  const text = encodeURIComponent(`Hi ${m.name}, your share for the Parcelकर Group Order (${groupOrderState.roomCode}) is ₹${due}. Tap to pay via UPI: ${upiLink}`);
   window.open(`https://wa.me/?text=${text}`, '_blank');
 }
 
@@ -5152,12 +5159,12 @@ function bumpKdsOrder(orderId, nextStatus) {
 // -------------------------------------------------------------
 const LUCKY_SECTORS = [
   { label: '₹50 OFF', color: '#ec4899', textColor: '#ffffff', type: 'coupon', value: 'SPIN50', title: 'You Won ₹50 OFF!', sub: 'Use coupon code SPIN50 on orders above ₹199.' },
-  { label: 'Free Dessert', color: '#8b5cf6', textColor: '#ffffff', type: 'wallet', value: 40, title: 'You Won Free Dessert (₹40 Cash)!', sub: '₹40 instant bonus added to your BhookIt wallet.' },
-  { label: '₹30 Cash', color: '#10b981', textColor: '#ffffff', type: 'wallet', value: 30, title: 'You Won ₹30 Wallet Cash!', sub: '₹30 instantly credited to your BhookIt wallet.' },
+  { label: 'Free Dessert', color: '#8b5cf6', textColor: '#ffffff', type: 'wallet', value: 40, title: 'You Won Free Dessert (₹40 Cash)!', sub: '₹40 instant bonus added to your Parcelकर wallet.' },
+  { label: '₹30 Cash', color: '#10b981', textColor: '#ffffff', type: 'wallet', value: 30, title: 'You Won ₹30 Wallet Cash!', sub: '₹30 instantly credited to your Parcelकर wallet.' },
   { label: '15% Discount', color: '#f59e0b', textColor: '#ffffff', type: 'coupon', value: 'LUCKY15', title: 'You Won 15% OFF Coupon!', sub: 'Use coupon LUCKY15 on your next delicious meal.' },
   { label: 'Free Delivery', color: '#3b82f6', textColor: '#ffffff', type: 'coupon', value: 'FREEDEL', title: 'You Won Free Delivery!', sub: 'Coupon FREEDEL auto-applied to waive ₹30 delivery fee.' },
   { label: 'VIP Pass', color: '#d946ef', textColor: '#ffffff', type: 'vip', value: 1, title: 'You Won 1-Day VIP Gold Pass!', sub: 'Enjoy ₹0 delivery fees and 15% wallet cashback for 24h!' },
-  { label: '₹100 Mega Win', color: '#ef4444', textColor: '#ffffff', type: 'wallet', value: 100, title: 'MEGA WIN! ₹100 Wallet Cash!', sub: '₹100 jackpot cash credited to your BhookIt wallet.' },
+  { label: '₹100 Mega Win', color: '#ef4444', textColor: '#ffffff', type: 'wallet', value: 100, title: 'MEGA WIN! ₹100 Wallet Cash!', sub: '₹100 jackpot cash credited to your Parcelकर wallet.' },
   { label: 'BOGO 50%', color: '#06b6d4', textColor: '#ffffff', type: 'coupon', value: 'BOGO50', title: 'You Won 50% OFF Combo Coupon!', sub: 'Use coupon BOGO50 on any meal combo deal.' }
 ];
 
@@ -5354,7 +5361,7 @@ function claimLuckyReward() {
       date: new Date().toLocaleDateString('en-IN')
     });
     pushNotification('🎁', `₹${pendingWonPrize.value} won from Daily Lucky Wheel credited to your wallet!`);
-    showToast(`💰 ₹${pendingWonPrize.value} credited to your BhookIt Wallet!`, 'success');
+    showToast(`💰 ₹${pendingWonPrize.value} credited to your Parcelकर Wallet!`, 'success');
   } else if (pendingWonPrize.type === 'vip') {
     if (appData.currentUser) {
       appData.currentUser.isVip = true;
@@ -5475,11 +5482,11 @@ function confirmInstantRefund() {
     timestamp: new Date().toISOString()
   });
 
-  pushNotification('⚠️', `₹${refundAmount} has been credited to your BhookIt wallet for Order #${order.id}.`);
+  pushNotification('⚠️', `₹${refundAmount} has been credited to your Parcelकर wallet for Order #${order.id}.`);
   saveState();
   updateWalletUI();
   playSound('chime');
-  showToast(`✅ ₹${refundAmount} refunded instantly to your BhookIt Wallet!`, 'success');
+  showToast(`✅ ₹${refundAmount} refunded instantly to your Parcelकर Wallet!`, 'success');
 
   closeModal('disputeModal');
   renderOrdersView();
@@ -6051,7 +6058,7 @@ function openWhatsAppBotModal(orderId) {
     msgList.innerHTML = `
       <div class="wa-bubble-incoming">
         Hello <b>${order.customer.name}</b>! 👋<br>
-        Thank you for choosing <b>BhookIt</b>. Your order from <b>${order.restaurantName}</b> has been received!
+        Thank you for choosing <b>Parcelकर</b>. Your order from <b>${order.restaurantName}</b> has been received!
         <div class="wa-time">${timeStr} ✓✓</div>
       </div>
 
@@ -6136,7 +6143,7 @@ function sendWhatsAppQuickReply(action, orderId) {
     } else if (action === 'external') {
       const order = appData.orders.find(o => o.id === orderId);
       if (order) {
-        const text = encodeURIComponent(`BhookIt Order #${order.id} for ${order.restaurantName} (₹${order.total}). Track live: ${window.location.origin}/?track=${order.id}`);
+        const text = encodeURIComponent(`Parcelकर Order #${order.id} for ${order.restaurantName} (₹${order.total}). Track live: ${window.location.origin}/?track=${order.id}`);
         window.open(`https://wa.me/?text=${text}`, '_blank');
       }
     }
@@ -6207,7 +6214,7 @@ function exportOrdersCSV(vendorId = null) {
 
   const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
   const dateStr = new Date().toISOString().slice(0, 10);
-  const filename = vendorId ? `BhookIt_Vendor_${vendorId}_Orders_${dateStr}.csv` : `BhookIt_All_Orders_${dateStr}.csv`;
+  const filename = vendorId ? `Parcelकर_Vendor_${vendorId}_Orders_${dateStr}.csv` : `Parcelकर_All_Orders_${dateStr}.csv`;
   downloadCSV(filename, csvContent);
   playSound('delivered');
   showToast(`📥 Exported ${orders.length} orders to CSV successfully!`, 'success');
@@ -6250,7 +6257,7 @@ function exportSettlementsCSV() {
 
   const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
   const dateStr = new Date().toISOString().slice(0, 10);
-  downloadCSV(`BhookIt_Vendor_Settlements_${dateStr}.csv`, csvContent);
+  downloadCSV(`Parcelकर_Vendor_Settlements_${dateStr}.csv`, csvContent);
   playSound('delivered');
   showToast(`📥 Exported financial settlements for ${restaurants.length} restaurants!`, 'success');
 }
@@ -6295,7 +6302,7 @@ function exportFleetCSV() {
 
   const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
   const dateStr = new Date().toISOString().slice(0, 10);
-  downloadCSV(`BhookIt_Fleet_Telemetry_${dateStr}.csv`, csvContent);
+  downloadCSV(`Parcelकर_Fleet_Telemetry_${dateStr}.csv`, csvContent);
   playSound('delivered');
   showToast(`📥 Exported fleet telemetry for ${riders.length} courier partners!`, 'success');
 }
@@ -6414,7 +6421,7 @@ function openZReportModal(vendorId = currentActiveVendorId) {
         <div class="z-line"><span>💵 Cash Collections:</span><span>₹${cashTotal.toFixed(2)}</span></div>
         <div class="z-line"><span>⚡ UPI & Dynamic QR:</span><span>₹${upiTotal.toFixed(2)}</span></div>
         <div class="z-line"><span>💳 POS Card Swipes:</span><span>₹${cardTotal.toFixed(2)}</span></div>
-        <div class="z-line"><span>🛍️ BhookIt Wallet:</span><span>₹${walletTotal.toFixed(2)}</span></div>
+        <div class="z-line"><span>🛍️ Parcelकर Wallet:</span><span>₹${walletTotal.toFixed(2)}</span></div>
       </div>
 
       <div style="border-top: 1px dashed #64748b; padding-top: 8px; margin-bottom: 10px;">
@@ -7035,17 +7042,17 @@ function sendPartnerApprovalNotification(rest) {
   content.innerHTML = `
     <div style="font-size: 13px; color: var(--text-main); margin-bottom: 12px;">
       <b>To:</b> ${rest.email || 'Partner'}<br>
-      <b>Subject:</b> Congratulations! Your BhookIt Partnership is Approved 🎉
+      <b>Subject:</b> Congratulations! Your Parcelकर Partnership is Approved 🎉
     </div>
     <div style="background: var(--bg-card); padding: 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 13px;">
       <p>Hi <b>${rest.name}</b>,</p>
-      <p>Your KYC and registration documents have been verified and approved by the BhookIt Admin team.</p>
+      <p>Your KYC and registration documents have been verified and approved by the Parcelकर Admin team.</p>
       <p>You can now log in to the Vendor Portal to manage your menu, track orders, and view payouts.</p>
       <div style="margin: 16px 0;">
         <a href="${vendorLink}" target="_blank" style="display:inline-block; background: #2563eb; color: #fff; padding: 10px 16px; border-radius: 6px; text-decoration: none; font-weight: 700;">Open Vendor App</a>
       </div>
       <p>Commission Rate: <b>${rest.commissionRate}%</b></p>
-      <p>Welcome aboard!<br>- BhookIt Team</p>
+      <p>Welcome aboard!<br>- Parcelकर Team</p>
     </div>
   `;
   
@@ -7295,17 +7302,17 @@ function sendPartnerApprovalNotification(rest) {
   content.innerHTML = `
     <div style="font-size: 13px; color: var(--text-main); margin-bottom: 12px;">
       <b>To:</b> ${rest.email || 'Partner'}<br>
-      <b>Subject:</b> Congratulations! Your BhookIt Partnership is Approved 🎉
+      <b>Subject:</b> Congratulations! Your Parcelकर Partnership is Approved 🎉
     </div>
     <div style="background: var(--bg-card); padding: 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 13px;">
       <p>Hi <b>${rest.name}</b>,</p>
-      <p>Your KYC and registration documents have been verified and approved by the BhookIt Admin team.</p>
+      <p>Your KYC and registration documents have been verified and approved by the Parcelकर Admin team.</p>
       <p>You can now log in to the Vendor Portal to manage your menu, track orders, and view payouts.</p>
       <div style="margin: 16px 0;">
         <a href="${vendorLink}" target="_blank" style="display:inline-block; background: #2563eb; color: #fff; padding: 10px 16px; border-radius: 6px; text-decoration: none; font-weight: 700;">Open Vendor App</a>
       </div>
       <p>Commission Rate: <b>${rest.commissionRate}%</b></p>
-      <p>Welcome aboard!<br>- BhookIt Team</p>
+      <p>Welcome aboard!<br>- Parcelकर Team</p>
     </div>
   `;
   
@@ -7329,38 +7336,6 @@ function sendInvite() {
   // Show mock notification to simulate email received
   const msg = `Click here to register your restaurant: <a href="#" onclick="closeModal('mockNotificationModal'); show('partnerRegistration')">Partner Registration Form</a>`;
   showMockNotification('Email', email, msg, '');
-}
-
-function submitPartnerRegistration(e) {
-  e.preventDefault();
-  const form = e.target;
-  const name = form.restName.value;
-  const phone = form.restPhone.value;
-  const address = form.restAddress.value;
-  const docs = form.restDocs.value;
-  
-  const newRest = {
-    id: Date.now(),
-    name: name,
-    rating: 0,
-    deliveryTime: '30-45 mins',
-    fssai: 'Pending',
-    hygiene: 'N/A',
-    minOrder: 100,
-    approved: false, // Pending approval
-    open: false,
-    coverImg: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80',
-    foods: []
-  };
-  
-  appData.restaurants.push(newRest);
-  saveState();
-  
-  form.reset();
-  showToast('Registration submitted! Awaiting Admin Approval.', 'success');
-  
-  // Go back to main
-  show('explore');
 }
 
 function showMockNotification(type, to, message, link) {
@@ -7468,7 +7443,7 @@ function handlePaymentMethodChange(method) {
 }
 
 // =============================================================
-// COMPREHENSIVE RESTAURANT VENDOR PWA ENGINE (partner.bhookit.com/vendor)
+// COMPREHENSIVE RESTAURANT VENDOR PWA ENGINE (partner.parcelkar.com/vendor)
 // =============================================================
 
 let currentVendorTab = 'orders';
@@ -7887,7 +7862,7 @@ function renderVendorOffers() {
       <div>
         <div style="display: flex; align-items: center; gap: 8px;">
           <span style="font-weight: 800; font-size: 16px; color: var(--primary); letter-spacing: 1px;">🏷️ ${off.code}</span>
-          <span class="badge" style="background: ${off.active ? '#dcfce7' : '#fee2e2'}; color: ${off.active ? '#15803d' : '#991b1b'};">${off.active ? 'Active on BhookIt' : 'Paused'}</span>
+          <span class="badge" style="background: ${off.active ? '#dcfce7' : '#fee2e2'}; color: ${off.active ? '#15803d' : '#991b1b'};">${off.active ? 'Active on Parcelकर' : 'Paused'}</span>
         </div>
         <div style="font-size: 13px; color: var(--text-color); margin-top: 4px;">${off.desc} (Min. Order: ₹${off.minOrder})</div>
       </div>
@@ -7959,7 +7934,7 @@ function checkVendorAuth() {
   const dashEl = document.getElementById('vendorDashboardContainer');
   const errEl = document.getElementById('vendorAuthError');
 
-  const rawSession = sessionStorage.getItem('bhookit_vendor_session');
+  const rawSession = sessionStorage.getItem('parcelkar_vendor_session');
   if (!rawSession) {
     if (gateEl) gateEl.style.display = 'flex';
     if (dashEl) dashEl.style.display = 'none';
@@ -7970,7 +7945,7 @@ function checkVendorAuth() {
     const session = JSON.parse(rawSession);
     const vendor = appData.restaurants.find(r => r.id === session.vendorId);
     if (!vendor) {
-      sessionStorage.removeItem('bhookit_vendor_session');
+      sessionStorage.removeItem('parcelkar_vendor_session');
       if (gateEl) gateEl.style.display = 'flex';
       if (dashEl) dashEl.style.display = 'none';
       if (errEl) {
@@ -7981,7 +7956,7 @@ function checkVendorAuth() {
     }
 
     if (vendor.approved === false) {
-      sessionStorage.removeItem('bhookit_vendor_session');
+      sessionStorage.removeItem('parcelkar_vendor_session');
       if (gateEl) gateEl.style.display = 'flex';
       if (dashEl) dashEl.style.display = 'none';
       if (errEl) {
@@ -8000,7 +7975,7 @@ function checkVendorAuth() {
 
     return true;
   } catch (e) {
-    sessionStorage.removeItem('bhookit_vendor_session');
+    sessionStorage.removeItem('parcelkar_vendor_session');
     if (gateEl) gateEl.style.display = 'flex';
     if (dashEl) dashEl.style.display = 'none';
     return false;
@@ -8037,7 +8012,7 @@ function submitVendorLogin(e) {
 
   if (!vendor) {
     if (errEl) {
-      errEl.textContent = '❌ Invalid credentials. Please verify your Login ID and PIN or contact BhookIt Super Admin.';
+      errEl.textContent = '❌ Invalid credentials. Please verify your Login ID and PIN or contact Parcelकर Super Admin.';
       errEl.style.display = 'block';
     }
     return;
@@ -8045,7 +8020,7 @@ function submitVendorLogin(e) {
 
   if (vendor.approved === false) {
     if (errEl) {
-      errEl.textContent = `⚠️ Outlet "${vendor.name}" is pending approval or suspended by Admin. Contact BhookIt Support.`;
+      errEl.textContent = `⚠️ Outlet "${vendor.name}" is pending approval or suspended by Admin. Contact Parcelकर Support.`;
       errEl.style.display = 'block';
     }
     return;
@@ -8057,7 +8032,7 @@ function submitVendorLogin(e) {
     name: vendor.name,
     loginTime: Date.now()
   };
-  sessionStorage.setItem('bhookit_vendor_session', JSON.stringify(sessionData));
+  sessionStorage.setItem('parcelkar_vendor_session', JSON.stringify(sessionData));
 
   if (errEl) errEl.style.display = 'none';
   showToast(`Welcome back, ${vendor.name}! Kitchen Terminal Unlocked 👨‍🍳`, 'success');
@@ -8078,7 +8053,7 @@ function demoVendorLogin(outletId, pin = '1234') {
 }
 
 function vendorLogout() {
-  sessionStorage.removeItem('bhookit_vendor_session');
+  sessionStorage.removeItem('parcelkar_vendor_session');
   showToast('Logged out of Kitchen Terminal.', 'info');
   checkVendorAuth();
 }
@@ -8170,7 +8145,7 @@ function saveVendorCredentials(e) {
       ownerName: owner,
       vendorLogin: loginId,
       vendorPin: pin,
-      email: `${loginId}@bhookit.com`,
+      email: `${loginId}@parcelkar.com`,
       phone: '+91 ' + (loginId.replace(/\D/g, '') || '9800000000'),
       category: 'Multi-Cuisine',
       rating: 4.8,
@@ -8206,10 +8181,10 @@ function copyVendorWhatsAppCreds(restaurantId) {
   const r = appData.restaurants.find(x => x.id === Number(restaurantId));
   if (!r) return;
 
-  const msg = `🍽️ *BhookIt Restaurant Partner Credentials*\n\n` +
+  const msg = `🍽️ *Parcelकर Restaurant Partner Credentials*\n\n` +
     `Namaskar ${r.ownerName || r.name} Team,\n` +
-    `Your BhookIt Kitchen Terminal is ready and authorized:\n\n` +
-    `🌐 *Login Portal:* https://partner.bhookit.com/vendor\n` +
+    `Your Parcelकर Kitchen Terminal is ready and authorized:\n\n` +
+    `🌐 *Login Portal:* https://partner.parcelkar.com/vendor\n` +
     `🔑 *Login ID:* ${r.vendorLogin || r.phone || r.email}\n` +
     `🔒 *Terminal PIN:* ${r.vendorPin || '1234'}\n` +
     `📊 *Commission:* ${r.commissionRate}%\n` +
@@ -8235,6 +8210,6 @@ function adminLoginAsVendor(restaurantId) {
     name: r.name,
     loginTime: Date.now()
   };
-  sessionStorage.setItem('bhookit_vendor_session', JSON.stringify(sessionData));
+  sessionStorage.setItem('parcelkar_vendor_session', JSON.stringify(sessionData));
   window.open('/vendor', '_blank');
 }

@@ -4,281 +4,73 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#ff4722">
-  <title>BhookIt Partner — Restaurant Vendor Terminal & Kitchen PWA</title>
-  <meta name="description" content="Restaurant partner terminal for BhookIt. Manage live orders, KDS, menu prices, stock toggles, store hours, earnings, and customer discounts.">
+  <title>Parcelकर Partner — Restaurant Vendor Portal & Kitchen POS</title>
+  <meta name="description" content="Manage orders, digital menu, kitchen KDS, POS billing and daily settlements for your restaurant on Parcelकर.">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="style.css">
   <style>
-    /* Specialized Vendor PWA Styling */
-    .vendor-nav-tabs {
-      display: flex;
-      gap: 8px;
-      overflow-x: auto;
-      padding: 10px 0 16px 0;
-      scrollbar-width: none;
-      -webkit-overflow-scrolling: touch;
-      border-bottom: 2px solid var(--border);
-      margin-bottom: 20px;
-    }
-    .vendor-nav-tabs::-webkit-scrollbar { display: none; }
-    .vendor-tab-btn {
-      padding: 10px 18px;
-      border-radius: 12px;
-      font-weight: 700;
-      font-size: 13px;
-      border: 1.5px solid var(--border);
-      background: var(--bg-surface);
-      color: var(--text-muted);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      white-space: nowrap;
-      transition: all 0.2s ease;
-    }
-    .vendor-tab-btn:hover {
-      background: var(--bg-surface-alt, #f8fafc);
-      color: var(--primary);
-    }
-    .vendor-tab-btn.active {
-      background: var(--primary);
-      color: #fff;
-      border-color: var(--primary);
-      box-shadow: 0 4px 12px rgba(255, 71, 34, 0.25);
-    }
-    .vendor-tab-pane {
-      display: none;
-      animation: fadeIn 0.2s ease-in-out;
-    }
-    .vendor-tab-pane.active {
-      display: block;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(4px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .stock-switch {
-      position: relative;
-      display: inline-block;
-      width: 48px;
-      height: 26px;
-    }
-    .stock-switch input { opacity: 0; width: 0; height: 0; }
-    .stock-slider {
-      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #ef4444; transition: .3s; border-radius: 26px;
-    }
-    .stock-slider:before {
-      position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px;
-      background-color: white; transition: .3s; border-radius: 50%;
-    }
-    input:checked + .stock-slider { background-color: #10b981; }
-    input:checked + .stock-slider:before { transform: translateX(22px); }
-    .dish-card-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-      padding: 14px 16px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      margin-bottom: 10px;
-      transition: all 0.2s;
-    }
-    .dish-card-row:hover {
-      border-color: var(--primary);
-      box-shadow: var(--shadow-sm);
-    }
-    .order-pipeline-step {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 12px;
-      border-radius: 8px;
-      font-size: 11px;
-      font-weight: 700;
-    }
-  
-    /* Vendor Authentication Gate Styling */
-    .vendor-auth-gate {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: radial-gradient(circle at top right, #1e293b 0%, #0f172a 100%);
-      padding: 24px 16px;
-      box-sizing: border-box;
-      position: relative;
-    }
-    .vendor-auth-card {
-      background: rgba(30, 41, 59, 0.9);
-      border: 1.5px solid rgba(255, 255, 255, 0.12);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-radius: 20px;
-      padding: 36px 30px;
-      width: 100%;
-      max-width: 450px;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
-      color: #f8fafc;
-      animation: fadeIn 0.3s ease-out;
-    }
-    .vendor-auth-card input {
-      background: #0f172a !important;
-      border: 1.5px solid #334155 !important;
-      color: #fff !important;
-      border-radius: 10px !important;
-      padding: 12px 14px !important;
-      font-size: 14px !important;
-      width: 100% !important;
-      box-sizing: border-box !important;
-      margin-bottom: 14px !important;
-      outline: none !important;
-      transition: border-color 0.2s !important;
-    }
-    .vendor-auth-card input:focus {
-      border-color: var(--primary) !important;
-      box-shadow: 0 0 0 3px rgba(255, 71, 34, 0.2) !important;
-    }
-    .demo-login-chip {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 8px;
-      padding: 6px 12px;
-      font-size: 11px;
-      font-weight: 700;
-      color: #94a3b8;
-      cursor: pointer;
+    /* Standalone Portal Specialized Accents */
+    .portal-badge {
       display: inline-flex;
       align-items: center;
       gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .badge-vendor { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .badge-rider { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+    .badge-admin { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .badge-hub { background: #f3e8ff; color: #6b21a8; border: 1px solid #e9d5ff; }
+    .portal-quick-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 6px;
       transition: all 0.2s;
     }
-    .demo-login-chip:hover {
-      background: rgba(255, 71, 34, 0.15);
-      border-color: var(--primary);
-      color: #fff;
+    .portal-quick-link:hover {
+      background: var(--bg-surface-alt, #f1f5f9);
+      color: var(--primary);
     }
-
   </style>
 </head>
 <body>
-
-  <!-- ========================================================= -->
-  <!-- VENDOR AUTHENTICATION GATE (RESTRICTED TERMINAL ACCESS)   -->
-  <!-- ========================================================= -->
-  <div id="vendorAuthGate" class="vendor-auth-gate">
-    <div class="vendor-auth-card">
-      <div style="text-align: center; margin-bottom: 24px;">
-        <img src="bhookit-logo.png" alt="BhookIt" style="height: 44px; margin-bottom: 8px; filter: drop-shadow(0 2px 8px rgba(255,71,34,0.3));">
-        <div style="display: inline-block; background: rgba(255,71,34,0.15); border: 1px solid rgba(255,71,34,0.3); color: #ff6b4a; font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">
-          🏪 Restaurant Partner Terminal
-        </div>
-        <h2 style="font-size: 22px; font-weight: 900; margin: 0 0 6px 0; color: #fff;">Chef &amp; Manager Login</h2>
-        <p style="font-size: 12px; color: #94a3b8; margin: 0; line-height: 1.5;">
-          Enter your restaurant credentials allocated by BhookIt Super Admin to access live orders, KDS, and menu settings.
-        </p>
-      </div>
-
-      <!-- Error Box -->
-      <div id="vendorAuthError" style="display: none; background: rgba(239, 68, 68, 0.15); border: 1.5px solid #ef4444; color: #fca5a5; font-size: 12px; font-weight: 600; padding: 10px 14px; border-radius: 10px; margin-bottom: 16px;">
-      </div>
-
-      <form onsubmit="submitVendorLogin(event)">
-        <div style="margin-bottom: 6px;">
-          <label style="font-size: 12px; font-weight: 700; color: #cbd5e1; display: block; margin-bottom: 6px;">
-            Restaurant Login ID (or Mobile Number)
-          </label>
-          <input type="text" id="vendorAuthLoginInput" placeholder="e.g. sakoli or 9822334455" required autocomplete="username">
-        </div>
-
-        <div style="margin-bottom: 6px;">
-          <label style="font-size: 12px; font-weight: 700; color: #cbd5e1; display: block; margin-bottom: 6px;">
-            Terminal PIN / Password
-          </label>
-          <input type="password" id="vendorAuthPinInput" placeholder="4-digit PIN (e.g. 1234)" required autocomplete="current-password">
-        </div>
-
-        <button type="submit" class="btn-primary" style="width: 100%; padding: 12px; font-size: 14px; font-weight: 800; border-radius: 10px; margin-top: 6px; box-shadow: 0 4px 14px rgba(255,71,34,0.35);">
-          🔑 Log In to Kitchen Terminal
-        </button>
-      </form>
-
-      <!-- Quick Demo Accounts -->
-      <div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.1);">
-        <div style="font-size: 11px; font-weight: 700; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
-          ⚡ Quick Demo Accounts (One-Click Test):
-        </div>
-        <div style="display: flex; flex-direction: column; gap: 6px;">
-          <div class="demo-login-chip" onclick="demoVendorLogin(1, '1234')">
-            <span>🍔</span>
-            <span style="flex: 1;">Sakoli Food Corner (PIN: 1234)</span>
-            <span style="font-size: 10px; opacity: 0.7;">Click to Login →</span>
-          </div>
-          <div class="demo-login-chip" onclick="demoVendorLogin(2, '1234')">
-            <span>🍛</span>
-            <span style="flex: 1;">Aapla Bhojanalay (PIN: 1234)</span>
-            <span style="font-size: 10px; opacity: 0.7;">Click to Login →</span>
-          </div>
-          <div class="demo-login-chip" onclick="demoVendorLogin(3, '1234')">
-            <span>🍗</span>
-            <span style="flex: 1;">Royal Biryani &amp; Rolls (PIN: 1234)</span>
-            <span style="font-size: 10px; opacity: 0.7;">Click to Login →</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Footer Info -->
-      <div style="text-align: center; margin-top: 18px; font-size: 11px; color: #64748b; line-height: 1.4;">
-        🛡️ Credentials are allocated &amp; approved by BhookIt Admin.<br>
-        Need credentials? Contact Admin at <a href="https://partner.bhookit.com/admin" target="_blank" style="color: var(--primary); text-decoration: underline;">partner.bhookit.com/admin</a>
-      </div>
-    </div>
-  </div>
-
   <!-- Header: Restaurant Partner Dedicated Header -->
-  
-  <!-- ========================================================= -->
-  <!-- VENDOR DASHBOARD CONTAINER (HIDDEN UNTIL AUTHENTICATED)   -->
-  <!-- ========================================================= -->
-  <div id="vendorDashboardContainer" style="display: none;">
-<header>
-    <div class="logo-area" onclick="location.href='/vendor'" style="cursor: pointer;" title="BhookIt Restaurant Partner">
-      <img src="bhookit-logo.png" alt="BhookIt Partner" class="brand-logo-img">
-      <span class="portal-badge" style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a;">🏪 Vendor Terminal</span>
+  <header>
+    <div class="logo-area" onclick="location.href='/vendor'" style="cursor: pointer;" title="Parcelकर Restaurant Partner">
+      <img src="parcelkar-logo.png" alt="Parcelकर Partner" class="brand-logo-img">
+      <span class="brand-name-text">Parcel<span class="brand-highlight">कर</span></span>
+      <span class="portal-badge badge-vendor">🏪 Vendor Portal</span>
     </div>
 
-    <!-- Active Restaurant Selector / Status -->
-    <div style="display: flex; align-items: center; gap: 8px;">
-      <select id="vendorOutletSelector" onchange="switchVendor(this.value)" style="padding: 6px 12px; border-radius: 8px; border: 1.5px solid var(--border); font-weight: 700; font-size: 13px; background: var(--bg-surface); color: var(--text-color); cursor: pointer; outline: none;">
-        <!-- Injected dynamically -->
+    <!-- Restaurant Switcher / Active Outlet Selector -->
+    <div style="display: flex; align-items: center; gap: 8px; background: var(--bg-surface-alt, #f8fafc); padding: 4px 12px; border-radius: 8px; border: 1px solid var(--border-color, #e2e8f0);">
+      <span style="font-size: 13px; font-weight: 600;">Outlet:</span>
+      <select id="vendorOutletSelector" onchange="quickRole('restaurant', parseInt(this.value))" style="border: none; background: transparent; font-weight: 700; color: var(--text-color); cursor: pointer; outline: none; font-size: 13px;">
+        <option value="1">Sakoli Corner (Main Market)</option>
+        <option value="2">Aapla Bhojanalay (Highway Express)</option>
       </select>
-      <!-- Store Open/Close Button -->
-      <button id="storeStatusToggleBtn" onclick="toggleStoreOpen()" style="padding: 6px 14px; font-size: 12px; font-weight: 700; border-radius: 999px; cursor: pointer; border: none; transition: all 0.2s; display: flex; align-items: center; gap: 6px;">
-        <span id="storeStatusDot">🟢</span>
-        <span id="storeStatusLabel">Store Open</span>
-      </button>
     </div>
 
-    <!-- Center Navigation Shortcuts -->
+    <!-- Center Navigation Actions for Vendor -->
     <nav class="nav-center">
-      <button class="nav-item-btn" onclick="openKdsModal()" style="background: rgba(234, 88, 12, 0.1); color: #ea580c; border: 1px solid rgba(234, 88, 12, 0.2);">👨‍🍳 Kitchen KDS</button>
-      <button class="nav-item-btn" onclick="openPosModal()" style="background: rgba(79, 70, 229, 0.1); color: #4f46e5; border: 1px solid rgba(79, 70, 229, 0.2);">📠 Counter POS</button>
+      <button class="nav-item-btn active" onclick="show('restaurant')">📋 Kitchen Orders</button>
+      <button class="nav-item-btn" onclick="openKdsModal()" style="background: rgba(234, 88, 12, 0.1); color: #ea580c; border: 1px solid rgba(234, 88, 12, 0.2);">👨‍🍳 Live KDS</button>
+      <button class="nav-item-btn" onclick="openPosModal()" style="background: rgba(79, 70, 229, 0.1); color: #4f46e5; border: 1px solid rgba(79, 70, 229, 0.2);">📠 Quick POS</button>
       <button class="nav-item-btn" onclick="openAddDishModal()">➕ Add Dish</button>
     </nav>
 
     <div class="nav-right">
-      <!-- Vendor Logout Button -->
-      <button class="btn-danger" onclick="vendorLogout()" style="padding: 6px 14px; font-size: 12px; font-weight: 800; border-radius: 8px; cursor: pointer; border: none; background: #fee2e2; color: #991b1b; display: flex; align-items: center; gap: 6px;">
-        <span>🔒</span>
-        <span>Logout</span>
-      </button>
-      
-      <!-- Audio Toggle -->
+      <!-- Audio Chime Toggle -->
       <button id="audioToggleBtn" class="role-pill" onclick="toggleSystemAudio()" style="margin: 0;">🔊 Sound: ON</button>
       
       <!-- Theme & Lang -->
@@ -292,444 +84,170 @@
         <option value="hi">🇮🇳 हिन्दी</option>
       </select>
 
-      <!-- PWA Install Button -->
-      <button id="btnPwaVendorInstall" onclick="triggerPwaInstall()" class="role-pill" style="background: #059669; color: #fff; border-color: #059669; display: flex; align-items: center; gap: 4px;">
-        <span>📲</span>
-        <span>Install App</span>
-      </button>
-
-      <!-- Restaurant Profile & Login -->
-      <div class="user-profile-badge" id="vendorProfileBadge" onclick="openVendorProfileModal()" style="cursor: pointer;" title="Edit Restaurant Profile">
-        <span>🏪</span>
-        <span id="vendorBadgeName">Sakoli Corner</span>
+      <!-- Notification Bell -->
+      <div class="notification-wrapper">
+        <button class="notification-btn" onclick="toggleNotificationDrawer()" title="Order Alerts">
+          <span>🔔</span>
+          <span class="notif-badge" id="notifBadge">0</span>
+        </button>
+        <div id="notificationDrawer" class="notification-drawer hidden">
+          <div class="notif-header">
+            <span style="font-weight: 700; font-size: 13px;">🔔 Store Notifications</span>
+            <button class="btn-secondary" onclick="markAllNotificationsRead()" style="padding: 2px 8px; font-size: 11px;">Clear</button>
+          </div>
+          <div id="notificationList" class="notif-list"></div>
+        </div>
       </div>
-      <button class="btn-secondary" onclick="openVendorLoginModal()" style="padding: 5px 10px; font-size: 12px;" title="Switch Account">Switch</button>
+
+      <!-- User Profile -->
+      <div class="user-profile-badge" id="userProfileArea">
+        <span>🏪</span>
+        <span id="userLabel">Restaurant Manager</span>
+      </div>
+      <button class="btn-secondary" onclick="location.href='/partner'" style="padding: 5px 10px; font-size: 12px;" title="Switch to Partner Hub">Hub ➔</button>
     </div>
   </header>
 
-  <main class="container" style="max-width: 1200px; margin: 20px auto; padding: 0 16px;">
-    
-    <!-- Hero / Metrics Overview Strip -->
-    <div class="stats-grid" style="margin-bottom: 20px;">
-      <div class="stat-card" style="border-left: 4px solid var(--primary); cursor: pointer;" onclick="switchVendorTab('orders')">
-        <span class="stat-card-title">Pending Orders</span>
-        <span class="stat-card-value" id="vendorActiveOrders" style="color: var(--primary);">0</span>
-        <span style="font-size: 11px; color: var(--text-muted);">Requires Kitchen Action</span>
+  <main class="container">
+    <!-- 5. RESTAURANT PARTNER VENDOR PORTAL -->
+    <section id="restaurant" class="panel">
+      <div class="dashboard-card" style="background: linear-gradient(135deg, #1e293b, #334155); color: #fff;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h2 style="font-family: var(--font-heading); font-size: 24px;">🏪 Parcelकर Vendor Terminal</h2>
+            <p style="opacity: 0.8; font-size: 14px;">Manage kitchen orders, menus, stock status, and earnings.</p>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <select id="vendorSelect" class="input-field" style="margin: 0; width: auto; background: #fff; color: #000;" onchange="switchVendor(this.value)">
+              <!-- Options injected dynamically -->
+            </select>
+            <button id="storeStatusToggleBtn" class="btn-accent" onclick="toggleStoreOpen()">🟢 Open for Orders</button>
+      <button class="role-pill" onclick="openPosModal()" style="background: #4f46e5; color: #fff; border-color: #4f46e5;">📠 Restaurant POS</button>
+      <button class="role-pill" onclick="openKdsModal()" style="background: #ea580c; color: #fff; border-color: #ea580c;">👨‍🍳 Kitchen KDS</button>
+            <button class="btn-export-csv" onclick="exportOrdersCSV(currentActiveVendorId)">📥 Export Orders (CSV)</button>
+            <button class="btn-secondary" onclick="openZReportModal()" style="margin: 0; padding: 8px 14px; background: #1e1b4b; color: #fff; border-color: #4338ca;">🌙 Nightly Z-Report</button>
+          </div>
+        </div>
       </div>
-      <div class="stat-card" style="border-left: 4px solid #10b981; cursor: pointer;" onclick="switchVendorTab('earnings')">
-        <span class="stat-card-title">Today's Sales (Gross)</span>
-        <span class="stat-card-value" id="vendorTodayGross">₹0</span>
-        <span style="font-size: 11px; color: #10b981;">Total order value</span>
+      <!-- Restaurant Metrics -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-card-title">Active Orders</span>
+          <span class="stat-card-value" id="vendorActiveOrders">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-card-title">Today's Gross Sales</span>
+          <span class="stat-card-value" id="vendorTodayGross">₹0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-card-title">Platform Commission (10%)</span>
+          <span class="stat-card-value" style="color: var(--danger);" id="vendorCommission">₹0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-card-title">Net Payout Due</span>
+          <span class="stat-card-value" style="color: var(--accent);" id="vendorNetPayout">₹0</span>
+        </div>
       </div>
-      <div class="stat-card" style="border-left: 4px solid #f59e0b; cursor: pointer;" onclick="switchVendorTab('earnings')">
-        <span class="stat-card-title">Platform Fee (10%)</span>
-        <span class="stat-card-value" id="vendorCommission" style="color: #d97706;">₹0</span>
-        <span style="font-size: 11px; color: var(--text-muted);">Commission & Gateway</span>
+      <!-- Real-time Dine-In Waiter Buzzers -->
+      <div id="vendorWaiterCallAlerts" class="hidden" style="margin-bottom: 16px;">
+        <!-- Injected dynamically with active table buzzers -->
       </div>
-      <div class="stat-card" style="border-left: 4px solid #3b82f6; cursor: pointer;" onclick="switchVendorTab('earnings')">
-        <span class="stat-card-title">Net Bank Payout</span>
-        <span class="stat-card-value" id="vendorNetPayout" style="color: #2563eb;">₹0</span>
-        <span style="font-size: 11px; color: #2563eb;">Due for settlement</span>
-      </div>
-    </div>
-
-    <!-- Vendor App Tab Navigation Bar -->
-    <div class="vendor-nav-tabs">
-      <button class="vendor-tab-btn active" id="tabBtn_orders" onclick="switchVendorTab('orders')">
-        <span>🔔</span>
-        <span>Live Orders (<b id="vendorTabOrderCount">0</b>)</span>
-      </button>
-      <button class="vendor-tab-btn" id="tabBtn_menu" onclick="switchVendorTab('menu')">
-        <span>🍽️</span>
-        <span>Menu &amp; Price Management</span>
-      </button>
-      <button class="vendor-tab-btn" id="tabBtn_history" onclick="switchVendorTab('history')">
-        <span>📦</span>
-        <span>Order History</span>
-      </button>
-      <button class="vendor-tab-btn" id="tabBtn_earnings" onclick="switchVendorTab('earnings')">
-        <span>💰</span>
-        <span>Earnings &amp; Payouts</span>
-      </button>
-      <button class="vendor-tab-btn" id="tabBtn_offers" onclick="switchVendorTab('offers')">
-        <span>🏷️</span>
-        <span>Discounts &amp; Coupons</span>
-      </button>
-      <button class="vendor-tab-btn" id="tabBtn_profile" onclick="switchVendorTab('profile')">
-        <span>⚙️</span>
-        <span>Restaurant Profile</span>
-      </button>
-    </div>
-
-    <!-- ====================================================
-         TAB 1: LIVE ORDERS & KITCHEN PIPELINE
-         ==================================================== -->
-    <div id="vendorTabPane_orders" class="vendor-tab-pane active">
+      <!-- Live Incoming Orders Terminal -->
       <div class="dashboard-card">
         <div class="dashboard-card-title">
+          <span>🔔 Incoming & Preparing Kitchen Orders</span>
           <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 20px;">🔔</span>
-            <span>Live Kitchen Orders (Incoming, Accepted &amp; Preparing)</span>
-          </div>
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <button class="btn-secondary" onclick="openKdsModal()" style="font-size: 11px; padding: 4px 10px;">👨‍🍳 Fullscreen KDS</button>
-            <button class="btn-secondary" onclick="openPosModal()" style="font-size: 11px; padding: 4px 10px;">📠 POS Billing</button>
-            <span class="badge" id="vendorLiveCountBadge" style="background: #ecfdf5; color: #059669;">Real-time synced</span>
+            <button id="voiceAlertToggleBtn" class="btn-secondary" onclick="toggleVoiceAlerts()" style="padding: 4px 10px; font-size: 12px;">🔊 Voice: ON</button>
+            <button class="btn-secondary" onclick="testVoiceAlert()" style="padding: 4px 8px; font-size: 11px;">Test Voice</button>
+            <span class="badge" id="vendorLiveCountBadge">Real-time synced</span>
           </div>
         </div>
         <div id="vendorOrdersList">
-          <!-- Injected dynamically via renderRestaurantView() -->
+          <!-- Dynamically injected -->
         </div>
       </div>
-    </div>
-
-    <!-- ====================================================
-         TAB 2: MENU & PRICE MANAGEMENT (STOCK TOGGLES)
-         ==================================================== -->
-    <div id="vendorTabPane_menu" class="vendor-tab-pane">
+      <!-- Menu Management -->
       <div class="dashboard-card">
         <div class="dashboard-card-title">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 20px;">🍽️</span>
-            <span>Menu Dishes, Prices &amp; Stock Availability</span>
-          </div>
-          <div style="display: flex; gap: 8px;">
-            <button class="btn-primary" onclick="openAddDishModal()" style="font-size: 12px; padding: 6px 14px;">➕ Add New Dish</button>
+          <span>📋 Menu Items & Stock Availability</span>
+          <button class="btn-secondary" onclick="openAddMenuModal()">+ Add New Food Item</button>
+        </div>
+        <div id="vendorMenuList">
+          <!-- Dynamically injected -->
+        </div>
+      </div>
+      <!-- Dine-In Table Reservations & Seating Management -->
+      <div class="dashboard-card">
+        <div class="dashboard-card-title">
+          <span>🍽️ Dine-In Table Reservations</span>
+          <span class="badge" id="vendorTbBadge" style="background: #e0f2fe; color: #0284c7;">0 Bookings</span>
+        </div>
+        <div id="vendorTableBookingsList">
+          <!-- Dynamically injected -->
+        </div>
+      </div>
+      <!-- Kitchen Revenue & Performance Analytics Chart -->
+      <div class="dashboard-card">
+        <div class="dashboard-card-title">
+          <span>📊 Kitchen Revenue &amp; Peak Ordering Trends</span>
+          <div style="display: flex; gap: 6px;">
+            <button class="btn-secondary" onclick="renderVendorAnalytics('7days')" style="padding: 4px 8px; font-size: 11px;">7 Days</button>
+            <button class="btn-secondary" onclick="renderVendorAnalytics('30days')" style="padding: 4px 8px; font-size: 11px;">Monthly</button>
           </div>
         </div>
-        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
-          Update food prices, descriptions, and toggle item availability. Marking an item <b>Out of Stock</b> immediately prevents customers from ordering it on <b>bhookit.com</b>.
+        <div id="vendorAnalyticsBox" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 10px;">
+          <!-- Dynamically injected charts -->
+        </div>
+      </div>
+      <!-- Raw Material Inventory & Auto-Depletion Tracker -->
+      <div class="dashboard-card">
+        <div class="dashboard-card-title">
+          <span>🌾 Kitchen Raw Material &amp; Supplies Inventory</span>
+          <button class="btn-secondary" onclick="restockAllIngredients()">⚡ Restock All Supplies</button>
+        </div>
+        <div id="vendorInventoryList" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 10px;">
+          <!-- Dynamically populated inventory cards -->
+        </div>
+      </div>
+      <!-- Kitchen Audio Alert Matrix & Voice Customizer -->
+      <div class="dashboard-card" style="border-left: 4px solid #8b5cf6;">
+        <div class="dashboard-card-title">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 20px;">🔊</span>
+            <span>Kitchen Audio Alert Matrix &amp; Chef Voice Customizer</span>
+          </div>
+          <span class="badge" style="background: #ede9fe; color: #6d28d9;">Web Audio Synthesis</span>
+        </div>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+          Personalize kitchen bell tones and voice announcements so cooks and counter staff immediately hear high-priority orders.
         </p>
-        <div style="display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;">
-          <input type="text" id="vendorMenuSearchInput" oninput="filterVendorMenu(this.value)" placeholder="Search dishes (e.g. Burger, Thali, Biryani)..." class="input-field" style="max-width: 320px; margin: 0;">
-          <select id="vendorMenuCategoryFilter" onchange="filterVendorMenuByCategory(this.value)" class="input-field" style="max-width: 180px; margin: 0;">
-            <option value="All">All Categories</option>
-            <!-- Injected dynamically -->
-          </select>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px;">
+          <div>
+            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Kitchen Chime Alert Tone</label>
+            <select id="kitchenChimeToneSelect" class="input-field" onchange="setKitchenChimeTone(this.value)">
+              <option value="modern_chime">🎵 Modern Harmonic Arpeggio (Default)</option>
+              <option value="classic_bell">🔔 Classic Service Counter Bell</option>
+              <option value="rush_siren">🚨 High-Priority Rush Siren</option>
+              <option value="pleasant_harp">🎶 Pleasant Ambient Harp</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Speech Synthesis Voice Rate</label>
+            <select id="kitchenVoiceSpeedSelect" class="input-field" onchange="setKitchenVoiceSpeed(this.value)">
+              <option value="0.9">0.9x (Deliberate &amp; Clear)</option>
+              <option value="1.0" selected>1.0x (Standard Speed)</option>
+              <option value="1.2">1.2x (Fast Kitchen Pace)</option>
+            </select>
+          </div>
         </div>
-        <div id="vendorMenuListContainer">
-          <!-- Injected dynamically -->
+        <div style="margin-top: 10px; display: flex; gap: 10px;">
+          <button class="btn-secondary" onclick="testKitchenChimeTone()">🔔 Play Sound Tone</button>
+          <button class="btn-accent" onclick="testKitchenVoiceAnnouncement()">🗣️ Test Voice Announcement</button>
         </div>
       </div>
-    </div>
-
-    <!-- ====================================================
-         TAB 3: ORDER HISTORY & ARCHIVE
-         ==================================================== -->
-    <div id="vendorTabPane_history" class="vendor-tab-pane">
-      <div class="dashboard-card">
-        <div class="dashboard-card-title">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 20px;">📦</span>
-            <span>Past Order History &amp; Receipts</span>
-          </div>
-          <div style="display: flex; gap: 8px;">
-            <button class="btn-export-csv" onclick="exportOrdersCSV(currentActiveVendorId)">📥 Export CSV</button>
-            <button class="btn-secondary" onclick="openZReportModal()" style="font-size: 11px; padding: 4px 10px;">🌙 Z-Report</button>
-          </div>
-        </div>
-        <div style="display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;">
-          <input type="text" id="vendorHistorySearchInput" oninput="renderVendorOrderHistory(currentActiveVendorId, this.value)" placeholder="Search Order ID, Customer, Phone..." class="input-field" style="max-width: 300px; margin: 0;">
-          <select id="vendorHistoryStatusFilter" onchange="renderVendorOrderHistory(currentActiveVendorId, document.getElementById('vendorHistorySearchInput').value, this.value)" class="input-field" style="max-width: 160px; margin: 0;">
-            <option value="All">All Statuses</option>
-            <option value="Delivered">Delivered</option>
-            <option value="Rejected">Rejected</option>
-            <option value="Cancelled">Cancelled</option>
-          </select>
-        </div>
-        <div id="vendorOrderHistoryList" class="table-responsive">
-          <!-- Injected dynamically -->
-        </div>
-      </div>
-    </div>
-
-    <!-- ====================================================
-         TAB 4: EARNINGS & SETTLEMENTS
-         ==================================================== -->
-    <div id="vendorTabPane_earnings" class="vendor-tab-pane">
-      <div class="dashboard-card">
-        <div class="dashboard-card-title">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 20px;">💰</span>
-            <span>Restaurant Financial Statement &amp; Settlements</span>
-          </div>
-          <span class="badge" style="background: #dcfce7; color: #15803d; font-weight: 700;">Direct Bank NEFT</span>
-        </div>
-        <div id="vendorEarningsDetailsBox">
-          <!-- Injected dynamically -->
-        </div>
-      </div>
-    </div>
-
-    <!-- ====================================================
-         TAB 5: DISCOUNTS & STORE OFFERS
-         ==================================================== -->
-    <div id="vendorTabPane_offers" class="vendor-tab-pane">
-      <div class="dashboard-card">
-        <div class="dashboard-card-title">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 20px;">🏷️</span>
-            <span>Restaurant Promotional Offers &amp; Discounts</span>
-          </div>
-          <button class="btn-primary" onclick="openVendorOfferModal()" style="font-size: 12px; padding: 6px 14px;">➕ Create New Offer</button>
-        </div>
-        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
-          Create customer discount coupons to attract more food orders from Sakoli. Active discounts are prominently highlighted on your restaurant page on <b>bhookit.com</b>.
-        </p>
-        <div id="vendorOffersListContainer">
-          <!-- Injected dynamically -->
-        </div>
-      </div>
-    </div>
-
-    <!-- ====================================================
-         TAB 6: RESTAURANT PROFILE & FSSAI
-         ==================================================== -->
-    <div id="vendorTabPane_profile" class="vendor-tab-pane">
-      <div class="dashboard-card">
-        <div class="dashboard-card-title">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 20px;">⚙️</span>
-            <span>Restaurant Profile, FSSAI &amp; Operating Details</span>
-          </div>
-          <button class="btn-primary" onclick="saveVendorProfileForm(event)" style="font-size: 12px; padding: 6px 14px;">💾 Save Changes</button>
-        </div>
-        <form id="vendorProfileForm" onsubmit="saveVendorProfileForm(event)" style="margin-top: 14px;">
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
-            <div>
-              <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; display: block;">Restaurant Name</label>
-              <input type="text" id="profRestName" class="input-field" required>
-            </div>
-            <div>
-              <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; display: block;">Primary Phone / WhatsApp</label>
-              <input type="text" id="profRestPhone" class="input-field" required>
-            </div>
-            <div>
-              <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; display: block;">FSSAI License Number</label>
-              <input type="text" id="profRestFssai" class="input-field" placeholder="14-digit FSSAI Number" required>
-            </div>
-            <div>
-              <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; display: block;">Operating Timings</label>
-              <input type="text" id="profRestTimings" class="input-field" placeholder="e.g. 10:00 AM - 11:00 PM">
-            </div>
-            <div>
-              <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; display: block;">Average Preparation Time</label>
-              <input type="text" id="profRestPrepTime" class="input-field" placeholder="e.g. 20-30 mins">
-            </div>
-            <div>
-              <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; display: block;">Dietary Classification</label>
-              <select id="profRestPureVeg" class="input-field">
-                <option value="true">🌿 Pure Vegetarian Only</option>
-                <option value="false">🍗 Non-Veg &amp; Veg Both</option>
-              </select>
-            </div>
-          </div>
-          <div style="margin-top: 14px;">
-            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; display: block;">Complete Address &amp; Landmark</label>
-            <textarea id="profRestAddress" class="input-field" rows="2" required></textarea>
-          </div>
-          <div style="margin-top: 14px;">
-            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; display: block;">Cover / Banner Photo URL</label>
-            <input type="url" id="profRestBanner" class="input-field" placeholder="https://...">
-          </div>
-          <div style="margin-top: 16px;">
-            <button type="submit" class="btn-primary" style="padding: 10px 24px;">💾 Update Profile</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
+    </section>
   </main>
-  </div><!-- /vendorDashboardContainer -->
 
-
-
-  <!-- ====================================================
-       VENDOR SPECIFIC MODALS
-       ==================================================== -->
-
-  <!-- MODAL: Restaurant Login / PIN Authentication -->
-  <div id="vendorLoginModal" class="modal-backdrop hidden">
-    <div class="modal-content" style="max-width: 440px;">
-      <button class="modal-close-btn" onclick="closeModal('vendorLoginModal')">✕</button>
-      <div style="text-align: center; margin-bottom: 18px;">
-        <span style="font-size: 40px;">🔐</span>
-        <h3 style="font-size: 20px; font-weight: 800; margin-top: 6px;">Restaurant Partner Login</h3>
-        <p style="font-size: 12px; color: var(--text-muted);">Select your restaurant outlet or enter your manager PIN</p>
-      </div>
-      <form onsubmit="submitVendorLoginForm(event)">
-        <label style="font-size: 12px; font-weight: 700; margin-bottom: 4px; display: block;">Select Outlet</label>
-        <select id="loginOutletSelect" class="input-field" style="margin-bottom: 12px;">
-          <!-- Injected dynamically -->
-        </select>
-        <label style="font-size: 12px; font-weight: 700; margin-bottom: 4px; display: block;">Kitchen Manager PIN</label>
-        <input type="password" id="loginOutletPin" class="input-field" placeholder="Enter 4-digit PIN (Default: 1234)" value="1234" maxlength="6" style="letter-spacing: 4px; font-size: 18px; text-align: center; margin-bottom: 16px;" required>
-        <button type="submit" class="btn-primary" style="width: 100%; padding: 12px; font-size: 14px;">🔓 Log In to Kitchen Terminal</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- MODAL: Edit Food Dish & Price -->
-  <div id="editDishModal" class="modal-backdrop hidden">
-    <div class="modal-content" style="max-width: 500px;">
-      <button class="modal-close-btn" onclick="closeModal('editDishModal')">✕</button>
-      <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 14px;">✏️ Edit Menu Item &amp; Price</h3>
-      <form onsubmit="saveDishEditForm(event)">
-        <input type="hidden" id="editDishId">
-        <input type="hidden" id="editDishVendorId">
-        <div style="margin-bottom: 12px;">
-          <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Dish Name</label>
-          <input type="text" id="editDishName" class="input-field" required>
-        </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-          <div>
-            <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Price (₹)</label>
-            <input type="number" id="editDishPrice" class="input-field" min="1" required>
-          </div>
-          <div>
-            <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Category</label>
-            <input type="text" id="editDishCategory" class="input-field" required>
-          </div>
-        </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-          <div>
-            <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Food Type</label>
-            <select id="editDishVeg" class="input-field">
-              <option value="true">🌿 Veg</option>
-              <option value="false">🍗 Non-Veg</option>
-            </select>
-          </div>
-          <div>
-            <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Availability</label>
-            <select id="editDishStock" class="input-field">
-              <option value="true">🟢 In Stock</option>
-              <option value="false">🔴 Out of Stock</option>
-            </select>
-          </div>
-        </div>
-        <div style="margin-bottom: 12px;">
-          <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Short Description</label>
-          <textarea id="editDishDesc" class="input-field" rows="2"></textarea>
-        </div>
-        <div style="margin-bottom: 16px;">
-          <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Photo URL (Unsplash or direct image)</label>
-          <input type="url" id="editDishImg" class="input-field" placeholder="https://...">
-        </div>
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <button type="button" class="btn-danger" onclick="confirmDeleteDish()" style="padding: 8px 14px; font-size: 12px;">🗑️ Delete Item</button>
-          <button type="submit" class="btn-primary" style="padding: 8px 20px; font-size: 13px;">💾 Save Changes</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- MODAL: Add New Dish -->
-  <div id="addDishModal" class="modal-backdrop hidden">
-    <div class="modal-content" style="max-width: 500px;">
-      <button class="modal-close-btn" onclick="closeModal('addDishModal')">✕</button>
-      <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 14px;">➕ Add New Dish to Menu</h3>
-      <form onsubmit="saveNewDishForm(event)">
-        <div style="margin-bottom: 12px;">
-          <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Dish Name</label>
-          <input type="text" id="newDishName" class="input-field" placeholder="e.g. Paneer Butter Masala Thali" required>
-        </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-          <div>
-            <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Price (₹)</label>
-            <input type="number" id="newDishPrice" class="input-field" placeholder="140" min="1" required>
-          </div>
-          <div>
-            <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Category</label>
-            <input type="text" id="newDishCategory" class="input-field" placeholder="e.g. Thali, Biryani, Fast Food" required>
-          </div>
-        </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-          <div>
-            <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Dietary</label>
-            <select id="newDishVeg" class="input-field">
-              <option value="true">🌿 Pure Veg</option>
-              <option value="false">🍗 Non-Veg</option>
-            </select>
-          </div>
-          <div>
-            <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Initial Stock</label>
-            <select id="newDishStock" class="input-field">
-              <option value="true">🟢 Available In Stock</option>
-              <option value="false">🔴 Out of Stock</option>
-            </select>
-          </div>
-        </div>
-        <div style="margin-bottom: 12px;">
-          <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Description</label>
-          <textarea id="newDishDesc" class="input-field" rows="2" placeholder="Ingredients, taste, serving details..."></textarea>
-        </div>
-        <div style="margin-bottom: 16px;">
-          <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Image URL</label>
-          <input type="url" id="newDishImg" class="input-field" placeholder="https://images.unsplash.com/...">
-        </div>
-        <button type="submit" class="btn-primary" style="width: 100%; padding: 10px; font-size: 13px;">➕ Add to Restaurant Menu</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- MODAL: Reject Order with Reason -->
-  <div id="rejectOrderModal" class="modal-backdrop hidden">
-    <div class="modal-content" style="max-width: 440px;">
-      <button class="modal-close-btn" onclick="closeModal('rejectOrderModal')">✕</button>
-      <h3 style="font-size: 18px; font-weight: 800; color: #dc2626; margin-bottom: 10px;">⚠️ Reject Customer Order</h3>
-      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;" id="rejectOrderTitle">Select a reason for declining Order #FB-XXXX:</p>
-      <input type="hidden" id="rejectOrderId">
-      <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
-        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; background: var(--bg-surface-alt, #f8fafc); padding: 8px 12px; border-radius: 8px; cursor: pointer;">
-          <input type="radio" name="rejectReason" value="Kitchen at full capacity / Overloaded" checked> Kitchen at full capacity
-        </label>
-        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; background: var(--bg-surface-alt, #f8fafc); padding: 8px 12px; border-radius: 8px; cursor: pointer;">
-          <input type="radio" name="rejectReason" value="Required food ingredients out of stock"> Ingredients out of stock
-        </label>
-        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; background: var(--bg-surface-alt, #f8fafc); padding: 8px 12px; border-radius: 8px; cursor: pointer;">
-          <input type="radio" name="rejectReason" value="Restaurant closing / Kitchen closed"> Restaurant closing soon
-        </label>
-        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; background: var(--bg-surface-alt, #f8fafc); padding: 8px 12px; border-radius: 8px; cursor: pointer;">
-          <input type="radio" name="rejectReason" value="Delivery address out of service area"> Out of service area
-        </label>
-      </div>
-      <div style="display: flex; gap: 10px;">
-        <button class="btn-secondary" onclick="closeModal('rejectOrderModal')" style="flex: 1;">Cancel</button>
-        <button class="btn-danger" onclick="confirmRejectOrderAction()" style="flex: 1;">Confirm Rejection</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: Add / Edit Store Offer -->
-  <div id="vendorOfferModal" class="modal-backdrop hidden">
-    <div class="modal-content" style="max-width: 460px;">
-      <button class="modal-close-btn" onclick="closeModal('vendorOfferModal')">✕</button>
-      <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 14px;">🏷️ Create Restaurant Offer</h3>
-      <form onsubmit="saveVendorOfferForm(event)">
-        <div style="margin-bottom: 12px;">
-          <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Promo Coupon Code</label>
-          <input type="text" id="newOfferCode" class="input-field" placeholder="e.g. SAKOLI25" style="text-transform: uppercase;" required>
-        </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-          <div>
-            <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Discount Percentage (%)</label>
-            <input type="number" id="newOfferPercent" class="input-field" placeholder="20" min="5" max="60" required>
-          </div>
-          <div>
-            <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Min. Order Value (₹)</label>
-            <input type="number" id="newOfferMinOrder" class="input-field" placeholder="199" min="50" required>
-          </div>
-        </div>
-        <div style="margin-bottom: 16px;">
-          <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Offer Description</label>
-          <input type="text" id="newOfferDesc" class="input-field" placeholder="e.g. 20% OFF on all burgers and thalis" required>
-        </div>
-        <button type="submit" class="btn-primary" style="width: 100%; padding: 10px; font-size: 13px;">🎉 Launch Promo Offer</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Modals inherited from base system (POS, KDS, Thermal Receipt, Z-Report, etc.) -->
   <!-- MODAL: Food Item Customization (Add-ons) -->
   <div id="foodCustomizerModal" class="modal-overlay hidden">
     <div class="modal-content">
@@ -781,7 +299,7 @@
         <div class="invoice-box">
           <div class="invoice-header">
             <div>
-              <h2 style="font-family: var(--font-heading); color: var(--primary);">BhookIt Delivery</h2>
+              <h2 style="font-family: var(--font-heading); color: var(--primary);">Parcelकर Delivery</h2>
               <p style="font-size: 11px; color: #64748b;">Tax Invoice / Cash Receipt<br>GSTIN: 27AABCF1234F1Z5</p>
             </div>
             <div style="text-align: right;">
@@ -816,7 +334,7 @@
             <div style="font-size: 15px; font-weight: 800; color: #0f172a; margin-top: 4px;">Grand Total: ₹<span id="invGrandTotal">0</span></div>
           </div>
           <p style="font-size: 10px; color: #94a3b8; text-align: center; margin-top: 14px;">
-            This is a computer generated tax invoice issued under BhookIt Multi-Restaurant System.
+            This is a computer generated tax invoice issued under Parcelकर Multi-Restaurant System.
           </p>
         </div>
       </div>
@@ -874,7 +392,7 @@
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
         <div>
           <label style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Partner Email</label>
-          <input type="email" id="newRestEmail" class="input-field" placeholder="vendor@bhookit.com">
+          <input type="email" id="newRestEmail" class="input-field" placeholder="vendor@parcelkar.com">
         </div>
         <div>
           <label style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Cuisine Category</label>
@@ -929,7 +447,7 @@
         <button class="modal-close-btn" style="background: rgba(255,255,255,0.2); color: #fff; top: 14px; right: 14px;" onclick="cancelGatewayPayment()">✕</button>
         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
           <span style="font-size: 24px;">🔒</span>
-          <h3 style="font-family: var(--font-heading); font-size: 18px; margin: 0; color: #fff;">BhookIt Secure Pay</h3>
+          <h3 style="font-family: var(--font-heading); font-size: 18px; margin: 0; color: #fff;">Parcelकर Secure Pay</h3>
         </div>
         <p style="font-size: 12px; opacity: 0.8; margin: 0;">Razorpay & UPI Verified Gateway</p>
         <div style="margin-top: 14px; font-size: 26px; font-weight: 800; font-family: var(--font-heading); color: #38bdf8;">
@@ -1072,7 +590,7 @@
     <div class="modal-card" style="max-width: 440px;">
       <div class="modal-header" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: #fff;">
         <div>
-          <h3 class="modal-title" style="color: #fff; font-size: 16px;">💬 BhookIt Live Support</h3>
+          <h3 class="modal-title" style="color: #fff; font-size: 16px;">💬 Parcelकर Live Support</h3>
           <span style="font-size: 11px; opacity: 0.8;">24/7 Virtual Concierge & Rider Dispatch Desk</span>
         </div>
         <button class="modal-close-btn" style="color: #fff;" onclick="closeModal('supportChatModal')">×</button>
@@ -1080,7 +598,7 @@
       <div class="chat-container">
         <div class="chat-history" id="supportChatHistory">
           <div class="chat-msg bot">
-            Hello! 👋 I'm BhookIt's order concierge. How can I assist you with your active delivery today?
+            Hello! 👋 I'm Parcelकर's order concierge. How can I assist you with your active delivery today?
           </div>
         </div>
         <div class="chat-quick-chips">
@@ -1101,7 +619,7 @@
     <div class="modal-card" style="max-width: 460px;">
       <div class="modal-header" style="background: linear-gradient(135deg, #064e3b, #047857); color: #fff;">
         <div>
-          <h3 class="modal-title" style="color: #fff; font-size: 18px;">💳 BhookIt Cash Wallet</h3>
+          <h3 class="modal-title" style="color: #fff; font-size: 18px;">💳 Parcelकर Cash Wallet</h3>
           <span style="font-size: 11px; opacity: 0.85;">Loyalty Rewards, Instant Refunds & 5% Cashback</span>
         </div>
         <button class="modal-close-btn" style="color: #fff;" onclick="closeModal('walletModal')">×</button>
@@ -1222,7 +740,7 @@
           <div style="display: flex; align-items: center; gap: 8px;">
             <span style="font-size: 26px;">🍽️</span>
             <div>
-              <h3 style="font-family: var(--font-heading); font-size: 18px; margin: 0; color: #fff;">BhookIt Table Pass</h3>
+              <h3 style="font-family: var(--font-heading); font-size: 18px; margin: 0; color: #fff;">Parcelकर Table Pass</h3>
               <p style="font-size: 11px; opacity: 0.85; margin: 0;">Guaranteed Dine-In Seating Confirmation</p>
             </div>
           </div>
@@ -1284,7 +802,7 @@
           <div style="display: flex; align-items: center; gap: 8px;">
             <span style="font-size: 22px;">🖥️</span>
             <div>
-              <h3 style="font-size: 16px; font-weight: 800; margin: 0; color: #fff;">BhookIt POS Terminal</h3>
+              <h3 style="font-size: 16px; font-weight: 800; margin: 0; color: #fff;">Parcelकर POS Terminal</h3>
               <span style="font-size: 11px; opacity: 0.8;">Station: POS-01 • Cashier: Rakesh</span>
             </div>
           </div>
@@ -1441,7 +959,7 @@
         </div>
         <div style="text-align: center; margin-top: 10px; font-size: 9px; line-height: 1.3;">
           <div>*** THANK YOU FOR DINING WITH US ***</div>
-          <div>Powered by BhookIt All-in-One POS System</div>
+          <div>Powered by Parcelकर All-in-One POS System</div>
         </div>
       </div>
       <div style="padding: 10px 14px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; gap: 8px;">
@@ -1465,7 +983,7 @@
         <span style="font-size: 24px;">🎁</span>
         <div style="font-size: 12px; color: #166534;">
           <b>Earn ₹20 Instant Wallet Cashback!</b><br>
-          Submit a verified rating and get rewarded in your BhookIt wallet.
+          Submit a verified rating and get rewarded in your Parcelकर wallet.
         </div>
       </div>
       <input type="hidden" id="ratingTargetOrderId" value="">
@@ -1598,7 +1116,7 @@
       <button class="foodiebot-send-btn" onclick="sendFoodieBotMessage()" title="Send">➤</button>
     </div>
   </div>
-  <!-- MODAL: BhookIt VIP Gold Club Membership -->
+  <!-- MODAL: Parcelकर VIP Gold Club Membership -->
   <div id="membershipModal" class="modal-backdrop hidden">
     <div class="modal-card vip-modal-card" style="max-width: 520px; padding: 0; overflow: hidden;">
       <!-- VIP Luxury Header -->
@@ -1606,7 +1124,7 @@
         <div style="display: flex; align-items: center; gap: 12px;">
           <span class="vip-crown-large">👑</span>
           <div>
-            <h3 style="margin: 0; font-size: 20px; font-weight: 900; color: #fff; letter-spacing: 0.5px;">BhookIt VIP Gold Club</h3>
+            <h3 style="margin: 0; font-size: 20px; font-weight: 900; color: #fff; letter-spacing: 0.5px;">Parcelकर VIP Gold Club</h3>
             <span style="font-size: 12px; color: #fde68a;">Exclusive Dining Privileges &amp; Zero Delivery Fees</span>
           </div>
         </div>
@@ -1754,7 +1272,7 @@
         <div style="display: flex; align-items: center; gap: 12px;">
           <span style="font-size: 26px;">👨‍🍳</span>
           <div>
-            <h3 style="margin: 0; font-size: 18px; font-weight: 900; color: #fff; letter-spacing: 0.5px;">BhookIt Live Kitchen KDS</h3>
+            <h3 style="margin: 0; font-size: 18px; font-weight: 900; color: #fff; letter-spacing: 0.5px;">Parcelकर Live Kitchen KDS</h3>
             <span style="font-size: 11px; color: #94a3b8;">Real-Time Chef Expedition &amp; Station Kanban</span>
           </div>
         </div>
@@ -1898,7 +1416,7 @@
           <div class="wa-avatar">🍔</div>
           <div>
             <div style="display: flex; align-items: center; gap: 4px;">
-              <span class="wa-profile-name">BhookIt Delivery Bot</span>
+              <span class="wa-profile-name">Parcelकर Delivery Bot</span>
               <span class="wa-verified-badge" title="Verified Business">✓</span>
             </div>
             <div class="wa-status-text">Official Business Account • Online</div>
@@ -2194,7 +1712,8 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <!-- Firebase Compat Scripts -->
 
-  <!-- Scripts -->
+  
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
@@ -2204,8 +1723,16 @@
   <script src="translations.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      if (typeof initVendorApp === 'function') {
-        initVendorApp();
+      // Ensure the standalone portal is active
+      if (typeof show === 'function') {
+        show('restaurant');
+      }
+      if ('restaurant' === 'restaurant' && typeof quickRole === 'function') {
+        quickRole('restaurant', 1);
+      } else if ('restaurant' === 'delivery' && typeof quickRole === 'function') {
+        quickRole('delivery');
+      } else if ('restaurant' === 'admin' && typeof quickRole === 'function') {
+        quickRole('admin');
       }
     });
   </script>

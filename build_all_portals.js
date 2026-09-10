@@ -2,25 +2,26 @@
 // Generates standalone portals: customer.html, vendor.html, rider.html, admin.html, partner.html
 const fs = require('fs');
 
-const indexHtml = fs.readFileSync('index.html', 'utf8');
+const sourceHtml = fs.readFileSync('demo_all_in_one.html', 'utf8');
 const allModals = fs.readFileSync('_extracted_modals.html', 'utf8');
 
-// Section markers
-const restStart = indexHtml.indexOf('<!-- 5. RESTAURANT PARTNER VENDOR PORTAL -->');
-const riderStart = indexHtml.indexOf('<!-- 6. DELIVERY RIDER PARTNER PORTAL -->');
-const adminStart = indexHtml.indexOf('<section id="admin"');
-const partnerRegStart = indexHtml.indexOf('<section id="partnerRegistration"');
-const modalsStart = indexHtml.indexOf('<!-- MODAL:');
+// Section markers from demo_all_in_one.html
+const restStart = sourceHtml.indexOf('<!-- 5. RESTAURANT PARTNER VENDOR PORTAL -->');
+const riderStart = sourceHtml.indexOf('<!-- 6. DELIVERY RIDER PARTNER PORTAL -->');
+const adminStart = sourceHtml.indexOf('<!-- 7. SUPER ADMIN EXECUTIVE COMMAND CENTER -->');
+const partnerRegStart = sourceHtml.indexOf('<!-- PARTNER REGISTRATION PANEL -->');
+const endOfMain = sourceHtml.indexOf('</main>', partnerRegStart);
 
-let restaurantSection = indexHtml.substring(restStart, riderStart).trim();
-let riderSection = indexHtml.substring(riderStart, adminStart).trim();
-let adminSection = indexHtml.substring(adminStart, partnerRegStart).trim();
-let partnerRegSection = indexHtml.substring(partnerRegStart, modalsStart).trim();
+let restaurantSection = sourceHtml.substring(restStart, riderStart).trim();
+let riderSection = sourceHtml.substring(riderStart, adminStart).trim();
+let adminSection = sourceHtml.substring(adminStart, partnerRegStart).trim();
+let partnerRegSection = sourceHtml.substring(partnerRegStart, endOfMain).trim();
 
 // Unhide the main panels for each standalone page
 restaurantSection = restaurantSection.replace('id="restaurant" class="panel hidden"', 'id="restaurant" class="panel"');
 riderSection = riderSection.replace('id="delivery" class="panel hidden"', 'id="delivery" class="panel"');
 adminSection = adminSection.replace('id="admin" class="panel hidden"', 'id="admin" class="panel"');
+partnerRegSection = partnerRegSection.replace('id="partnerRegistration" class="panel hidden"', 'id="partnerRegistration" class="panel"');
 
 const headCommon = (title, desc) => `<!doctype html>
 <html lang="en">
@@ -96,14 +97,15 @@ const scriptsCommon = (activeInitRole) => `
 </html>`;
 
 // ============================================================
-// 1. VENDOR PORTAL (vendor.html / partner.bhookit.com/vendor)
+// 1. VENDOR PORTAL (vendor.html / partner.parcelkar.com/vendor)
 // ============================================================
-const vendorHtml = `${headCommon('BhookIt Partner — Restaurant Vendor Portal & Kitchen POS', 'Manage orders, digital menu, kitchen KDS, POS billing and daily settlements for your restaurant on BhookIt.')}
+const vendorHtml = `${headCommon('Parcelकर Partner — Restaurant Vendor Portal & Kitchen POS', 'Manage orders, digital menu, kitchen KDS, POS billing and daily settlements for your restaurant on Parcelकर.')}
 <body>
   <!-- Header: Restaurant Partner Dedicated Header -->
   <header>
-    <div class="logo-area" onclick="location.href='/vendor'" style="cursor: pointer;" title="BhookIt Restaurant Partner">
-      <img src="bhookit-logo.png" alt="BhookIt Partner" class="brand-logo-img">
+    <div class="logo-area" onclick="location.href='/vendor'" style="cursor: pointer;" title="Parcelकर Restaurant Partner">
+      <img src="parcelkar-logo.png" alt="Parcelकर Partner" class="brand-logo-img">
+      <span class="brand-name-text">Parcel<span class="brand-highlight">कर</span></span>
       <span class="portal-badge badge-vendor">🏪 Vendor Portal</span>
     </div>
 
@@ -176,14 +178,15 @@ fs.writeFileSync('vendor.html', vendorHtml, 'utf8');
 console.log('vendor.html generated!');
 
 // ============================================================
-// 2. RIDER PORTAL (rider.html / partner.bhookit.com/rider)
+// 2. RIDER PORTAL (rider.html / partner.parcelkar.com/rider)
 // ============================================================
-const riderHtml = `${headCommon('BhookIt Delivery — Rider & Courier Dispatch Partner Portal', 'Delivery partner app for live order pickup, GPS route navigation, proof of delivery and instant daily earnings.')}
+const riderHtml = `${headCommon('Parcelकर Delivery — Rider & Courier Dispatch Partner Portal', 'Delivery partner app for live order pickup, GPS route navigation, proof of delivery and instant daily earnings.')}
 <body>
   <!-- Header: Delivery Partner Dedicated Header -->
   <header>
-    <div class="logo-area" onclick="location.href='/rider'" style="cursor: pointer;" title="BhookIt Delivery Hero">
-      <img src="bhookit-logo.png" alt="BhookIt Rider" class="brand-logo-img">
+    <div class="logo-area" onclick="location.href='/rider'" style="cursor: pointer;" title="Parcelकर Delivery Hero">
+      <img src="parcelkar-logo.png" alt="Parcelकर Rider" class="brand-logo-img">
+      <span class="brand-name-text">Parcel<span class="brand-highlight">कर</span></span>
       <span class="portal-badge badge-rider">🛵 Delivery Hero</span>
     </div>
 
@@ -234,14 +237,15 @@ fs.writeFileSync('rider.html', riderHtml, 'utf8');
 console.log('rider.html generated!');
 
 // ============================================================
-// 3. ADMIN PORTAL (admin.html / partner.bhookit.com/admin)
+// 3. ADMIN PORTAL (admin.html / partner.parcelkar.com/admin)
 // ============================================================
-const adminHtml = `${headCommon('BhookIt Master Admin — Platform Operations & System Dashboard', 'Master control dashboard for BhookIt platform: restaurant onboarding, rider telemetry, zone configuration, commission and analytics.')}
+const adminHtml = `${headCommon('Parcelकर Master Admin — Platform Operations & System Dashboard', 'Master control dashboard for Parcelकर platform: restaurant onboarding, rider telemetry, zone configuration, commission and analytics.')}
 <body>
   <!-- Header: Master Super Admin Dedicated Header -->
   <header>
-    <div class="logo-area" onclick="location.href='/admin'" style="cursor: pointer;" title="BhookIt Master Admin">
-      <img src="bhookit-logo.png" alt="BhookIt Admin" class="brand-logo-img">
+    <div class="logo-area" onclick="location.href='/admin'" style="cursor: pointer;" title="Parcelकर Master Admin">
+      <img src="parcelkar-logo.png" alt="Parcelकर Admin" class="brand-logo-img">
+      <span class="brand-name-text">Parcel<span class="brand-highlight">कर</span></span>
       <span class="portal-badge badge-admin">🛡️ Master Admin</span>
     </div>
 
@@ -290,14 +294,15 @@ fs.writeFileSync('admin.html', adminHtml, 'utf8');
 console.log('admin.html generated!');
 
 // ============================================================
-// 4. PARTNER HUB (partner.html / partner.bhookit.com)
+// 4. PARTNER HUB (partner.html / partner.parcelkar.com)
 // ============================================================
-const partnerHtml = `${headCommon('BhookIt Partner Hub — Restaurant & Delivery Fleet Ecosystem', 'Join BhookIt partner network. Dedicated portals for restaurants, delivery riders, and operations management in Maharashtra.')}
+const partnerHtml = `${headCommon('Parcelकर Partner Hub — Restaurant & Delivery Fleet Ecosystem', 'Join Parcelकर partner network. Dedicated portals for restaurants, delivery riders, and operations management in Maharashtra.')}
 <body>
   <!-- Partner Hub Header -->
   <header>
-    <div class="logo-area" onclick="location.href='/partner'" style="cursor: pointer;" title="BhookIt Partner Gateway">
-      <img src="bhookit-logo.png" alt="BhookIt Partner" class="brand-logo-img">
+    <div class="logo-area" onclick="location.href='/partner'" style="cursor: pointer;" title="Parcelकर Partner Gateway">
+      <img src="parcelkar-logo.png" alt="Parcelकर Partner" class="brand-logo-img">
+      <span class="brand-name-text">Parcel<span class="brand-highlight">कर</span></span>
       <span class="portal-badge badge-hub">🤝 Partner Hub</span>
     </div>
 
@@ -324,8 +329,8 @@ const partnerHtml = `${headCommon('BhookIt Partner Hub — Restaurant & Delivery
   <main class="container" style="max-width: 1100px; margin: 30px auto; padding: 0 16px;">
     <!-- Hero Banner -->
     <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #fff; border-radius: 20px; padding: 40px 32px; margin-bottom: 36px; box-shadow: var(--shadow-lg); text-align: center;">
-      <span class="portal-badge badge-vendor" style="margin-bottom: 12px;">🚀 BhookIt Partner Ecosystem</span>
-      <h1 style="font-size: 32px; font-weight: 800; margin: 12px 0; letter-spacing: -0.5px;">Grow Your Food Business with BhookIt</h1>
+      <span class="portal-badge badge-vendor" style="margin-bottom: 12px;">🚀 Parcelकर Partner Ecosystem</span>
+      <h1 style="font-size: 32px; font-weight: 800; margin: 12px 0; letter-spacing: -0.5px;">Grow Your Food Business with Parcelकर</h1>
       <p style="font-size: 15px; opacity: 0.85; max-width: 680px; margin: 0 auto 24px;">Dedicated tools, kitchen management POS, automated rider dispatch, and transparent settlements for local restaurants and courier partners.</p>
       <div style="display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;">
         <button class="btn-primary" onclick="show('partnerRegistration')" style="font-size: 14px; padding: 10px 22px;">📝 Register Your Restaurant</button>
