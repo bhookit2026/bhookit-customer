@@ -201,6 +201,9 @@ const SEED_DATA = {
   settings: {
     riderDeliveryCommission: 40,
     deliveryBase: 30,
+    hideDeliveryCharges: false,
+    deliveryAutoAddStrategy: 'cart_split',
+    deliveryItemFlatAmount: 15,
     perKm: 8,
     gstRate: 5,
     platformFee: 5,
@@ -354,6 +357,12 @@ let appData = JSON.parse(localStorage.getItem(STORAGE_KEY)) ||
               JSON.parse(localStorage.getItem('bhookit_v11_data_v2')) ||
               JSON.parse(localStorage.getItem('bhookit_v1_data')) ||
               SEED_DATA;
+
+// Ensure delivery charges visibility settings exist
+if (!appData.settings) appData.settings = {};
+if (appData.settings.hideDeliveryCharges === undefined) appData.settings.hideDeliveryCharges = false;
+if (!appData.settings.deliveryAutoAddStrategy) appData.settings.deliveryAutoAddStrategy = 'cart_split';
+if (appData.settings.deliveryItemFlatAmount === undefined) appData.settings.deliveryItemFlatAmount = 15;
 
 // =============================================================
 // GLOBAL SUPER ADMIN SECURITY & CREDENTIAL PROTOCOLS
@@ -1485,6 +1494,23 @@ function renderCustomerView() {
   grid.innerHTML = '';
   let visibleCount = 0;
 
+  // Banner if Delivery Charges are Hidden (Free Delivery Active)
+  if (appData.settings && appData.settings.hideDeliveryCharges) {
+    const banner = document.createElement('div');
+    banner.style.cssText = 'grid-column: 1 / -1; background: linear-gradient(135deg, #ecfdf5, #eff6ff); border: 1.5px solid #a7f3d0; border-radius: 12px; padding: 12px 18px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; box-shadow: 0 2px 8px rgba(16,185,129,0.08);';
+    banner.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 24px; background: #fff; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 4px rgba(0,0,0,0.06);">🎉</span>
+        <div>
+          <div style="font-weight: 800; font-size: 13px; color: #065f46;">Zero Delivery Fee: 100% Free Doorstep Delivery Active!</div>
+          <div style="font-size: 11px; color: #047857; margin-top: 1px;">Enjoy delicious meals with ₹0 delivery charges at checkout (Delivery charges are included in food prices).</div>
+        </div>
+      </div>
+      <span style="background: #10b981; color: #fff; font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 999px; letter-spacing: 0.5px; white-space: nowrap;">FREE DELIVERY</span>
+    `;
+    grid.appendChild(banner);
+  }
+
   const favList = appData.currentUser?.favorites || [];
   const favBadge = document.getElementById('favCountBadge');
   if (favBadge) favBadge.textContent = favList.length;
@@ -1572,7 +1598,10 @@ function renderCustomerView() {
                     <span class="${f.veg ? 'veg-indicator' : 'nonveg-indicator'}"></span>
                     ${f.name}
                   </span>
-                  <span class="food-price">₹${f.price}</span>
+                  <div style="display: flex; align-items: center; gap: 4px;">
+                    <span class="food-price">₹${(typeof getDishEffectivePrice === 'function') ? getDishEffectivePrice(f) : f.price}</span>
+                    ${(appData.settings && appData.settings.hideDeliveryCharges) ? `<span style="font-size: 9px; font-weight: 800; color: #059669; background: #ecfdf5; padding: 1px 5px; border-radius: 4px; border: 1px solid #a7f3d0;">${appData.settings.deliveryAutoAddStrategy === 'item_flat' ? '✨ Free Del' : '🚚 Free Del'}</span>` : ''}
+                  </div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 6px;">
                   <button class="btn-fav-dish ${isFav ? 'active' : ''}" onclick="toggleFavoriteDish(${r.id}, ${f.id}, event)" title="${isFav ? 'Remove Favorite' : 'Add to Favorites'}">
@@ -1651,8 +1680,9 @@ function openCustomizeModal(restId, foodId) {
   if (!rest || !food) return;
 
   pendingCustomizeDish = { rest, food };
+  const modalDishPrice = (typeof getDishEffectivePrice === 'function') ? getDishEffectivePrice(food) : food.price;
   document.getElementById('customizerFoodName').textContent = food.name;
-  document.getElementById('customizerRestaurantName').textContent = `From ${rest.name} • ₹${food.price}`;
+  document.getElementById('customizerRestaurantName').textContent = `From ${rest.name} • ₹${modalDishPrice}`;
 
   document.getElementById('addonExtraCheese').checked = false;
   document.getElementById('addonSpicyDip').checked = false;
@@ -1776,7 +1806,9 @@ function renderCartView() {
           </div>
           <span style="font-size: 11px; color: var(--text-muted);">${group.items.length} ${group.items.length === 1 ? 'Item' : 'Items'}</span>
         </div>
-        ${group.items.map(({ item, idx }) => `
+        ${group.items.map(({ item, idx }) => {
+          const pricing = (typeof getCartItemEffectivePricing === 'function') ? getCartItemEffectivePricing(item, currentCart) : { unitPrice: item.price, deliverySharePerUnit: 0, isIncluded: false };
+          return `
           <div class="cart-item-row" style="border: none; border-bottom: 1px solid var(--border); border-radius: 0;">
             <div class="cart-item-left">
               <span class="cart-item-name">${item.name}</span>
@@ -1791,7 +1823,10 @@ function renderCartView() {
                   👨‍🍳 Note: "${item.chefNotes}"
                 </div>
               ` : ''}
-              <span style="font-weight: 700; font-size: 13px; margin-top: 4px; color: var(--text-main);">₹${item.price} each</span>
+              <div style="display: flex; align-items: center; gap: 6px; margin-top: 4px; flex-wrap: wrap;">
+                <span style="font-weight: 700; font-size: 13px; color: var(--text-main);">₹${pricing.unitPrice} each</span>
+                ${pricing.isIncluded ? `<span style="font-size: 10px; font-weight: 700; color: #059669; background: #ecfdf5; padding: 1px 6px; border-radius: 4px; border: 1px solid #a7f3d0;">Includes delivery (+₹${pricing.deliverySharePerUnit})</span>` : ''}
+              </div>
             </div>
             <div class="cart-qty-controls">
               <button class="qty-btn" onclick="changeQty(${idx}, -1)">−</button>
@@ -1799,7 +1834,7 @@ function renderCartView() {
               <button class="qty-btn" onclick="changeQty(${idx}, 1)">+</button>
             </div>
           </div>
-        `).join('')}
+        `;}).join('')}
       </div>
     `;
   }).join('');
@@ -1954,12 +1989,30 @@ function setServiceMode(mode) {
 }
 
 function updateBillTotals() {
-  const subtotal = currentCart.reduce((s, i) => s + (i.price * i.qty), 0);
   const isVip = appData.currentUser && appData.currentUser.isVip;
   const isDineIn = currentServiceMode === 'dinein';
-  const isFreeDelivery = (isVip && subtotal >= 199) || isDineIn;
-  let deliveryFee = (currentCart.length && !isFreeDelivery) ? appData.settings.deliveryBase : 0;
-  if (isDineIn) deliveryFee = 0;
+  const isHideDel = !!(appData.settings && appData.settings.hideDeliveryCharges) && !isDineIn;
+
+  let subtotal = 0;
+  let deliveryFee = 0;
+
+  if (isHideDel) {
+    if (appData.settings.deliveryAutoAddStrategy === 'item_flat') {
+      const flat = Number(appData.settings.deliveryItemFlatAmount) || 15;
+      subtotal = currentCart.reduce((s, i) => s + (((Number(i.basePrice || i.price) || 0) + flat) * (i.qty || 1)), 0);
+    } else {
+      // cart_split
+      const baseSubtotal = currentCart.reduce((s, i) => s + ((Number(i.basePrice || i.price) || 0) * (i.qty || 1)), 0);
+      const deliveryToAbsorb = currentCart.length ? (Number(appData.settings.deliveryBase) || 30) : 0;
+      subtotal = baseSubtotal + deliveryToAbsorb;
+    }
+    deliveryFee = 0;
+  } else {
+    subtotal = currentCart.reduce((s, i) => s + ((Number(i.price) || 0) * (i.qty || 1)), 0);
+    const isFreeDelivery = (isVip && subtotal >= 199) || isDineIn;
+    deliveryFee = (currentCart.length && !isFreeDelivery) ? (Number(appData.settings.deliveryBase) || 30) : 0;
+    if (isDineIn) deliveryFee = 0;
+  }
 
   // Phase 12: Dynamic Surge Pricing Calculation
   const surge = appData.surgeSettings || { rainSurge: false, rainFee: 25, peakSurge: false, peakMultiplier: 1.25, lateNightSurge: false, lateNightFee: 20 };
@@ -1976,7 +2029,7 @@ function updateBillTotals() {
   // Phase 13: Delivery Partner Tip
   const tip = isDineIn ? 0 : (currentDriverTip || 0);
 
-  const taxes = Math.round(subtotal * (appData.settings.gstRate / 100));
+  const taxes = Math.round(subtotal * ((appData.settings.gstRate || 5) / 100));
   const subAfterDiscount = Math.max(0, subtotal + deliveryFee + surgeFee + tip + taxes - appliedDiscount);
 
   let walletDeduction = 0;
@@ -2005,10 +2058,12 @@ function updateBillTotals() {
   if (elDel) {
     if (isDineIn) {
       elDel.innerHTML = '<span style="color:#059669; font-weight:800;">₹0 (Dine-In Table)</span>';
-    } else if (isFreeDelivery) {
+    } else if (isHideDel) {
+      elDel.innerHTML = '<span style="color:#059669; font-weight:800; background:#ecfdf5; padding:2px 8px; border-radius:6px; border:1px solid #a7f3d0;">🎉 FREE (Included in Items)</span>';
+    } else if (isVip && subtotal >= 199) {
       elDel.innerHTML = '<span style="color:#059669; font-weight:800;">₹0 (VIP Free)</span>';
     } else {
-      elDel.textContent = deliveryFee;
+      elDel.innerHTML = `₹<b>${deliveryFee}</b>`;
     }
   }
 
@@ -2132,10 +2187,29 @@ async function submitOrder() {
     return;
   }
 
-  const subtotal = currentCart.reduce((s, i) => s + (i.price * i.qty), 0);
   const isVip = appData.currentUser && appData.currentUser.isVip;
   const isDineIn = currentServiceMode === 'dinein';
-  let deliveryFee = (isDineIn || (isVip && subtotal >= 199)) ? 0 : appData.settings.deliveryBase;
+  const isHideDel = !!(appData.settings && appData.settings.hideDeliveryCharges) && !isDineIn;
+
+  let subtotal = 0;
+  let deliveryFee = 0;
+  let deliveryAmountAbsorbed = 0;
+
+  if (isHideDel) {
+    if (appData.settings.deliveryAutoAddStrategy === 'item_flat') {
+      const flat = Number(appData.settings.deliveryItemFlatAmount) || 15;
+      subtotal = currentCart.reduce((s, i) => s + (((Number(i.basePrice || i.price) || 0) + flat) * (i.qty || 1)), 0);
+      deliveryAmountAbsorbed = flat * currentCart.reduce((sum, i) => sum + (i.qty || 1), 0);
+    } else {
+      const baseSubtotal = currentCart.reduce((s, i) => s + ((Number(i.basePrice || i.price) || 0) * (i.qty || 1)), 0);
+      deliveryAmountAbsorbed = currentCart.length ? (Number(appData.settings.deliveryBase) || 30) : 0;
+      subtotal = baseSubtotal + deliveryAmountAbsorbed;
+    }
+    deliveryFee = 0;
+  } else {
+    subtotal = currentCart.reduce((s, i) => s + ((Number(i.price) || 0) * (i.qty || 1)), 0);
+    deliveryFee = (isDineIn || (isVip && subtotal >= 199)) ? 0 : (Number(appData.settings.deliveryBase) || 30);
+  }
 
   // Phase 12: Dynamic Surge Pricing Calculation
   const surge = appData.surgeSettings || { rainSurge: false, rainFee: 25, peakSurge: false, peakMultiplier: 1.25, lateNightSurge: false, lateNightFee: 20 };
@@ -2152,7 +2226,7 @@ async function submitOrder() {
   // Phase 13: Delivery Partner Tip
   const tip = isDineIn ? 0 : (currentDriverTip || 0);
 
-  const taxes = Math.round(subtotal * (appData.settings.gstRate / 100));
+  const taxes = Math.round(subtotal * ((appData.settings.gstRate || 5) / 100));
   const subAfterDiscount = Math.max(0, subtotal + deliveryFee + surgeFee + tip + taxes - appliedDiscount);
 
   let walletDeduction = 0;
@@ -2174,6 +2248,15 @@ async function submitOrder() {
   const allCartAllergies = [...new Set(currentCart.flatMap(i => i.allergies || []))];
   const allCartNotes = currentCart.filter(i => i.chefNotes).map(i => `${i.name}: "${i.chefNotes}"`).join('; ');
 
+  const finalOrderItems = currentCart.map(item => {
+    const pricing = (typeof getCartItemEffectivePricing === 'function') ? getCartItemEffectivePricing(item, currentCart) : { unitPrice: item.price, deliverySharePerUnit: 0 };
+    return {
+      ...item,
+      price: isHideDel ? pricing.unitPrice : item.price,
+      deliveryShare: isHideDel ? pricing.deliverySharePerUnit : 0
+    };
+  });
+
   const newOrder = {
     id: 'FB-' + Math.floor(10000 + Math.random() * 90000),
     invoiceNo: `JBINV-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${Math.floor(100 + Math.random() * 900)}`,
@@ -2191,9 +2274,11 @@ async function submitOrder() {
       phone, 
       address: isDineIn ? `[DINE-IN] ${document.getElementById('dineInTableSelect')?.value || 'Table #01 (AC Family Hall)'}` : address 
     },
-    items: [...currentCart],
+    items: finalOrderItems,
     subtotal,
-    deliveryFee,
+    deliveryFee: isHideDel ? 0 : deliveryFee,
+    deliveryFeeHidden: isHideDel,
+    deliveryFeeIncluded: isHideDel ? deliveryAmountAbsorbed : 0,
     surgeFee,
     riderTip: tip,
     taxes,
@@ -3733,6 +3818,11 @@ function renderAdminView() {
 
   // Render Dynamic Surge Switchboard Controls
   renderAdminSurgeSwitchboard();
+
+  // Render Delivery Charges Visibility Switchboard
+  if (typeof renderAdminDeliveryVisibilitySwitchboard === 'function') {
+    renderAdminDeliveryVisibilitySwitchboard();
+  }
 
   // Render Sakoli Geo-Demand Heatmap & Fleet Telemetry
   renderAdminHeatmap();
@@ -9272,3 +9362,185 @@ function saveAdminGlobalRiderCommission() {
   if (typeof renderAdminView === 'function') renderAdminView();
 }
 window.saveAdminGlobalRiderCommission = saveAdminGlobalRiderCommission;
+
+// =============================================================
+// ADMIN DELIVERY CHARGES VISIBILITY & ITEM INCLUSION SWITCHBOARD
+// =============================================================
+function getDishEffectivePrice(food) {
+  if (!food) return 0;
+  const base = Number(food.price) || 0;
+  if (appData.settings && appData.settings.hideDeliveryCharges) {
+    if (appData.settings.deliveryAutoAddStrategy === 'item_flat') {
+      const flat = Number(appData.settings.deliveryItemFlatAmount) || 15;
+      return base + flat;
+    }
+  }
+  return base;
+}
+
+function getCartItemEffectivePricing(item, cart) {
+  const isHideDel = !!(appData.settings && appData.settings.hideDeliveryCharges);
+  const isDineIn = (typeof currentServiceMode !== 'undefined' && currentServiceMode === 'dinein');
+  const baseUnit = Number(item.basePrice || item.price) || 0;
+  
+  if (!isHideDel || isDineIn) {
+    return {
+      unitPrice: baseUnit,
+      deliverySharePerUnit: 0,
+      isIncluded: false
+    };
+  }
+
+  if (appData.settings.deliveryAutoAddStrategy === 'item_flat') {
+    const flat = Number(appData.settings.deliveryItemFlatAmount) || 15;
+    return {
+      unitPrice: baseUnit + flat,
+      deliverySharePerUnit: flat,
+      isIncluded: true
+    };
+  }
+
+  // Strategy: 'cart_split' (proportional share of deliveryBase)
+  const cartItems = cart || (typeof currentCart !== 'undefined' ? currentCart : []);
+  const totalBaseSubtotal = cartItems.reduce((s, i) => s + ((Number(i.basePrice || i.price) || 0) * (i.qty || 1)), 0);
+  const deliveryBase = Number(appData.settings.deliveryBase) || 30;
+  const qty = item.qty || 1;
+  
+  if (totalBaseSubtotal <= 0) {
+    return { unitPrice: baseUnit, deliverySharePerUnit: 0, isIncluded: false };
+  }
+
+  const itemTotalBase = baseUnit * qty;
+  const itemDeliveryShareTotal = Math.round((itemTotalBase / totalBaseSubtotal) * deliveryBase);
+  const sharePerUnit = Math.max(1, Math.round(itemDeliveryShareTotal / qty));
+  
+  return {
+    unitPrice: baseUnit + sharePerUnit,
+    deliverySharePerUnit: sharePerUnit,
+    isIncluded: true
+  };
+}
+
+function onDeliveryVisibilityModeChange() {
+  const isHide = document.getElementById('radioDelHide')?.checked;
+  const settingsPanel = document.getElementById('adminDelHideSettingsPanel');
+  const cardShow = document.getElementById('labelShowDel');
+  const cardHide = document.getElementById('labelHideDel');
+  
+  if (settingsPanel) settingsPanel.style.display = isHide ? 'block' : 'none';
+  if (cardShow) cardShow.style.borderColor = isHide ? 'var(--border)' : '#10b981';
+  if (cardHide) cardHide.style.borderColor = isHide ? '#ef4444' : 'var(--border)';
+  
+  updateDelStrategyUI();
+}
+
+function updateDelStrategyUI() {
+  const isHide = document.getElementById('radioDelHide')?.checked;
+  const isFlat = document.getElementById('radioStrategyFlat')?.checked;
+  const groupFlat = document.getElementById('groupAdminFlatItemAmount');
+  const preview = document.getElementById('delVisibilityPreviewText');
+  const baseDelInput = document.getElementById('inputAdminBaseDeliveryFee');
+  const baseFee = baseDelInput ? Number(baseDelInput.value) || 30 : 30;
+  const flatInput = document.getElementById('inputAdminFlatItemAmount');
+  const flatFee = flatInput ? Number(flatInput.value) || 15 : 15;
+
+  if (groupFlat) groupFlat.style.display = isFlat ? 'flex' : 'none';
+
+  if (preview) {
+    if (!isHide) {
+      preview.innerHTML = `🟢 <b>Standard Mode Active:</b> Delivery fee (₹${baseFee}) will appear as a separate line item on customer bills. Item prices remain untouched.`;
+    } else if (isFlat) {
+      preview.innerHTML = `🔴 <b>Free Delivery Mode (Flat Markup):</b> Delivery charges are HIDDEN (Customer sees ₹0 FREE Delivery). All food dishes automatically have +₹${flatFee} added to their price.`;
+    } else {
+      preview.innerHTML = `🔴 <b>Free Delivery Mode (Cart Split):</b> Delivery charges are HIDDEN (Customer sees ₹0 FREE Delivery). The ₹${baseFee} delivery fee is automatically split across cart items at checkout.`;
+    }
+  }
+}
+
+function renderAdminDeliveryVisibilitySwitchboard() {
+  if (!appData.settings) appData.settings = {};
+  const isHide = !!appData.settings.hideDeliveryCharges;
+  const strategy = appData.settings.deliveryAutoAddStrategy || 'cart_split';
+  const baseFee = Number(appData.settings.deliveryBase) || 30;
+  const flatFee = Number(appData.settings.deliveryItemFlatAmount) || 15;
+
+  const radioShow = document.getElementById('radioDelShow');
+  const radioHide = document.getElementById('radioDelHide');
+  const radioSplit = document.getElementById('radioStrategySplit');
+  const radioFlat = document.getElementById('radioStrategyFlat');
+  const inputBase = document.getElementById('inputAdminBaseDeliveryFee');
+  const inputFlat = document.getElementById('inputAdminFlatItemAmount');
+  const badge = document.getElementById('adminDeliveryVisibilityBadge');
+  const displayBase = document.getElementById('displayBaseDelFee');
+
+  if (radioShow) radioShow.checked = !isHide;
+  if (radioHide) radioHide.checked = isHide;
+  if (radioSplit) radioSplit.checked = (strategy === 'cart_split');
+  if (radioFlat) radioFlat.checked = (strategy === 'item_flat');
+  if (inputBase) inputBase.value = baseFee;
+  if (inputFlat) inputFlat.value = flatFee;
+  if (displayBase) displayBase.textContent = baseFee;
+
+  if (badge) {
+    if (isHide) {
+      badge.textContent = `Hidden (Free Del: ${strategy === 'item_flat' ? '+₹' + flatFee + '/item' : 'Cart Split ₹' + baseFee})`;
+      badge.style.background = '#ecfdf5';
+      badge.style.color = '#059669';
+      badge.style.border = '1px solid #a7f3d0';
+    } else {
+      badge.textContent = `Shown (₹${baseFee} Delivery Fee)`;
+      badge.style.background = '#e0f2fe';
+      badge.style.color = '#0284c7';
+      badge.style.border = '1px solid #bae6fd';
+    }
+  }
+
+  onDeliveryVisibilityModeChange();
+}
+
+function saveAdminDeliveryVisibilitySettings() {
+  const isHide = document.getElementById('radioDelHide')?.checked;
+  const strategy = document.getElementById('radioStrategyFlat')?.checked ? 'item_flat' : 'cart_split';
+  const inputBase = document.getElementById('inputAdminBaseDeliveryFee');
+  const inputFlat = document.getElementById('inputAdminFlatItemAmount');
+
+  const baseFee = inputBase ? Number(inputBase.value) : 30;
+  const flatFee = inputFlat ? Number(inputFlat.value) : 15;
+
+  if (isNaN(baseFee) || baseFee < 0) {
+    showToast('❌ कृपया वैध डिलिव्हरी फी टाका (Invalid delivery fee)', 'danger');
+    return;
+  }
+  if (isNaN(flatFee) || flatFee < 0) {
+    showToast('❌ कृपया वैध प्रति आयटम रक्कम टाका (Invalid flat item amount)', 'danger');
+    return;
+  }
+
+  if (!appData.settings) appData.settings = {};
+  appData.settings.hideDeliveryCharges = isHide;
+  appData.settings.deliveryBase = baseFee;
+  appData.settings.deliveryAutoAddStrategy = strategy;
+  appData.settings.deliveryItemFlatAmount = flatFee;
+
+  saveState();
+  renderAdminDeliveryVisibilitySwitchboard();
+
+  const msg = isHide 
+    ? `✅ डिलिव्हरी चार्जेस लपवले (Hidden)! ग्राहकांना मोफत डिलिव्हरी (Free Delivery) दिसेल आणि डिलिव्हरी चार्जेस आपोआप पदार्थांच्या किमतीत जोडले जातील.`
+    : `✅ डिलिव्हरी चार्जेस दाखवले (Shown)! बिलावर डिलिव्हरी चार्जेस (₹${baseFee}) स्वतंत्रपणे दिसतील.`;
+
+  showToast(msg, 'success');
+  alert(`🚚 Delivery Charges Visibility Settings Saved!\n\nStatus: ${isHide ? '🔴 HIDDEN (Auto-Added to Food Items — Free Delivery UX)' : '🟢 SHOWN (Transparent ₹' + baseFee + ' Delivery Fee on Bill)'}\nMode: ${strategy === 'item_flat' ? 'Flat +₹' + flatFee + ' / Item' : 'Dynamic Cart Allocation (₹' + baseFee + ' order fee split across cart)'}`);
+
+  // Re-render customer views if loaded in the same window
+  if (typeof renderCustomerView === 'function') renderCustomerView();
+  if (typeof updateBillTotals === 'function') updateBillTotals();
+  if (typeof renderCartView === 'function') renderCartView();
+}
+
+window.getDishEffectivePrice = getDishEffectivePrice;
+window.getCartItemEffectivePricing = getCartItemEffectivePricing;
+window.onDeliveryVisibilityModeChange = onDeliveryVisibilityModeChange;
+window.updateDelStrategyUI = updateDelStrategyUI;
+window.renderAdminDeliveryVisibilitySwitchboard = renderAdminDeliveryVisibilitySwitchboard;
+window.saveAdminDeliveryVisibilitySettings = saveAdminDeliveryVisibilitySettings;

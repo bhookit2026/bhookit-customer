@@ -114,6 +114,123 @@ if (!adminSection.includes('id="adminManagersTable"')) {
   );
 }
 
+// Inject Delivery Charges Visibility & Auto-Inclusion Switchboard Card in Admin
+const deliveryChargesAdminCard = `
+        <!-- Delivery Charges Visibility & Auto-Inclusion Switchboard (Admin Controlled) -->
+        <div class="dashboard-card" style="border-left: 4px solid #0284c7;" id="adminDeliveryChargesCard">
+          <div class="dashboard-card-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 20px;">🚚</span>
+              <span>Delivery Charges Visibility &amp; Auto-Inclusion Switchboard</span>
+            </div>
+            <span class="badge" id="adminDeliveryVisibilityBadge" style="background: #e0f2fe; color: #0284c7; font-weight: 800; font-size: 11px; padding: 4px 10px;">
+              Checking Status...
+            </span>
+          </div>
+
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">
+            ग्राहकांना डिलिव्हरी चार्जेस स्वतंत्र दाखवायचे की लपवायचे (Show/Hide) ते ठरवा. लपवल्यास डिलिव्हरी चार्जेस आपोआप खाद्यपदार्थांच्या किमतीत विभागले जातील आणि ग्राहकाला <b>100% Free Delivery</b> दिसेल.
+            (Control whether delivery fees appear as a separate charge or are automatically rolled into food prices for a zero-friction Free Delivery experience).
+          </p>
+
+          <!-- Main Visibility Mode Radios / Cards -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-bottom: 16px;">
+            <!-- Option 1: Show Delivery Charges -->
+            <label style="border: 2px solid var(--border); border-radius: 12px; padding: 14px; cursor: pointer; display: flex; align-items: flex-start; gap: 12px; transition: all 0.2s; background: var(--bg-surface, #fff);" id="labelShowDel" class="del-mode-card">
+              <input type="radio" name="adminDelVisibilityMode" value="show" id="radioDelShow" onchange="onDeliveryVisibilityModeChange()" style="margin-top: 3px; transform: scale(1.2); cursor: pointer;">
+              <div>
+                <div style="font-weight: 800; font-size: 14px; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
+                  <span>🟢 Show Delivery Charges</span>
+                  <span style="background: #f1f5f9; color: #475569; font-size: 10px; padding: 1px 6px; border-radius: 4px; font-weight: 700;">TRANSPARENT</span>
+                </div>
+                <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px; line-height: 1.4;">
+                  Standard checkout: Food is shown at base price. Delivery charges (₹30) are displayed as a separate line item on the customer's bill.
+                </div>
+              </div>
+            </label>
+
+            <!-- Option 2: Hide Delivery Charges -->
+            <label style="border: 2px solid var(--border); border-radius: 12px; padding: 14px; cursor: pointer; display: flex; align-items: flex-start; gap: 12px; transition: all 0.2s; background: var(--bg-surface, #fff);" id="labelHideDel" class="del-mode-card">
+              <input type="radio" name="adminDelVisibilityMode" value="hide" id="radioDelHide" onchange="onDeliveryVisibilityModeChange()" style="margin-top: 3px; transform: scale(1.2); cursor: pointer;">
+              <div>
+                <div style="font-weight: 800; font-size: 14px; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
+                  <span>🔴 Hide Delivery Charges (Auto-Add to Items)</span>
+                  <span style="background: #ecfdf5; color: #059669; font-size: 10px; padding: 1px 6px; border-radius: 4px; font-weight: 800;">FREE DELIVERY UX</span>
+                </div>
+                <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px; line-height: 1.4;">
+                  Delivery charges are hidden from customer bill (shows <b>Free Delivery 🎉</b>). The delivery cost is automatically added to items so revenue is preserved.
+                </div>
+              </div>
+            </label>
+          </div>
+
+          <!-- Configuration Settings Sub-Panel (visible when Hide is selected) -->
+          <div id="adminDelHideSettingsPanel" style="display: none; background: rgba(2, 132, 199, 0.04); border: 1.5px solid rgba(2, 132, 199, 0.2); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+            <div style="font-weight: 800; font-size: 13px; color: #0284c7; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+              <span>⚙️ Auto-Add to Items Configuration</span>
+              <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">(कमिशन आणि डिलिव्हरी शुल्क कसे जोडायचे ते निवडा)</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-bottom: 14px;">
+              <!-- Strategy A: Dynamic Cart Allocation -->
+              <label style="background: var(--bg-surface, #fff); border: 1.5px solid var(--border); border-radius: 10px; padding: 12px; cursor: pointer; display: flex; gap: 10px;">
+                <input type="radio" name="adminDelStrategy" value="cart_split" id="radioStrategySplit" onchange="updateDelStrategyUI()" style="margin-top: 2px; cursor: pointer;">
+                <div>
+                  <div style="font-weight: 800; font-size: 13px; color: var(--text-main);">
+                    Option A: Dynamic Cart Allocation (Recommended)
+                  </div>
+                  <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                    Order delivery fee (₹<span id="displayBaseDelFee">30</span>) is automatically divided across cart items at checkout. Customer sees 100% Free Delivery!
+                  </div>
+                </div>
+              </label>
+
+              <!-- Strategy B: Flat Menu Price Markup -->
+              <label style="background: var(--bg-surface, #fff); border: 1.5px solid var(--border); border-radius: 10px; padding: 12px; cursor: pointer; display: flex; gap: 10px;">
+                <input type="radio" name="adminDelStrategy" value="item_flat" id="radioStrategyFlat" onchange="updateDelStrategyUI()" style="margin-top: 2px; cursor: pointer;">
+                <div>
+                  <div style="font-weight: 800; font-size: 13px; color: var(--text-main);">
+                    Option B: Flat Menu Price Addition
+                  </div>
+                  <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                    Adds a fixed amount directly onto every dish price across the entire customer menu with "Free Delivery" badges.
+                  </div>
+                </div>
+              </label>
+            </div>
+
+            <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center; background: var(--bg-surface, #fff); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border);">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <label style="font-size: 12px; font-weight: 700; color: var(--text-main);">Base Order Delivery Fee to Absorb (₹):</label>
+                <input type="number" id="inputAdminBaseDeliveryFee" oninput="updateDelStrategyUI()" style="width: 80px; padding: 4px 8px; font-weight: 800; text-align: center; border-radius: 6px; border: 1.5px solid #0284c7;" min="0" step="5" value="30">
+              </div>
+
+              <div id="groupAdminFlatItemAmount" style="display: none; align-items: center; gap: 8px;">
+                <label style="font-size: 12px; font-weight: 700; color: var(--text-main);">Flat Addition per Item (₹):</label>
+                <input type="number" id="inputAdminFlatItemAmount" oninput="updateDelStrategyUI()" style="width: 80px; padding: 4px 8px; font-weight: 800; text-align: center; border-radius: 6px; border: 1.5px solid #0284c7;" min="0" step="5" value="15">
+              </div>
+            </div>
+          </div>
+
+          <!-- Action and Preview Bar -->
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; padding-top: 8px; border-top: 1px solid var(--border);">
+            <div style="font-size: 12px; color: var(--text-muted);" id="delVisibilityPreviewText">
+              <!-- Live explanation of active mode -->
+            </div>
+            <button type="button" class="btn-primary" onclick="saveAdminDeliveryVisibilitySettings()" style="margin: 0; padding: 8px 18px; font-size: 13px; font-weight: 800; background: #0284c7; border-color: #0369a1;">
+              💾 Save Delivery Visibility Settings
+            </button>
+          </div>
+        </div>
+`;
+
+if (!adminSection.includes('id="adminDeliveryChargesCard"')) {
+  adminSection = adminSection.replace(
+    '<!-- Sakoli Delivery Zone Geo-Demand Heatmap & Fleet Telemetry -->',
+    deliveryChargesAdminCard + '\n      <!-- Sakoli Delivery Zone Geo-Demand Heatmap & Fleet Telemetry -->'
+  );
+}
+
 // Inject Change Master Password button in Admin Header area
 adminSection = adminSection.replace(
   '<button class="btn-secondary" onclick="exportPlatformAuditLog()" style="padding: 8px 14px; color: #fff; border-color: rgba(255,255,255,0.3);">📋 System Audit</button>',
