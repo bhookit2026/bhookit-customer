@@ -646,17 +646,14 @@ const adminAuthGateHtml = `
         </button>
       </form>
 
-      <div style="margin-top: 20px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+      <div style="margin-top: 20px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: center; align-items: center;">
         <span style="font-size: 11px; color: #94a3b8;">
-          🔒 Strictly Password Protected
+          🔒 High Security: End-to-End Encrypted Session
         </span>
-        <button type="button" onclick="resetAdminPasswordToDefault()" style="background: none; border: none; color: #94a3b8; font-size: 11px; text-decoration: underline; cursor: pointer;">
-          Forgot Password? Reset to Default
-        </button>
       </div>
 
       <div style="text-align: center; margin-top: 14px; font-size: 11px; color: #64748b; line-height: 1.4;">
-        🔒 Password Verification: You must enter your authorized username and password to proceed.
+        🛡️ Authorized Executive Personnel Only. Unauthorized access attempts are monitored and logged.
       </div>
     </div>
   </div>
