@@ -163,6 +163,8 @@ function setLanguage(lang) {
   localStorage.setItem('parcelkar_lang', lang);
   const langSel = document.getElementById('langSelect');
   if (langSel) langSel.value = lang;
+  const accountLangSel = document.getElementById('accountLangSelect');
+  if (accountLangSel) accountLangSel.value = lang;
   applyLanguageTranslations();
   showToast(`Language set to ${lang === 'mr' ? 'मराठी' : lang === 'hi' ? 'हिंदी' : 'English'}`, 'info');
 }
@@ -4267,6 +4269,34 @@ function renderAuthModalContent() {
           <button class="btn-secondary" onclick="userSignupAction()" style="flex: 1; padding: 12px; font-weight: 700; font-size: 14px;">✨ Sign Up</button>
         </div>
         <p id="authErrorMessage" style="color: var(--danger); font-size: 12px; margin: 4px 0 0; text-align: center;"></p>
+
+        <!-- Spin & Win Rewards in Account -->
+        <div style="margin-top: 10px; padding: 12px 14px; background: linear-gradient(135deg, rgba(236, 72, 153, 0.12), rgba(139, 92, 246, 0.12)); border: 1.5px solid rgba(236, 72, 153, 0.35); border-radius: 12px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s ease;" onclick="closeModal('authModal'); openGamificationModal();" title="Daily Lucky Rewards">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 24px;">🎰</span>
+            <div>
+              <div style="font-size: 13px; font-weight: 800; color: #ec4899;">Spin &amp; Win Rewards</div>
+              <div style="font-size: 11px; color: var(--text-muted);">Spin daily lucky wheel for instant discounts</div>
+            </div>
+          </div>
+          <span style="font-size: 11px; font-weight: 800; color: #fff; background: linear-gradient(135deg, #ec4899, #8b5cf6); padding: 5px 12px; border-radius: 20px; white-space: nowrap;">Play ➔</span>
+        </div>
+
+        <!-- App Language Selector in Account -->
+        <div style="padding: 10px 14px; background: var(--bg-surface-alt, #f8fafc); border: 1px solid var(--border); border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 20px;">🌐</span>
+            <div>
+              <div style="font-size: 12px; font-weight: 800; color: var(--text-main);">App Language</div>
+              <div style="font-size: 11px; color: var(--text-muted);">भाषा निवडा / भाषा चुनें</div>
+            </div>
+          </div>
+          <select id="accountLangSelect" class="lang-selector" onchange="setLanguage(this.value)" style="padding: 6px 10px; font-size: 12px; font-weight: 700; border-radius: 8px; border: 1.5px solid var(--primary); background: var(--bg-card); color: var(--text-main); cursor: pointer;">
+            <option value="en" ${currentLanguage === 'en' ? 'selected' : ''}>🇬🇧 English</option>
+            <option value="mr" ${currentLanguage === 'mr' ? 'selected' : ''}>🇮🇳 मराठी</option>
+            <option value="hi" ${currentLanguage === 'hi' ? 'selected' : ''}>🇮🇳 हिन्दी</option>
+          </select>
+        </div>
       </div>
     `;
   } else {
@@ -4317,6 +4347,34 @@ function renderAuthModalContent() {
             </div>
           </div>
           <button class="btn-secondary" onclick="closeModal('authModal'); openWalletModal();" style="padding: 4px 10px; font-size: 11px;">View Wallet</button>
+        </div>
+
+        <!-- Spin & Win Rewards in Account -->
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: linear-gradient(135deg, rgba(236, 72, 153, 0.12), rgba(139, 92, 246, 0.12)); border: 1.5px solid rgba(236, 72, 153, 0.35); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;" onclick="closeModal('authModal'); openGamificationModal();" title="Daily Lucky Rewards">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 24px;">🎰</span>
+            <div>
+              <div style="font-size: 13px; font-weight: 800; color: #ec4899;">Spin &amp; Win Rewards</div>
+              <div style="font-size: 11px; color: var(--text-muted);">Daily lucky discounts &amp; promo coins</div>
+            </div>
+          </div>
+          <span style="font-size: 11px; font-weight: 800; color: #fff; background: linear-gradient(135deg, #ec4899, #8b5cf6); padding: 5px 12px; border-radius: 20px; white-space: nowrap;">Play ➔</span>
+        </div>
+
+        <!-- App Language Selector in Account -->
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--bg-surface-alt, #f8fafc); border: 1px solid var(--border); border-radius: 10px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 20px;">🌐</span>
+            <div>
+              <div style="font-size: 12px; font-weight: 800; color: var(--text-main);">App Language</div>
+              <div style="font-size: 11px; color: var(--text-muted);">भाषा निवडा / भाषा चुनें</div>
+            </div>
+          </div>
+          <select id="accountLangSelect" class="lang-selector" onchange="setLanguage(this.value)" style="padding: 6px 10px; font-size: 12px; font-weight: 700; border-radius: 8px; border: 1.5px solid var(--primary); background: var(--bg-card); color: var(--text-main); cursor: pointer;">
+            <option value="en" ${currentLanguage === 'en' ? 'selected' : ''}>🇬🇧 English</option>
+            <option value="mr" ${currentLanguage === 'mr' ? 'selected' : ''}>🇮🇳 मराठी</option>
+            <option value="hi" ${currentLanguage === 'hi' ? 'selected' : ''}>🇮🇳 हिन्दी</option>
+          </select>
         </div>
       </div>
 

@@ -16,7 +16,7 @@
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="style.css?v=20260910_2345">
+  <link rel="stylesheet" href="style.css?v=20260910_2355">
   <script>
     // Subdomain routing for Parcelकर portals
     const host = window.location.hostname;
@@ -54,11 +54,6 @@
           <span class="loc-sub" id="currentSelectedAreaLabel">Sakoli (Main Market Road)</span>
         </div>
       </div>
-      <!-- Spin & Win Moved Beside Location -->
-      <button class="role-pill header-spin-pill" onclick="openGamificationModal()" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); color: #fff; border-color: #ec4899; padding: 6px 12px; font-size: 11px; font-weight: 700; white-space: nowrap; border-radius: 999px; box-shadow: var(--shadow-sm); cursor: pointer; display: flex; align-items: center; gap: 4px;" title="Daily Lucky Rewards">
-        <span>🎰</span>
-        <span>Spin &amp; Win</span>
-      </button>
     </div>
     <!-- Customer Navigation -->
     <nav class="nav-center">
@@ -72,11 +67,7 @@
         <span>🌙</span>
         <span>Dark</span>
       </button>
-      <select id="langSelect" class="lang-selector" onchange="setLanguage(this.value)">
-        <option value="en">🇬🇧 English</option>
-        <option value="mr">🇮🇳 मराठी</option>
-        <option value="hi">🇮🇳 हिन्दी</option>
-      </select>
+      <input type="hidden" id="langSelect" value="en">
       <!-- Notification Bell -->
       <div class="notification-wrapper">
         <button class="notification-btn" onclick="toggleNotificationDrawer()" title="Activity Updates">
@@ -2198,7 +2189,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js"></script>
-  <script src="app.js?v=20260910_2345"></script>
-  <script src="translations.js?v=20260910_2345"></script>
+  <script src="app.js?v=20260910_2355"></script>
+  <script src="translations.js?v=20260910_2355"></script>
 </body>
 </html>

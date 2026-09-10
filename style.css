@@ -5106,7 +5106,8 @@ html, body {
   #weatherSurgePill,
   .lucky-spin-nav-btn,
   .user-profile-badge,
-  #authBtn {
+  #authBtn,
+  .cart-indicator-btn {
     display: none !important;
   }
 
@@ -5142,7 +5143,6 @@ html, body {
     flex-shrink: 0 !important;
   }
 
-  .cart-indicator-btn,
   .wallet-nav-btn,
   .theme-toggle-btn {
     padding: 6px 10px !important;
@@ -5469,8 +5469,7 @@ html, body {
     font-size: 11px !important;
   }
 
-  .wallet-nav-btn,
-  .cart-indicator-btn {
+  .wallet-nav-btn {
     padding: 6px 8px !important;
     font-size: 12px !important;
   }
