@@ -1991,29 +1991,52 @@
 
   <!-- MODAL: Change Master Admin Password -->
   <div id="changeAdminPassModal" class="modal-overlay hidden">
-    <div class="modal-content" style="max-width: 440px;">
+    <div class="modal-content" style="max-width: 460px;">
       <button class="modal-close-btn" onclick="closeModal('changeAdminPassModal')">✕</button>
-      <div style="text-align: center; margin-bottom: 18px;">
+      <div style="text-align: center; margin-bottom: 16px;">
         <span style="font-size: 36px;">🔐</span>
-        <h3 class="modal-title" style="margin-top: 6px; font-size: 18px; font-weight: 900;">Change Master Admin Password</h3>
-        <p style="font-size: 12px; color: var(--text-muted); margin: 0;">Update the master executive password for parcelkar.com/admin</p>
+        <h3 class="modal-title" style="margin-top: 6px; font-size: 18px; font-weight: 900;">Change / Reset Master Admin Password</h3>
+        <p style="font-size: 12px; color: var(--text-muted); margin: 0;">Update or reset the executive password for parcelkar.com/admin</p>
       </div>
 
-      <div id="changeAdminPassError" style="display: none; background: rgba(239, 68, 68, 0.15); border: 1.5px solid #ef4444; color: #fca5a5; font-size: 12px; font-weight: 600; padding: 8px 12px; border-radius: 8px; margin-bottom: 12px;"></div>
+      <div id="changeAdminPassError" style="display: none; background: rgba(239, 68, 68, 0.15); border: 1.5px solid #ef4444; color: #dc2626; font-size: 12px; font-weight: 700; padding: 10px 14px; border-radius: 8px; margin-bottom: 14px;"></div>
 
       <form onsubmit="submitChangeAdminPass(event)">
-        <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Current Master Password</label>
-        <input type="password" id="oldAdminPass" class="input-field" placeholder="Default: admin123" required style="margin-bottom: 10px;">
+        <div style="margin-bottom: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <label style="font-size: 12px; font-weight: 700;">Current Master Password (चालू पासवर्ड)</label>
+            <button type="button" onclick="toggleInputVisibility('oldAdminPass')" style="background:none; border:none; color:var(--primary); font-size:12px; font-weight:700; cursor:pointer;">👁️ Show/Hide</button>
+          </div>
+          <input type="password" id="oldAdminPass" class="input-field" placeholder="Enter current password or leave pre-filled" style="width: 100%;">
+        </div>
 
-        <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">New Master Password</label>
-        <input type="password" id="newAdminPass" class="input-field" placeholder="Enter new strong password" required minlength="4" style="margin-bottom: 10px;">
+        <div style="margin-bottom: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <label style="font-size: 12px; font-weight: 700;">New Master Password (नवीन पासवर्ड)</label>
+            <div style="display: flex; gap: 8px;">
+              <a href="javascript:void(0)" onclick="document.getElementById('newAdminPass').value = document.getElementById('confirmAdminPass').value = 'admin' + Math.floor(100 + Math.random()*900)" style="font-size: 11px; color: var(--primary); font-weight: 700;">🎲 Auto-Generate</a>
+              <button type="button" onclick="toggleInputVisibility('newAdminPass')" style="background:none; border:none; color:var(--primary); font-size:12px; font-weight:700; cursor:pointer;">👁️</button>
+            </div>
+          </div>
+          <input type="password" id="newAdminPass" class="input-field" placeholder="Enter new strong password (min 4 chars)" required minlength="4" style="width: 100%;">
+        </div>
 
-        <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Confirm New Password</label>
-        <input type="password" id="confirmAdminPass" class="input-field" placeholder="Re-enter new password" required minlength="4" style="margin-bottom: 16px;">
+        <div style="margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <label style="font-size: 12px; font-weight: 700;">Confirm New Password (पुन्हा टाका)</label>
+            <button type="button" onclick="toggleInputVisibility('confirmAdminPass')" style="background:none; border:none; color:var(--primary); font-size:12px; font-weight:700; cursor:pointer;">👁️ Show/Hide</button>
+          </div>
+          <input type="password" id="confirmAdminPass" class="input-field" placeholder="Re-enter new password" required minlength="4" style="width: 100%;">
+        </div>
 
-        <div style="display: flex; justify-content: flex-end; gap: 10px;">
-          <button type="button" class="btn-secondary" onclick="closeModal('changeAdminPassModal')">Cancel</button>
-          <button type="submit" class="btn-primary" style="font-weight: 800;">🔒 Update Password</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 16px;">
+          <button type="button" class="btn-secondary" onclick="resetAdminPasswordToDefault()" style="font-size: 12px; padding: 6px 12px; color: #dc2626; border-color: rgba(220,38,38,0.3); font-weight: 700;">
+            🔄 Reset to Default (admin123)
+          </button>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn-secondary" onclick="closeModal('changeAdminPassModal')">Cancel</button>
+            <button type="submit" class="btn-primary" style="font-weight: 800;">💾 Save Password</button>
+          </div>
         </div>
       </form>
     </div>

@@ -8431,9 +8431,34 @@ function adminLogout() {
   checkAdminAuth();
 }
 
+function toggleInputVisibility(inputId) {
+  const el = document.getElementById(inputId);
+  if (!el) return;
+  el.type = el.type === 'password' ? 'text' : 'password';
+}
+
 function openChangeAdminPassModal() {
   const modal = document.getElementById('changeAdminPassModal');
-  if (modal) modal.classList.remove('hidden');
+  if (!modal) return;
+
+  if (!appData.adminSettings) appData.adminSettings = {};
+  const currentPass = appData.adminSettings.masterPassword || 'admin123';
+
+  const oldPassEl = document.getElementById('oldAdminPass');
+  const newPassEl = document.getElementById('newAdminPass');
+  const confirmPassEl = document.getElementById('confirmAdminPass');
+  const errEl = document.getElementById('changeAdminPassError');
+
+  if (oldPassEl) oldPassEl.value = currentPass;
+  if (newPassEl) newPassEl.value = '';
+  if (confirmPassEl) confirmPassEl.value = '';
+  if (errEl) {
+    errEl.style.display = 'none';
+    errEl.textContent = '';
+  }
+
+  openModal('changeAdminPassModal');
+  if (newPassEl) setTimeout(() => newPassEl.focus(), 150);
 }
 
 function submitChangeAdminPass(e) {
@@ -8446,16 +8471,26 @@ function submitChangeAdminPass(e) {
   if (!appData.adminSettings) appData.adminSettings = {};
   const currentPass = appData.adminSettings.masterPassword || 'admin123';
 
-  if (oldPass !== currentPass && oldPass !== 'admin123') {
-    if (errEl) { errEl.textContent = '❌ Current password does not match.'; errEl.style.display = 'block'; }
+  // If old password provided, check if matches
+  if (oldPass && oldPass !== currentPass && oldPass !== 'admin123') {
+    if (errEl) {
+      errEl.textContent = '❌ चालू पासवर्ड जुळत नाही (Current password does not match).';
+      errEl.style.display = 'block';
+    }
     return;
   }
   if (!newPass || newPass.length < 4) {
-    if (errEl) { errEl.textContent = '❌ New password must be at least 4 characters.'; errEl.style.display = 'block'; }
+    if (errEl) {
+      errEl.textContent = '❌ नवीन पासवर्ड किमान ४ अक्षरांचा असावा (New password must be at least 4 characters).';
+      errEl.style.display = 'block';
+    }
     return;
   }
   if (newPass !== confirmPass) {
-    if (errEl) { errEl.textContent = '❌ New password and confirmation do not match.'; errEl.style.display = 'block'; }
+    if (errEl) {
+      errEl.textContent = '❌ नवीन पासवर्ड आणि कन्फर्म पासवर्ड जुळत नाहीत (New password and confirmation do not match).';
+      errEl.style.display = 'block';
+    }
     return;
   }
 
@@ -8463,7 +8498,31 @@ function submitChangeAdminPass(e) {
   saveState();
   if (errEl) errEl.style.display = 'none';
   closeModal('changeAdminPassModal');
-  showToast('Master Admin Password updated successfully! 🔐', 'success');
+  showToast(`✅ पासवर्ड यशस्वीरित्या बदलला! नवीन पासवर्ड: ${newPass}`, 'success');
+  alert(`✅ Master Admin Password Updated Successfully!\n\nनवीन पासवर्ड (New Password): ${newPass}\n\nपुढील वेळी लॉगिन करताना हाच पासवर्ड वापरा.`);
+}
+
+function resetAdminPasswordToDefault() {
+  if (!confirm('तुम्हाला Master Admin पासवर्ड रीसेट करून पुन्हा "admin123" करायचा आहे का?\n(Do you want to reset Master Admin password back to default "admin123"?)')) {
+    return;
+  }
+  if (!appData.adminSettings) appData.adminSettings = {};
+  appData.adminSettings.masterPassword = 'admin123';
+  saveState();
+
+  const oldPassEl = document.getElementById('oldAdminPass');
+  const newPassEl = document.getElementById('newAdminPass');
+  const confirmPassEl = document.getElementById('confirmAdminPass');
+  const gatePassEl = document.getElementById('adminAuthPassInput');
+
+  if (oldPassEl) oldPassEl.value = 'admin123';
+  if (newPassEl) newPassEl.value = '';
+  if (confirmPassEl) confirmPassEl.value = '';
+  if (gatePassEl) gatePassEl.value = 'admin123';
+
+  closeModal('changeAdminPassModal');
+  showToast('✅ पासवर्ड रीसेट झाला: admin123', 'success');
+  alert('✅ Master Admin पासवर्ड यशस्वीरित्या रीसेट झाला आहे!\n\nDefault Password: admin123');
 }
 
 // -------------------------------------------------------------
