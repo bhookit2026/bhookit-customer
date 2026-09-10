@@ -344,41 +344,40 @@ const SEED_DATA = {
 };
 
 // Application State
-
-  // Ensure managers list exists in appData
-  if (!appData.managers) {
-    appData.managers = [
-      {
-        id: 'mgr_1',
-        name: 'Pooja Deshmukh',
-        email: 'pooja@parcelkar.com',
-        loginId: 'pooja',
-        password: 'mgr123',
-        role: 'operations',
-        roleTitle: 'Operations & Restaurant Manager',
-        active: true,
-        permissions: ['restaurants', 'menu', 'kyc', 'orders'],
-        createdAt: '2026-09-08'
-      },
-      {
-        id: 'mgr_2',
-        name: 'Amit Shinde',
-        email: 'amit@parcelkar.com',
-        loginId: 'amit',
-        password: 'mgr123',
-        role: 'dispatch',
-        roleTitle: 'Fleet & Dispatch Manager',
-        active: true,
-        permissions: ['riders', 'dispatch', 'tracking'],
-        createdAt: '2026-09-09'
-      }
-    ];
-  }
-
 let appData = JSON.parse(localStorage.getItem(STORAGE_KEY)) ||
               JSON.parse(localStorage.getItem('bhookit_v11_data_v2')) ||
               JSON.parse(localStorage.getItem('bhookit_v1_data')) ||
               SEED_DATA;
+
+// Ensure managers list exists in appData
+if (appData && (!Array.isArray(appData.managers) || !appData.managers.length)) {
+  appData.managers = [
+    {
+      id: 'mgr_1',
+      name: 'Pooja Deshmukh',
+      email: 'pooja@parcelkar.com',
+      loginId: 'pooja',
+      password: 'mgr123',
+      role: 'operations',
+      roleTitle: 'Operations & Restaurant Manager',
+      active: true,
+      permissions: ['restaurants', 'menu', 'kyc', 'orders'],
+      createdAt: '2026-09-08'
+    },
+    {
+      id: 'mgr_2',
+      name: 'Amit Shinde',
+      email: 'amit@parcelkar.com',
+      loginId: 'amit',
+      password: 'mgr123',
+      role: 'dispatch',
+      roleTitle: 'Fleet & Dispatch Manager',
+      active: true,
+      permissions: ['riders', 'dispatch', 'tracking'],
+      createdAt: '2026-09-09'
+    }
+  ];
+}
 
 // Ensure KYC & FSSAI attributes exist on all restaurants
 if (appData && appData.restaurants) {
@@ -3446,14 +3445,26 @@ function riderCompleteDelivery(orderId) {
 // 7. SUPER ADMIN DASHBOARD
 // -------------------------------------------------------------
 function renderAdminView() {
-  const gmv = appData.orders.filter(o => o.status !== 'Cancelled').reduce((sum, o) => sum + o.total, 0);
-  const subtotal = appData.orders.filter(o => o.status !== 'Cancelled').reduce((sum, o) => sum + o.subtotal, 0);
+  if (!appData) appData = JSON.parse(JSON.stringify(SEED_DATA));
+  if (!Array.isArray(appData.orders)) appData.orders = (SEED_DATA && SEED_DATA.orders) ? JSON.parse(JSON.stringify(SEED_DATA.orders)) : [];
+  if (!Array.isArray(appData.restaurants)) appData.restaurants = (SEED_DATA && SEED_DATA.restaurants) ? JSON.parse(JSON.stringify(SEED_DATA.restaurants)) : [];
+  if (!Array.isArray(appData.riders)) appData.riders = (SEED_DATA && SEED_DATA.riders) ? JSON.parse(JSON.stringify(SEED_DATA.riders)) : [];
+  if (!Array.isArray(appData.managers)) appData.managers = [];
+  if (!Array.isArray(appData.disputes)) appData.disputes = [];
+  if (!Array.isArray(appData.deliveryZones)) appData.deliveryZones = [];
+
+  const gmv = appData.orders.filter(o => o.status !== 'Cancelled').reduce((sum, o) => sum + (o.total || 0), 0);
+  const subtotal = appData.orders.filter(o => o.status !== 'Cancelled').reduce((sum, o) => sum + (o.subtotal || 0), 0);
   const commission = Math.round(subtotal * 0.10);
 
-  document.getElementById('adminKpiGMV').textContent = `₹${gmv}`;
-  document.getElementById('adminKpiCommission').textContent = `₹${commission}`;
-  document.getElementById('adminKpiOrders').textContent = appData.orders.length;
-  document.getElementById('adminKpiRestaurants').textContent = appData.restaurants.length;
+  const kpiGmv = document.getElementById('adminKpiGMV');
+  const kpiComm = document.getElementById('adminKpiCommission');
+  const kpiOrders = document.getElementById('adminKpiOrders');
+  const kpiRests = document.getElementById('adminKpiRestaurants');
+  if (kpiGmv) kpiGmv.textContent = `₹${gmv}`;
+  if (kpiComm) kpiComm.textContent = `₹${commission}`;
+  if (kpiOrders) kpiOrders.textContent = appData.orders.length;
+  if (kpiRests) kpiRests.textContent = appData.restaurants.length;
 
     const restTable = document.getElementById('adminRestaurantsTable');
   if (restTable) {
@@ -3471,15 +3482,15 @@ function renderAdminView() {
             </tr>
           </thead>
           <tbody>
-            ${appData.restaurants.map(r => `
+            ${appData.restaurants.filter(Boolean).map(r => `
               <tr>
                 <td>
-                  <b>${r.name}</b><br>
+                  <b>${r.name || 'Restaurant #' + r.id}</b><br>
                   <span style="font-size:11px; color:var(--text-muted);">👤 ${r.ownerName || 'Manager'} • ${r.phone || r.email || ''}</span>
                 </td>
                 <td>
                   <code style="background:var(--bg-surface-alt,#f1f5f9); padding:2px 6px; border-radius:4px; font-weight:700; color:var(--text-main); font-size:12px;">
-                    ${r.vendorLogin || (r.phone ? r.phone.replace(/\D/g, '') : r.name.toLowerCase().replace(/\s+/g, ''))}
+                    ${r.vendorLogin || (r.phone ? r.phone.replace(/\D/g, '') : (r.name ? r.name.toLowerCase().replace(/\s+/g, '') : 'rest_' + r.id))}
                   </code>
                 </td>
                 <td>
