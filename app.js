@@ -8408,7 +8408,9 @@ function submitAdminLogin(e) {
 
   if (!appData) appData = JSON.parse(JSON.stringify(SEED_DATA));
   if (!appData.adminSettings) appData.adminSettings = {};
-  const masterPass = appData.adminSettings.masterPassword || 'admin123';
+  let dedicatedMasterPass = null;
+  try { dedicatedMasterPass = localStorage.getItem('parcelkar_master_pass'); } catch (e) {}
+  const masterPass = dedicatedMasterPass || appData.adminSettings.masterPassword || 'admin123';
   const masterLogin = (appData.adminSettings.masterLogin || 'admin@parcelkar.com').toLowerCase();
 
   // 1. Check Super Admin Master Login
@@ -8522,7 +8524,9 @@ function openChangeAdminPassModal() {
   if (!modal) return;
 
   if (!appData.adminSettings) appData.adminSettings = {};
-  const currentPass = appData.adminSettings.masterPassword || 'admin123';
+  let dedicatedMasterPass = null;
+  try { dedicatedMasterPass = localStorage.getItem('parcelkar_master_pass'); } catch (e) {}
+  const currentPass = dedicatedMasterPass || appData.adminSettings.masterPassword || 'admin123';
 
   const oldPassEl = document.getElementById('oldAdminPass');
   const newPassEl = document.getElementById('newAdminPass');
@@ -8549,7 +8553,9 @@ function submitChangeAdminPass(e) {
   const errEl = document.getElementById('changeAdminPassError');
 
   if (!appData.adminSettings) appData.adminSettings = {};
-  const currentPass = appData.adminSettings.masterPassword || 'admin123';
+  let dedicatedMasterPass = null;
+  try { dedicatedMasterPass = localStorage.getItem('parcelkar_master_pass'); } catch (e) {}
+  const currentPass = dedicatedMasterPass || appData.adminSettings.masterPassword || 'admin123';
 
   // If old password provided, check if matches
   if (oldPass && oldPass !== currentPass) {
@@ -8574,6 +8580,7 @@ function submitChangeAdminPass(e) {
     return;
   }
 
+  try { localStorage.setItem('parcelkar_master_pass', newPass); } catch (e) {}
   appData.adminSettings.masterPassword = newPass;
   saveState();
   if (errEl) errEl.style.display = 'none';
