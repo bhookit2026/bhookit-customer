@@ -25,6 +25,7 @@ const TRANSLATIONS = {
     guest: 'Guest User',
     login: 'Login',
     logout: 'Logout',
+    account: 'Account',
     heroBadge: '⚡ Instant 30-Min Delivery',
     heroTitle: 'Hungry? Order from the best restaurants nearby.',
     heroDesc: 'Discover top-rated cuisines, fast local delivery, and live route tracking right to your doorstep.',
@@ -70,6 +71,7 @@ const TRANSLATIONS = {
     guest: 'अतिथी ग्राहक',
     login: 'लॉगिन',
     logout: 'बाहेर पडा',
+    account: 'खाते',
     heroBadge: '⚡ 30 मिनिटांत जलद डिलिव्हरी',
     heroTitle: 'Food तुमच्या दारात! सर्वोत्तम रेस्टॉरंट्समधून ऑर्डर करा.',
     heroDesc: 'स्थानिक रेस्टॉरंट्समधून ताजे आणि चविष्ट जेवण घरपोच मिळवा. लाईव्ह ट्रॅकिंगसह!',
@@ -115,6 +117,7 @@ const TRANSLATIONS = {
     guest: 'अतिथि ग्राहक',
     login: 'लॉगिन',
     logout: 'लॉग आउट',
+    account: 'खाता',
     heroBadge: '⚡ 30 मिनट में फास्ट डिलीवरी',
     heroTitle: 'भूख लगी है? आसपास के बेहतरीन रेस्टोरेंट्स से ऑर्डर करें।',
     heroDesc: 'स्वादिष्ट व्यंजन, तेज डिलीवरी और लाइव ट्रैकिंग का आनंद लें।',
@@ -173,7 +176,8 @@ function applyLanguageTranslations() {
     navRestaurant: 'navVendor',
     navDelivery: 'navRider',
     navAdmin: 'navAdmin',
-    txtPureVegLabel: 'pureVeg'
+    txtPureVegLabel: 'pureVeg',
+    mobNavAuthText: 'account'
   };
   for (const [id, key] of Object.entries(map)) {
     const el = document.getElementById(id);
@@ -4096,8 +4100,122 @@ function closeModal(modalId) {
   }
 }
 
+function renderAuthModalContent() {
+  const container = document.querySelector('#authModal .modal-content');
+  if (!container) return;
+
+  const isUser = !!appData.currentUser;
+  if (!isUser) {
+    container.innerHTML = `
+      <button class="modal-close-btn" onclick="closeModal('authModal')">✕</button>
+      <div style="text-align: center; margin-bottom: 18px;">
+        <div style="width: 52px; height: 52px; margin: 0 auto 10px; background: rgba(255, 71, 34, 0.1); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 26px;">
+          👤
+        </div>
+        <h3 class="modal-title" style="margin: 0; font-size: 20px;">Customer Login / Sign Up</h3>
+        <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Sign in to track orders, access saved addresses, and manage your account.</p>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div>
+          <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Email Address</label>
+          <input type="email" id="loginEmail" class="input-field" placeholder="e.g. user@demo.com" style="width: 100%;" value="customer@bhookit.com">
+        </div>
+        <div>
+          <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Password</label>
+          <input type="password" id="loginPass" class="input-field" placeholder="Password (min 6 chars)" style="width: 100%;" value="pass123">
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 6px;">
+          <button class="btn-primary" onclick="userLoginAction()" style="flex: 1; padding: 12px; font-weight: 800; font-size: 14px;">🔑 Login</button>
+          <button class="btn-secondary" onclick="userSignupAction()" style="flex: 1; padding: 12px; font-weight: 700; font-size: 14px;">✨ Sign Up</button>
+        </div>
+        <p id="authErrorMessage" style="color: var(--danger); font-size: 12px; margin: 4px 0 0; text-align: center;"></p>
+      </div>
+    `;
+  } else {
+    const user = appData.currentUser;
+    const userName = user.name || 'Valued Customer';
+    const userEmail = user.email || 'customer@bhookit.com';
+    const userPhone = user.phone || '9876543210';
+    const userAddress = user.address || (typeof getCurrentAddress === 'function' ? getCurrentAddress() : 'Sakoli, Maharashtra');
+    const walletBal = (typeof appData.walletBalance === 'number') ? appData.walletBalance : 250;
+
+    container.innerHTML = `
+      <button class="modal-close-btn" onclick="closeModal('authModal')">✕</button>
+      <div style="text-align: center; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
+        <div style="width: 60px; height: 60px; margin: 0 auto 10px; background: linear-gradient(135deg, #ff4722, #ea580c); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 4px 12px rgba(255,71,34,0.3);">
+          👤
+        </div>
+        <h3 style="margin: 0; font-size: 20px; font-weight: 800; font-family: var(--font-heading);">${userName}</h3>
+        <span style="font-size: 12px; color: var(--text-muted);">${userEmail}</span>
+      </div>
+
+      <div style="margin: 16px 0; display: flex; flex-direction: column; gap: 10px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--bg-surface-alt, #f8fafc); border-radius: 10px; border: 1px solid var(--border);">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 18px;">📱</span>
+            <div>
+              <div style="font-size: 11px; color: var(--text-muted); font-weight: 700;">Phone Number</div>
+              <div style="font-size: 13px; font-weight: 600;">+91 ${userPhone}</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--bg-surface-alt, #f8fafc); border-radius: 10px; border: 1px solid var(--border);">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 18px;">📍</span>
+            <div>
+              <div style="font-size: 11px; color: var(--text-muted); font-weight: 700;">Delivery Address</div>
+              <div style="font-size: 13px; font-weight: 600;">${userAddress}</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(5,150,105,0.05)); border-radius: 10px; border: 1px solid rgba(16,185,129,0.2);">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 18px;">💳</span>
+            <div>
+              <div style="font-size: 11px; color: #059669; font-weight: 700;">Wallet Balance</div>
+              <div style="font-size: 14px; font-weight: 800; color: #059669;">₹${walletBal}</div>
+            </div>
+          </div>
+          <button class="btn-secondary" onclick="closeModal('authModal'); openWalletModal();" style="padding: 4px 10px; font-size: 11px;">View Wallet</button>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
+        <button class="btn-secondary" onclick="closeModal('authModal'); show('orders');" style="padding: 10px; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px;">
+          <span>📦</span>
+          <span>My Orders</span>
+        </button>
+        <button class="btn-secondary" onclick="closeModal('authModal'); show('track');" style="padding: 10px; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px;">
+          <span>📍</span>
+          <span>Live Track</span>
+        </button>
+      </div>
+
+      <div style="border-top: 1px solid var(--border); padding-top: 12px;">
+        <button class="btn-danger" onclick="userLogoutAction()" style="width: 100%; padding: 11px; font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 10px;">
+          <span>🚪</span>
+          <span>Logout from Account</span>
+        </button>
+      </div>
+    `;
+  }
+}
+
 function openAuth() {
+  renderAuthModalContent();
   openModal('authModal');
+}
+
+function userLogoutAction() {
+  if (confirm('Do you want to log out from Parcelकर?')) {
+    appData.currentUser = null;
+    if (typeof saveState === 'function') saveState();
+    updateUserBadge();
+    closeModal('authModal');
+    showToast('Logged out successfully.', 'info');
+  }
 }
 
 function userLoginAction() {
@@ -4137,29 +4255,25 @@ function updateUserBadge() {
   if (btn) {
     btn.textContent = isUser ? (typeof t === 'function' ? t('logout') : 'Logout') : (typeof t === 'function' ? t('login') : 'Login');
     btn.onclick = isUser ? () => {
-      appData.currentUser = null;
-      if (typeof saveState === 'function') saveState();
-      updateUserBadge();
-      showToast('Logged out successfully.', 'info');
+      userLogoutAction();
     } : openAuth;
   }
+  // Mobile navigation button ALWAYS shows Account
   if (mobText) {
-    mobText.textContent = isUser ? 'Logout' : 'Account';
+    mobText.textContent = typeof t === 'function' ? (t('account') || 'Account') : 'Account';
   }
   if (mobIcon) {
-    mobIcon.textContent = isUser ? '🚪' : '👤';
+    mobIcon.textContent = '👤';
   }
   if (mobBtn) {
-    mobBtn.onclick = isUser ? () => {
-      if (confirm('Do you want to log out from Parcelकर?')) {
-        appData.currentUser = null;
-        if (typeof saveState === 'function') saveState();
-        updateUserBadge();
-        showToast('Logged out successfully.', 'info');
-      }
-    } : openAuth;
+    mobBtn.onclick = openAuth;
   }
 }
+
+window.renderAuthModalContent = renderAuthModalContent;
+window.userLogoutAction = userLogoutAction;
+window.openAuth = openAuth;
+window.updateUserBadge = updateUserBadge;
 
 function focusSearchInput() {
   if (typeof show === 'function') show('customer');

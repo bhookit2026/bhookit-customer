@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="style.css?v=1789055229877">
+  <link rel="stylesheet" href="style.css?v=1789056817666">
   <style>
     /* Standalone Portal Specialized Accents */
     .portal-badge {
@@ -1734,14 +1734,14 @@
       <span class="mobile-nav-icon">📍</span>
       <span>Track</span>
     </button>
-    <button class="mobile-nav-btn" id="mobNavRestaurant" onclick="show('restaurant')">
-      <span class="mobile-nav-icon">🏪</span>
-      <span>Vendor</span>
-    </button>
     <button class="mobile-nav-btn" id="mobNavCart" onclick="show('cart')" style="position: relative;">
       <span class="mobile-nav-icon">🛒</span>
       <span>Cart</span>
       <span class="cart-count-badge" id="mobCartCountBadge" style="position: absolute; top: 0; right: 14px; font-size: 10px; min-width: 16px; height: 16px; padding: 1px 4px; line-height: 14px;">0</span>
+    </button>
+    <button class="mobile-nav-btn" id="mobNavAuthBtn" onclick="openAuth()">
+      <span class="mobile-nav-icon" id="mobNavAuthIcon">👤</span>
+      <span id="mobNavAuthText">Account</span>
     </button>
   </nav>
   <!-- Toast Notification Area -->
@@ -1760,7 +1760,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js?v=1789055229877"></script>
+  <script src="app.js?v=1789056817666"></script>
   <script src="translations.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {

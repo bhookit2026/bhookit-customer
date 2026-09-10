@@ -4946,7 +4946,8 @@ html, body {
 
   #weatherSurgePill,
   .lucky-spin-nav-btn,
-  .user-profile-badge {
+  .user-profile-badge,
+  #authBtn {
     display: none !important;
   }
 

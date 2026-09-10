@@ -2402,14 +2402,14 @@
       <span class="mobile-nav-icon">📍</span>
       <span>Track</span>
     </button>
-    <button class="mobile-nav-btn" id="mobNavRestaurant" onclick="show('restaurant')">
-      <span class="mobile-nav-icon">🏪</span>
-      <span>Vendor</span>
-    </button>
     <button class="mobile-nav-btn" id="mobNavCart" onclick="show('cart')" style="position: relative;">
       <span class="mobile-nav-icon">🛒</span>
       <span>Cart</span>
       <span class="cart-count-badge" id="mobCartCountBadge" style="position: absolute; top: 0; right: 14px; font-size: 10px; min-width: 16px; height: 16px; padding: 1px 4px; line-height: 14px;">0</span>
+    </button>
+    <button class="mobile-nav-btn" id="mobNavAuthBtn" onclick="openAuth()">
+      <span class="mobile-nav-icon" id="mobNavAuthIcon">👤</span>
+      <span id="mobNavAuthText">Account</span>
     </button>
   </nav>
   <!-- Toast Notification Area -->
