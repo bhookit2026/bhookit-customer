@@ -59,6 +59,35 @@ if (!adminSection.includes('id="adminRidersTable"')) {
   );
 }
 
+// Inject Platform Managers Card right below Rider Fleet Card in Admin
+const managersAdminCard = `
+        <!-- Platform Managers & Role-Based Access Control (RBAC) -->
+        <div class="dashboard-card" style="border-left: 4px solid #8b5cf6;">
+          <div class="dashboard-card-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 20px;">👥</span>
+              <span>Platform Managers &amp; Role-Based Access Control (RBAC)</span>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn-primary" onclick="openCreateManagerModal()" style="padding: 4px 12px; font-size: 11px; font-weight: 700; background: #8b5cf6; border-color: #7c3aed;">➕ Add New Manager</button>
+            </div>
+          </div>
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+            Super Admin Power: Allocate manager accounts and assign specific roles (Operations, Fleet Dispatch, Customer Support, Finance).
+          </p>
+          <div id="adminManagersTable">
+            <!-- Injected dynamically -->
+          </div>
+        </div>
+`;
+
+if (!adminSection.includes('id="adminManagersTable"')) {
+  adminSection = adminSection.replace(
+    '<!-- Delivery Cities & Geofenced Service Zones Management (Admin Controlled) -->',
+    managersAdminCard + '\n        <!-- Delivery Cities & Geofenced Service Zones Management (Admin Controlled) -->'
+  );
+}
+
 // Inject Change Master Password button in Admin Header area
 adminSection = adminSection.replace(
   '<button class="btn-secondary" onclick="exportPlatformAuditLog()" style="padding: 8px 14px; color: #fff; border-color: rgba(255,255,255,0.3);">📋 System Audit</button>',
@@ -657,6 +686,72 @@ const adminHtml = `${headCommon('Parcelकर Master Admin — Platform Operatio
 
   ${allModals}
   ${adminModalsHtml}
+
+  <!-- MODAL: Add / Edit Platform Manager (RBAC) -->
+  <div id="createManagerModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 520px;">
+      <button class="modal-close-btn" onclick="closeModal('createManagerModal')">✕</button>
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+        <span style="font-size: 26px;">👥</span>
+        <div>
+          <h3 class="modal-title" style="margin: 0; font-size: 18px; font-weight: 900;" id="mgrModalTitle">Add New Manager &amp; Allocate Role</h3>
+          <span style="font-size: 12px; color: var(--text-muted);">Assign roles &amp; permissions for parcelkar.com/admin access</span>
+        </div>
+      </div>
+
+      <form onsubmit="saveManagerCredentials(event)">
+        <input type="hidden" id="mgrTargetId">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+          <div>
+            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Manager Full Name</label>
+            <input type="text" id="mgrName" class="input-field" placeholder="e.g. Pooja Deshmukh" required>
+          </div>
+          <div>
+            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Official Email</label>
+            <input type="email" id="mgrEmail" class="input-field" placeholder="pooja@parcelkar.com">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+          <div>
+            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Login ID / Username</label>
+            <input type="text" id="mgrLoginId" class="input-field" placeholder="e.g. pooja" required>
+          </div>
+          <div>
+            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: flex; justify-content: space-between; margin-bottom: 4px;">
+              <span>Login Password</span>
+              <a href="javascript:void(0)" onclick="document.getElementById('mgrPassword').value = 'mgr' + Math.floor(100 + Math.random()*900)" style="font-size: 11px; color: var(--primary); font-weight: 700;">🎲 Auto-Generate</a>
+            </label>
+            <input type="text" id="mgrPassword" class="input-field" placeholder="Password (min 4 chars)" required minlength="4">
+          </div>
+        </div>
+
+        <div style="margin-bottom: 14px;">
+          <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">👑 Assign Role &amp; Power</label>
+          <select id="mgrRoleSelect" class="input-field" style="font-weight: 700; font-size: 13px;">
+            <option value="operations">📋 Operations &amp; Restaurant Manager (KYC, Menu, Outlets, Orders)</option>
+            <option value="dispatch">🛵 Fleet &amp; Dispatch Manager (Riders, GPS, Dispatch, Telemetry)</option>
+            <option value="support">💬 Customer Support &amp; Disputes Manager (Refunds, Chat, Reviews)</option>
+            <option value="finance">💰 Finance &amp; Accounts Manager (Commissions, Settlements, Ledger)</option>
+            <option value="coadmin">👑 Executive Co-Admin (Full platform operational authority)</option>
+          </select>
+        </div>
+
+        <div style="margin-bottom: 16px; padding: 10px 12px; background: var(--bg-surface-alt, #f8fafc); border-radius: 8px; border: 1px solid var(--border-color, #e2e8f0);">
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; font-weight: 700;">
+            <input type="checkbox" id="mgrActive" checked style="width: 18px; height: 18px;">
+            <span>Manager Authorized &amp; Active (Uncheck to immediately suspend access)</span>
+          </label>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" class="btn-secondary" onclick="closeModal('createManagerModal')">Cancel</button>
+          <button type="submit" class="btn-primary" style="font-weight: 800; background: #8b5cf6; border-color: #7c3aed;">💾 Save Manager &amp; Assign Role</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
 
   ${scriptsCommon('admin')}
 `;

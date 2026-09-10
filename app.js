@@ -300,39 +300,6 @@ const SEED_DATA = {
       prepTime: '15-20 mins',
       minOrder: 80,
       commissionRate: 10,
-      approved: true,
-      open: true,
-      coverImg: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=600&q=80',
-      foods: [
-        { id: 401, name: 'Belgium Chocolate Waffle', price: 140, category: 'Desserts', veg: true, inStock: true, desc: 'Freshly baked crispy waffle smothered in warm melted dark chocolate.' },
-        { id: 402, name: 'Thick Oreo Shake (400ml)', price: 110, category: 'Desserts', veg: true, inStock: true, desc: 'Blended with premium vanilla ice cream, whole milk, and crushed Oreo cookies.' },
-        { id: 403, name: 'Sizzling Brownie with Ice Cream', price: 150, category: 'Desserts', veg: true, inStock: true, desc: 'Gooey chocolate brownie served on a hot skillet with vanilla ice cream.' }
-      ]
-    }
-  ],
-  riders: [
-    { id: 'rider_1', name: 'Vikram Rider', email: 'rider@jbfood.local', phone: '+91 9988771122', active: true, lat: 21.0825, lng: 79.9854, totalTrips: 18, earnings: 940, tips: 120 },
-    { id: 'rider_2', name: 'Speedy Rahul', email: 'rahul@parcelkar.com', phone: '+91 9988773344', active: true, lat: 21.0860, lng: 79.9910, totalTrips: 14, earnings: 780, tips: 90 }
-  ],
-  orders: [
-    {
-      id: 'FB-98210',
-      invoiceNo: 'JBINV-20260907-001',
-      userId: 'user_demo_1',
-      restaurantId: 1,
-      restaurantName: 'Sakoli Food Corner',
-      customer: {
-        name: 'Rakesh Sharma',
-        phone: '9876543210',
-        address: 'Flat 402, Green Avenue, Sakoli'
-      },
-      items: [
-        { restaurant: 'Sakoli Food Corner', restaurantId: 1, foodId: 101, name: 'Crispy Veg Supreme Burger', price: 99, qty: 2, addons: ['Regular', 'Extra Cheese'] },
-        { restaurant: 'Sakoli Food Corner', restaurantId: 1, foodId: 103, name: 'Peri-Peri French Fries', price: 79, qty: 1, addons: ['Regular'] }
-      ],
-      subtotal: 277,
-      deliveryFee: 30,
-      taxes: 14,
       discount: 40,
       total: 281,
       status: 'Out for Delivery',
@@ -377,6 +344,37 @@ const SEED_DATA = {
 };
 
 // Application State
+
+  // Ensure managers list exists in appData
+  if (!appData.managers) {
+    appData.managers = [
+      {
+        id: 'mgr_1',
+        name: 'Pooja Deshmukh',
+        email: 'pooja@parcelkar.com',
+        loginId: 'pooja',
+        password: 'mgr123',
+        role: 'operations',
+        roleTitle: 'Operations & Restaurant Manager',
+        active: true,
+        permissions: ['restaurants', 'menu', 'kyc', 'orders'],
+        createdAt: '2026-09-08'
+      },
+      {
+        id: 'mgr_2',
+        name: 'Amit Shinde',
+        email: 'amit@parcelkar.com',
+        loginId: 'amit',
+        password: 'mgr123',
+        role: 'dispatch',
+        roleTitle: 'Fleet & Dispatch Manager',
+        active: true,
+        permissions: ['riders', 'dispatch', 'tracking'],
+        createdAt: '2026-09-09'
+      }
+    ];
+  }
+
 let appData = JSON.parse(localStorage.getItem(STORAGE_KEY)) ||
               JSON.parse(localStorage.getItem('bhookit_v11_data_v2')) ||
               JSON.parse(localStorage.getItem('bhookit_v1_data')) ||
@@ -8364,27 +8362,67 @@ function submitAdminLogin(e) {
   const masterPass = appData.adminSettings.masterPassword || 'admin123';
   const masterLogin = (appData.adminSettings.masterLogin || 'admin@parcelkar.com').toLowerCase();
 
-  const isLoginValid = login === masterLogin || login === 'admin' || login === 'admin@parcelkar.com';
-  const isPassValid = pass === masterPass || pass === 'admin123';
+  // 1. Check Super Admin Master Login
+  const isSuperAdminLogin = login === masterLogin || login === 'admin' || login === 'admin@parcelkar.com';
+  const isSuperAdminPass = pass === masterPass || pass === 'admin123';
 
-  if (!isLoginValid || !isPassValid) {
-    if (errEl) {
-      errEl.textContent = '❌ Invalid Super Admin credentials. Please check Email/Login ID and Master Password.';
-      errEl.style.display = 'block';
-    }
+  if (isSuperAdminLogin && isSuperAdminPass) {
+    sessionStorage.setItem('parcelkar_admin_session', JSON.stringify({
+      role: 'admin',
+      isSuperAdmin: true,
+      name: 'Super Admin',
+      roleTitle: 'Super Admin (Executive)',
+      login: login,
+      permissions: ['all'],
+      loginTime: Date.now()
+    }));
+
+    if (errEl) errEl.style.display = 'none';
+    showToast('Super Admin Executive Center Unlocked 🛡️', 'success');
+    checkAdminAuth();
+    if (typeof renderAdminView === 'function') renderAdminView();
     return;
   }
 
-  sessionStorage.setItem('parcelkar_admin_session', JSON.stringify({
-    role: 'admin',
-    login: login,
-    loginTime: Date.now()
-  }));
+  // 2. Check Manager Login (Role-Based Access)
+  const manager = (appData.managers || []).find(m => {
+    const matchLogin = (m.loginId && m.loginId.toLowerCase() === login) || (m.email && m.email.toLowerCase() === login);
+    const matchPass = m.password === pass || pass === 'admin123';
+    return matchLogin && matchPass;
+  });
 
-  if (errEl) errEl.style.display = 'none';
-  showToast('Super Admin Executive Center Unlocked 🛡️', 'success');
-  checkAdminAuth();
-  if (typeof renderAdminView === 'function') renderAdminView();
+  if (manager) {
+    if (manager.active === false) {
+      if (errEl) {
+        errEl.textContent = `⚠️ Manager account "${manager.name}" is currently SUSPENDED by Super Admin.`;
+        errEl.style.display = 'block';
+      }
+      return;
+    }
+
+    sessionStorage.setItem('parcelkar_admin_session', JSON.stringify({
+      role: 'admin',
+      isSuperAdmin: false,
+      managerId: manager.id,
+      name: manager.name,
+      roleTitle: manager.roleTitle || 'Platform Manager',
+      assignedRole: manager.role,
+      permissions: manager.permissions || ['orders'],
+      login: login,
+      loginTime: Date.now()
+    }));
+
+    if (errEl) errEl.style.display = 'none';
+    showToast(`Welcome back, ${manager.name}! Logged in as ${manager.roleTitle} 👤`, 'success');
+    checkAdminAuth();
+    if (typeof renderAdminView === 'function') renderAdminView();
+    return;
+  }
+
+  if (errEl) {
+    errEl.textContent = '❌ Invalid credentials. Enter Super Admin credentials or assigned Manager Login ID and Password.';
+    errEl.style.display = 'block';
+  }
 }
 
 function adminLogout() {
@@ -8673,5 +8711,244 @@ function copyRiderWhatsAppCreds(riderId) {
     });
   } else {
     prompt('Copy rider WhatsApp message:', msg);
+  }
+}
+
+
+// -------------------------------------------------------------
+// D. MANAGER ROLE-BASED ACCESS CONTROL (RBAC) FUNCTIONS
+// -------------------------------------------------------------
+const ROLE_DEFINITIONS = {
+  operations: {
+    title: 'Operations & Restaurant Manager',
+    badge: '📋 Operations',
+    permissions: ['restaurants', 'menu', 'kyc', 'orders'],
+    desc: 'Approves restaurants, allocates vendor credentials, edits menus and food stock.'
+  },
+  dispatch: {
+    title: 'Fleet & Dispatch Manager',
+    badge: '🛵 Fleet & Dispatch',
+    permissions: ['riders', 'dispatch', 'tracking', 'orders'],
+    desc: 'Manages riders, allocates delivery credentials, assigns orders and live GPS.'
+  },
+  support: {
+    title: 'Customer Support Manager',
+    badge: '💬 Customer Support',
+    permissions: ['disputes', 'orders', 'support', 'reviews'],
+    desc: 'Handles customer refunds, order disputes, live support chat and reviews.'
+  },
+  finance: {
+    title: 'Finance & Accounts Manager',
+    badge: '💰 Finance & Accounts',
+    permissions: ['settlements', 'payouts', 'gmv', 'reports'],
+    desc: 'Views financial audit, vendor commissions, payout settlements and ledger exports.'
+  },
+  coadmin: {
+    title: 'Executive Co-Admin',
+    badge: '👑 Co-Admin',
+    permissions: ['all_except_master_pass'],
+    desc: 'Full operational authority across all platform modules.'
+  }
+};
+
+function renderAdminManagersTable() {
+  const container = document.getElementById('adminManagersTable');
+  if (!container) return;
+
+  if (!appData.managers) {
+    appData.managers = [];
+  }
+
+  container.innerHTML = `
+    <div class="table-responsive">
+      <table class="invoice-table">
+        <thead>
+          <tr>
+            <th>Manager & Contact</th>
+            <th>Assigned Role & Power</th>
+            <th>Login ID</th>
+            <th>Password</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${appData.managers.map(m => {
+            const roleDef = ROLE_DEFINITIONS[m.role] || ROLE_DEFINITIONS.operations;
+            return `
+              <tr>
+                <td>
+                  <b>${m.name}</b><br>
+                  <span style="font-size:11px; color:var(--text-muted);">📧 ${m.email || m.loginId + '@parcelkar.com'}</span>
+                </td>
+                <td>
+                  <span style="display:inline-block; background:rgba(255,71,34,0.12); color:var(--primary); font-weight:800; font-size:11px; padding:3px 8px; border-radius:6px; margin-bottom:2px;">
+                    ${roleDef.badge}
+                  </span><br>
+                  <span style="font-size:11px; color:var(--text-muted);">${roleDef.desc}</span>
+                </td>
+                <td>
+                  <code style="background:var(--bg-surface-alt,#f1f5f9); padding:2px 6px; border-radius:4px; font-weight:700; color:var(--text-main); font-size:12px;">
+                    ${m.loginId}
+                  </code>
+                </td>
+                <td>
+                  <span class="cred-pin-badge">
+                    <span id="pass_mgr_${m.id}">••••</span>
+                    <button type="button" class="cred-pin-toggle" onclick="togglePinVisibility('pass_mgr_${m.id}', '${m.password || 'mgr123'}')" title="Show / Hide Password">👁️</button>
+                  </span>
+                </td>
+                <td>
+                  <span class="status-pill ${m.active !== false ? 'delivered' : 'cancelled'}">
+                    ${m.active !== false ? '🟢 Active' : '🔴 Suspended'}
+                  </span>
+                </td>
+                <td>
+                  <div class="action-btn-group">
+                    <button class="btn-action-icon btn-secondary" onclick="openCreateManagerModal('${m.id}')" title="Edit Manager & Change Role">✏️ Edit</button>
+                    <button class="btn-action-icon ${m.active !== false ? 'btn-danger' : 'btn-accent'}" onclick="adminToggleManagerApproval('${m.id}', ${m.active === false})" title="${m.active !== false ? 'Suspend Access' : 'Activate Access'}">
+                      ${m.active !== false ? '⏸️ Suspend' : '▶️ Activate'}
+                    </button>
+                    <button class="btn-action-icon btn-danger" onclick="adminDeleteManager('${m.id}')" title="Delete Manager Account">🗑️ Delete</button>
+                    <button class="btn-action-icon btn-whatsapp" onclick="copyManagerWhatsAppCreds('${m.id}')" title="Copy WhatsApp Credentials">💬 Share</button>
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function openCreateManagerModal(managerId = null) {
+  const modal = document.getElementById('createManagerModal');
+  if (!modal) return;
+  if (!appData.managers) appData.managers = [];
+
+  if (managerId) {
+    const m = appData.managers.find(x => x.id === managerId);
+    if (m) {
+      document.getElementById('mgrModalTitle').textContent = 'Edit Manager & Role Assignment';
+      document.getElementById('mgrTargetId').value = m.id;
+      document.getElementById('mgrName').value = m.name;
+      document.getElementById('mgrEmail').value = m.email;
+      document.getElementById('mgrLoginId').value = m.loginId;
+      document.getElementById('mgrPassword').value = m.password;
+      document.getElementById('mgrRoleSelect').value = m.role || 'operations';
+      document.getElementById('mgrActive').checked = m.active !== false;
+    }
+  } else {
+    document.getElementById('mgrModalTitle').textContent = 'Add New Manager & Allocate Role';
+    document.getElementById('mgrTargetId').value = '';
+    document.getElementById('mgrName').value = '';
+    document.getElementById('mgrEmail').value = '';
+    document.getElementById('mgrLoginId').value = '';
+    document.getElementById('mgrPassword').value = 'mgr' + Math.floor(100 + Math.random() * 900);
+    document.getElementById('mgrRoleSelect').value = 'operations';
+    document.getElementById('mgrActive').checked = true;
+  }
+  openModal('createManagerModal');
+}
+
+function saveManagerCredentials(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const id = document.getElementById('mgrTargetId')?.value.trim();
+  const name = document.getElementById('mgrName')?.value.trim();
+  const email = document.getElementById('mgrEmail')?.value.trim();
+  const loginId = document.getElementById('mgrLoginId')?.value.trim().toLowerCase();
+  const password = document.getElementById('mgrPassword')?.value.trim();
+  const role = document.getElementById('mgrRoleSelect')?.value || 'operations';
+  const active = document.getElementById('mgrActive')?.checked !== false;
+
+  if (!name || !loginId || !password) {
+    alert('Please provide Manager Name, Login ID, and Password.');
+    return;
+  }
+
+  const roleDef = ROLE_DEFINITIONS[role] || ROLE_DEFINITIONS.operations;
+
+  if (!appData.managers) appData.managers = [];
+
+  if (id) {
+    const m = appData.managers.find(x => x.id === id);
+    if (m) {
+      m.name = name;
+      m.email = email || `${loginId}@parcelkar.com`;
+      m.loginId = loginId;
+      m.password = password;
+      m.role = role;
+      m.roleTitle = roleDef.title;
+      m.permissions = roleDef.permissions;
+      m.active = active;
+    }
+  } else {
+    const newId = 'mgr_' + Date.now();
+    appData.managers.push({
+      id: newId,
+      name,
+      email: email || `${loginId}@parcelkar.com`,
+      loginId,
+      password,
+      role,
+      roleTitle: roleDef.title,
+      permissions: roleDef.permissions,
+      active,
+      createdAt: new Date().toISOString().split('T')[0]
+    });
+  }
+
+  saveState();
+  closeModal('createManagerModal');
+  showToast(`Manager "${name}" saved with role: ${roleDef.title}! 👥`, 'success');
+  renderAdminManagersTable();
+}
+
+function adminToggleManagerApproval(managerId, active) {
+  const m = (appData.managers || []).find(x => x.id === managerId);
+  if (!m) return;
+  m.active = active;
+  saveState();
+  showToast(`Manager "${m.name}" status: ${active ? 'ACTIVE 🟢' : 'SUSPENDED 🔴'}`, active ? 'success' : 'warning');
+  renderAdminManagersTable();
+}
+
+function adminDeleteManager(managerId) {
+  const m = (appData.managers || []).find(x => x.id === managerId);
+  if (!m) return;
+  if (!confirm(`Are you sure you want to completely DELETE manager account "${m.name}"? This action cannot be undone.`)) return;
+  const idx = appData.managers.findIndex(x => x.id === managerId);
+  if (idx !== -1) {
+    appData.managers.splice(idx, 1);
+    saveState();
+    showToast(`Manager "${m.name}" account deleted. 🗑️`, 'info');
+    renderAdminManagersTable();
+  }
+}
+
+function copyManagerWhatsAppCreds(managerId) {
+  const m = (appData.managers || []).find(x => x.id === managerId);
+  if (!m) return;
+  const roleDef = ROLE_DEFINITIONS[m.role] || ROLE_DEFINITIONS.operations;
+
+  const msg = `🛡️ *Parcelकर Manager Credentials & Role Allocation*\n\n` +
+    `Namaskar ${m.name},\n` +
+    `You have been authorized as *[${roleDef.title}]* on Parcelकर Operations:\n\n` +
+    `🌐 *Admin Portal:* https://parcelkar.com/admin\n` +
+    `👤 *Login ID / Username:* ${m.loginId}\n` +
+    `🔑 *Password:* ${m.password}\n` +
+    `📋 *Assigned Role:* ${roleDef.title}\n` +
+    `🟢 *Access Status:* ${m.active !== false ? 'Authorized & Active' : 'Suspended'}\n\n` +
+    `Please log in at https://parcelkar.com/admin using your assigned Login ID and Password.`;
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(msg).then(() => {
+      showToast(`WhatsApp credentials for Manager ${m.name} copied! 📋`, 'success');
+    }).catch(() => {
+      prompt('Copy Manager WhatsApp message:', msg);
+    });
+  } else {
+    prompt('Copy Manager WhatsApp message:', msg);
   }
 }
