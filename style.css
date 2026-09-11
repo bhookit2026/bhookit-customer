@@ -1088,48 +1088,79 @@ header {
 /* Dark Theme for Action Micro-Buttons */
 [data-theme="dark"] .btn-action-icon.btn-secondary,
 [data-theme="dark"] .action-btn-group .btn-secondary {
-  background: #1e293b !important;
-  color: #cbd5e1 !important;
-  border-color: #475569 !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #f1f5f9 !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
 }
 [data-theme="dark"] .btn-action-icon.btn-secondary:hover,
 [data-theme="dark"] .action-btn-group .btn-secondary:hover {
-  background: #334155 !important;
+  background: rgba(255, 255, 255, 0.18) !important;
   color: #ffffff !important;
-  border-color: #64748b !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
 }
 [data-theme="dark"] .btn-action-icon.btn-danger,
 [data-theme="dark"] .action-btn-group .btn-danger {
-  background: rgba(225, 29, 72, 0.15) !important;
+  background: rgba(244, 63, 94, 0.18) !important;
   color: #fda4af !important;
-  border-color: rgba(225, 29, 72, 0.35) !important;
+  border: 1px solid rgba(244, 63, 94, 0.45) !important;
 }
 [data-theme="dark"] .btn-action-icon.btn-danger:hover,
 [data-theme="dark"] .action-btn-group .btn-danger:hover {
-  background: #e11d48 !important;
+  background: #f43f5e !important;
   color: #ffffff !important;
+  border-color: #f43f5e !important;
+  box-shadow: 0 0 10px rgba(244, 63, 94, 0.4) !important;
+}
+[data-theme="dark"] .btn-action-icon.btn-action-delete,
+[data-theme="dark"] .action-btn-group .btn-action-delete {
+  background: rgba(239, 68, 68, 0.18) !important;
+  color: #fca5a5 !important;
+  border: 1px solid rgba(239, 68, 68, 0.45) !important;
+}
+[data-theme="dark"] .btn-action-icon.btn-action-delete:hover,
+[data-theme="dark"] .action-btn-group .btn-action-delete:hover {
+  background: #ef4444 !important;
+  color: #ffffff !important;
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.45) !important;
 }
 [data-theme="dark"] .btn-action-icon.btn-accent,
 [data-theme="dark"] .action-btn-group .btn-accent {
-  background: rgba(5, 150, 105, 0.15) !important;
+  background: rgba(16, 185, 129, 0.18) !important;
   color: #6ee7b7 !important;
-  border-color: rgba(5, 150, 105, 0.35) !important;
+  border: 1px solid rgba(16, 185, 129, 0.45) !important;
 }
 [data-theme="dark"] .btn-action-icon.btn-accent:hover,
 [data-theme="dark"] .action-btn-group .btn-accent:hover {
-  background: #059669 !important;
+  background: #10b981 !important;
   color: #ffffff !important;
+  border-color: #10b981 !important;
 }
 [data-theme="dark"] .btn-action-icon.btn-whatsapp,
 [data-theme="dark"] .action-btn-group .btn-whatsapp {
-  background: rgba(34, 197, 94, 0.15) !important;
+  background: rgba(34, 197, 94, 0.18) !important;
   color: #86efac !important;
-  border-color: rgba(34, 197, 94, 0.35) !important;
+  border: 1px solid rgba(34, 197, 94, 0.45) !important;
 }
 [data-theme="dark"] .btn-action-icon.btn-whatsapp:hover,
 [data-theme="dark"] .action-btn-group .btn-whatsapp:hover {
   background: #22c55e !important;
   color: #ffffff !important;
+  border-color: #22c55e !important;
+}
+[data-theme="dark"] .btn-action-icon.btn-action-login,
+[data-theme="dark"] .btn-action-icon.btn-primary,
+[data-theme="dark"] .action-btn-group .btn-primary {
+  background: linear-gradient(135deg, #ff5722, #ea580c) !important;
+  color: #ffffff !important;
+  border: 1px solid #f97316 !important;
+  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.35) !important;
+}
+[data-theme="dark"] .btn-action-icon.btn-action-login:hover,
+[data-theme="dark"] .btn-action-icon.btn-primary:hover,
+[data-theme="dark"] .action-btn-group .btn-primary:hover {
+  background: linear-gradient(135deg, #f97316, #c2410c) !important;
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.5) !important;
 }
 
 /* Card Header Smart Actions */
@@ -1192,14 +1223,23 @@ header {
   border-color: #94a3b8 !important;
 }
 
+[data-theme="dark"] .btn-smart-header.btn-primary {
+  background: linear-gradient(135deg, #ff5722, #ea580c) !important;
+  color: #ffffff !important;
+  border: 1px solid #f97316 !important;
+  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.4) !important;
+}
 [data-theme="dark"] .btn-smart-header.btn-secondary {
-  background: #1e293b !important;
-  color: #e2e8f0 !important;
-  border-color: #475569 !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.28) !important;
+  backdrop-filter: blur(8px);
 }
 [data-theme="dark"] .btn-smart-header.btn-secondary:hover {
-  background: #334155 !important;
+  background: rgba(255, 255, 255, 0.2) !important;
   color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.55) !important;
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.12) !important;
 }
 
 /* Executive Center Smart Action Buttons */
@@ -1734,6 +1774,7 @@ header {
 [data-theme="dark"] {
   --bg-main: #0b0f19;
   --bg-card: #151d30;
+  --bg-surface-alt: #1e293b;
   --text-main: #f1f5f9;
   --text-muted: #94a3b8;
   --border: #243049;
@@ -1869,6 +1910,30 @@ header {
   background: #2d3b55 !important;
   color: #ffffff !important;
   border-color: #475569 !important;
+}
+
+[data-theme="dark"] .btn-danger {
+  background: rgba(244, 63, 94, 0.2) !important;
+  color: #fda4af !important;
+  border: 1px solid rgba(244, 63, 94, 0.45) !important;
+}
+
+[data-theme="dark"] .btn-danger:hover {
+  background: #f43f5e !important;
+  color: #ffffff !important;
+  border-color: #f43f5e !important;
+}
+
+[data-theme="dark"] code,
+[data-theme="dark"] .invoice-table code,
+[data-theme="dark"] .cred-pin-badge {
+  background: #1e293b !important;
+  color: #f1f5f9 !important;
+  border: 1px solid #334155 !important;
+}
+
+[data-theme="dark"] .cred-pin-toggle {
+  color: #cbd5e1 !important;
 }
 
 [data-theme="dark"] #authBtn {

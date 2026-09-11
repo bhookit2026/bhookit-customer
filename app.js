@@ -7,6 +7,54 @@
 
 // Storage Key & Default Seed Data
 const STORAGE_KEY = 'parcelkar_v11_data_v2';
+const DELIVERY_ZONES_KEY = 'parcelkar_delivery_zones';
+const DEFAULT_DELIVERY_ZONES = [
+  { id: 'zone_sakoli_1', city: 'Sakoli', name: 'Main Market & Station Road', eta: '20-25 mins', baseFee: 30, active: true },
+  { id: 'zone_sakoli_2', city: 'Sakoli', name: 'Ward 3, 4 & Green Avenue', eta: '20 mins', baseFee: 30, active: true },
+  { id: 'zone_sakoli_3', city: 'Sakoli', name: 'College Campus & Bypass Chowk', eta: '25-30 mins', baseFee: 35, active: true },
+  { id: 'zone_sakoli_4', city: 'Sakoli', name: 'Sendurwafa Flyover Corridor', eta: '30-35 mins', baseFee: 40, active: true },
+  { id: 'zone_sakoli_5', city: 'Sakoli', name: 'Bus Depot & Civil Hospital Area', eta: '20-25 mins', baseFee: 30, active: true },
+  { id: 'zone_lakhani_1', city: 'Lakhani', name: 'Lakhani Town Hub & Main Chowk', eta: '35-45 mins', baseFee: 50, active: true },
+  { id: 'zone_bhandara_1', city: 'Bhandara', name: 'Bhandara City Central & Gandhi Chowk', eta: '45-55 mins', baseFee: 70, active: true }
+];
+
+function getPersistedDeliveryZones() {
+  try {
+    const saved = localStorage.getItem(DELIVERY_ZONES_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch (e) {}
+
+  if (typeof appData !== 'undefined' && appData && Array.isArray(appData.deliveryZones) && appData.deliveryZones.length > 0) {
+    try {
+      localStorage.setItem(DELIVERY_ZONES_KEY, JSON.stringify(appData.deliveryZones));
+    } catch (e) {}
+    return appData.deliveryZones;
+  }
+
+  try {
+    localStorage.setItem(DELIVERY_ZONES_KEY, JSON.stringify(DEFAULT_DELIVERY_ZONES));
+  } catch (e) {}
+  return JSON.parse(JSON.stringify(DEFAULT_DELIVERY_ZONES));
+}
+
+function persistDeliveryZones(list) {
+  if (!Array.isArray(list)) list = [];
+  if (typeof deliveryZonesList !== 'undefined') deliveryZonesList = list;
+  if (typeof appData !== 'undefined' && appData) {
+    appData.deliveryZones = list;
+  }
+  try {
+    localStorage.setItem(DELIVERY_ZONES_KEY, JSON.stringify(list));
+  } catch (e) {}
+  if (typeof saveState === 'function') {
+    saveState();
+  }
+}
 
 // -------------------------------------------------------------
 // MULTI-LANGUAGE TRANSLATION DICTIONARY
@@ -690,15 +738,13 @@ if (appData) {
     if (!o.deliveryOtp) o.deliveryOtp = Math.floor(1000 + Math.random() * 9000).toString();
   });
   if (!Array.isArray(appData.deliveryZones) || !appData.deliveryZones.length) {
-    appData.deliveryZones = [
-      { id: 'zone_sakoli_1', city: 'Sakoli', name: 'Main Market & Station Road', eta: '20-25 mins', baseFee: 30, active: true },
-      { id: 'zone_sakoli_2', city: 'Sakoli', name: 'Ward 3, 4 & Green Avenue', eta: '20 mins', baseFee: 30, active: true },
-      { id: 'zone_sakoli_3', city: 'Sakoli', name: 'College Campus & Bypass Chowk', eta: '25-30 mins', baseFee: 35, active: true },
-      { id: 'zone_sakoli_4', city: 'Sakoli', name: 'Sendurwafa Flyover Corridor', eta: '30-35 mins', baseFee: 40, active: true },
-      { id: 'zone_sakoli_5', city: 'Sakoli', name: 'Bus Depot & Civil Hospital Area', eta: '20-25 mins', baseFee: 30, active: true },
-      { id: 'zone_lakhani_1', city: 'Lakhani', name: 'Lakhani Town Hub & Main Chowk', eta: '35-45 mins', baseFee: 50, active: true },
-      { id: 'zone_bhandara_1', city: 'Bhandara', name: 'Bhandara City Central & Gandhi Chowk', eta: '45-55 mins', baseFee: 70, active: true }
-    ];
+    appData.deliveryZones = getPersistedDeliveryZones();
+  } else {
+    try {
+      if (!localStorage.getItem(DELIVERY_ZONES_KEY)) {
+        localStorage.setItem(DELIVERY_ZONES_KEY, JSON.stringify(appData.deliveryZones));
+      }
+    } catch (e) {}
   }
 }
 
@@ -3905,7 +3951,7 @@ function renderAdminView() {
   if (!Array.isArray(appData.riders)) appData.riders = (SEED_DATA && SEED_DATA.riders) ? JSON.parse(JSON.stringify(SEED_DATA.riders)) : [];
   if (!Array.isArray(appData.managers)) appData.managers = [];
   if (!Array.isArray(appData.disputes)) appData.disputes = [];
-  if (!Array.isArray(appData.deliveryZones)) appData.deliveryZones = [];
+  if (!Array.isArray(appData.deliveryZones) || !appData.deliveryZones.length) appData.deliveryZones = getPersistedDeliveryZones();
   if (!appData.settings) appData.settings = {};
   if (appData.settings.riderDeliveryCommission === undefined) {
     try {
@@ -8863,15 +8909,7 @@ function clearAllWaiterAlerts() {
 // -------------------------------------------------------------
 // DELIVERY AREA & CITY SELECTOR ENGINE (SWIGGY/ZOMATO GEOFENCING)
 // -------------------------------------------------------------
-let deliveryZonesList = appData.deliveryZones || [
-  { id: 'zone_sakoli_1', city: 'Sakoli', name: 'Main Market & Station Road', eta: '20-25 mins', baseFee: 30, active: true },
-  { id: 'zone_sakoli_2', city: 'Sakoli', name: 'Ward 3, 4 & Green Avenue', eta: '20 mins', baseFee: 30, active: true },
-  { id: 'zone_sakoli_3', city: 'Sakoli', name: 'College Campus & Bypass Chowk', eta: '25-30 mins', baseFee: 35, active: true },
-  { id: 'zone_sakoli_4', city: 'Sakoli', name: 'Sendurwafa Flyover Corridor', eta: '30-35 mins', baseFee: 40, active: true },
-  { id: 'zone_sakoli_5', city: 'Sakoli', name: 'Bus Depot & Civil Hospital Area', eta: '20-25 mins', baseFee: 30, active: true },
-  { id: 'zone_lakhani_1', city: 'Lakhani', name: 'Lakhani Town Hub & Main Chowk', eta: '35-45 mins', baseFee: 50, active: true },
-  { id: 'zone_bhandara_1', city: 'Bhandara', name: 'Bhandara City Central & Gandhi Chowk', eta: '45-55 mins', baseFee: 70, active: true }
-];
+let deliveryZonesList = getPersistedDeliveryZones();
 
 let currentSelectedCity = 'Sakoli';
 let currentSelectedZone = deliveryZonesList[0];
@@ -8998,6 +9036,7 @@ function selectDeliveryZone(zoneId) {
 let adminSelectedZoneCityFilter = 'All';
 
 function renderAdminDeliveryZones(cityFilter = null) {
+  deliveryZonesList = getPersistedDeliveryZones();
   if (cityFilter !== null) adminSelectedZoneCityFilter = cityFilter;
   const table = document.getElementById('adminDeliveryZonesTable');
   const cityRow = document.getElementById('adminZoneCityFilterRow');
@@ -9059,7 +9098,7 @@ function renderAdminDeliveryZones(cityFilter = null) {
             <td style="text-align: right;">
               <div style="display: flex; gap: 6px; justify-content: flex-end;">
                 <button type="button" class="btn-secondary" onclick="openAdminEditZoneModal('${z.id}')" style="padding: 4px 8px; font-size: 11px;">✏️ Edit</button>
-                <button type="button" class="btn-danger" onclick="deleteAdminDeliveryZone('${z.id}')" style="padding: 4px 8px; font-size: 11px;">🗑‘ï️ Delete</button>
+                <button type="button" class="btn-danger" onclick="deleteAdminDeliveryZone('${z.id}')" style="padding: 4px 8px; font-size: 11px;">🗑️ Delete</button>
               </div>
             </td>
           </tr>
@@ -9070,6 +9109,7 @@ function renderAdminDeliveryZones(cityFilter = null) {
 }
 
 function openAdminAddZoneModal() {
+  deliveryZonesList = getPersistedDeliveryZones();
   document.getElementById('adminZoneModalTitle').textContent = '📍 Add New Delivery Area / Zone';
   document.getElementById('adminZoneEditId').value = '';
   document.getElementById('adminZoneCityInput').value = adminSelectedZoneCityFilter !== 'All' ? adminSelectedZoneCityFilter : 'Sakoli';
@@ -9081,6 +9121,7 @@ function openAdminAddZoneModal() {
 }
 
 function openAdminEditZoneModal(zoneId) {
+  deliveryZonesList = getPersistedDeliveryZones();
   const zone = deliveryZonesList.find(z => z.id === zoneId);
   if (!zone) return;
 
@@ -9107,6 +9148,8 @@ function saveAdminDeliveryZone() {
     return;
   }
 
+  deliveryZonesList = getPersistedDeliveryZones();
+
   if (editId) {
     const existing = deliveryZonesList.find(z => z.id === editId);
     if (existing) {
@@ -9131,8 +9174,7 @@ function saveAdminDeliveryZone() {
     showToast(`Added new delivery zone for ${city}! 📍`, 'success');
   }
 
-  appData.deliveryZones = deliveryZonesList;
-  saveState();
+  persistDeliveryZones(deliveryZonesList);
   closeModal('adminZoneModal');
   playSound('order_placed');
 
@@ -9142,11 +9184,11 @@ function saveAdminDeliveryZone() {
 }
 
 function toggleAdminZoneStatus(zoneId) {
+  deliveryZonesList = getPersistedDeliveryZones();
   const zone = deliveryZonesList.find(z => z.id === zoneId);
   if (!zone) return;
   zone.active = zone.active === false ? true : false;
-  appData.deliveryZones = deliveryZonesList;
-  saveState();
+  persistDeliveryZones(deliveryZonesList);
   showToast(`${zone.city} - ${zone.name} is now ${zone.active ? 'Active 🟢' : 'Paused ⏸️'}`, 'info');
   renderAdminDeliveryZones();
   renderServiceZones(currentSelectedCity);
@@ -9177,13 +9219,13 @@ function sendPartnerApprovalNotification(rest) {
 }
 
 function deleteAdminDeliveryZone(zoneId) {
+  deliveryZonesList = getPersistedDeliveryZones();
   const zone = deliveryZonesList.find(z => z.id === zoneId);
   if (!zone) return;
   if (!confirm(`Are you sure you want to delete delivery area "${zone.city} - ${zone.name}"?`)) return;
 
   deliveryZonesList = deliveryZonesList.filter(z => z.id !== zoneId);
-  appData.deliveryZones = deliveryZonesList;
-  saveState();
+  persistDeliveryZones(deliveryZonesList);
   showToast(`Deleted delivery area "${zone.name}"`, 'info');
   renderAdminDeliveryZones();
   renderLocationCityTabs();
@@ -11588,12 +11630,17 @@ function triggerAdminDataSync() {
     syncBtn.classList.add('spinning');
   }
   try {
-    const saved = localStorage.getItem('parcelkar_app_data');
+    const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
       if (parsed) appData = parsed;
     }
   } catch (e) {}
+
+  if (appData) {
+    appData.deliveryZones = getPersistedDeliveryZones();
+    deliveryZonesList = appData.deliveryZones;
+  }
   
   if (typeof renderAdminView === 'function') {
     renderAdminView();
