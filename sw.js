@@ -1,5 +1,5 @@
 // ParcelKar V1.0 Progressive Web App Service Worker
-const CACHE_NAME = 'parcelkar-v14.7-cache';
+const CACHE_NAME = 'parcelkar-v14.8-cache';
 const STATIC_ASSETS = [
   './',
   './customer.html',
@@ -12,6 +12,7 @@ const STATIC_ASSETS = [
   './icon-192.png',
   './icon-512.png',
   './favicon.png',
+  './media_partner.png',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
 ];
