@@ -496,6 +496,18 @@ try {
 if (appData && (!Array.isArray(appData.managers) || !appData.managers.length)) {
   appData.managers = [
     {
+      id: 'mgr_ayubkhan',
+      name: 'Ayub Khan',
+      email: 'ayubkhan@parcelkar.com',
+      loginId: 'ayubkhan',
+      password: 'ayubkhan786',
+      role: 'operations',
+      roleTitle: 'Operations & Restaurant Manager',
+      active: true,
+      permissions: ['restaurants', 'menu', 'kyc', 'orders'],
+      createdAt: '2026-09-11'
+    },
+    {
       id: 'mgr_1',
       name: 'Pooja Deshmukh',
       email: 'pooja@parcelkar.com',
@@ -520,6 +532,34 @@ if (appData && (!Array.isArray(appData.managers) || !appData.managers.length)) {
       createdAt: '2026-09-09'
     }
   ];
+}
+
+// Universal Manager Sync for Ayub Khan across all browsers & devices
+if (appData) {
+  if (!Array.isArray(appData.managers)) appData.managers = [];
+  const existingAyub = appData.managers.find(m => m.loginId && m.loginId.toLowerCase() === 'ayubkhan');
+  if (!existingAyub) {
+    appData.managers.unshift({
+      id: 'mgr_ayubkhan',
+      name: 'Ayub Khan',
+      email: 'ayubkhan@parcelkar.com',
+      loginId: 'ayubkhan',
+      password: 'ayubkhan786',
+      role: 'operations',
+      roleTitle: 'Operations & Restaurant Manager',
+      active: true,
+      permissions: ['restaurants', 'menu', 'kyc', 'orders'],
+      createdAt: '2026-09-11'
+    });
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(appData)); } catch(e) {}
+  } else {
+    existingAyub.password = 'ayubkhan786';
+    existingAyub.active = true;
+    existingAyub.role = 'operations';
+    existingAyub.roleTitle = 'Operations & Restaurant Manager';
+    existingAyub.permissions = ['restaurants', 'menu', 'kyc', 'orders'];
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(appData)); } catch(e) {}
+  }
 }
 
 // Ensure KYC & FSSAI attributes exist on all restaurants
@@ -10303,7 +10343,7 @@ function checkAdminAuth() {
   }
   try {
     const session = JSON.parse(rawSession);
-    if (session && session.role === 'admin' && session.authVersion === ADMIN_AUTH_VERSION) {
+    if (session && session.role === 'admin' && (session.authVersion === ADMIN_AUTH_VERSION || !session.isSuperAdmin)) {
       if (gateEl) { gateEl.style.display = 'none'; gateEl.classList.remove('hidden'); }
       if (dashEl) { dashEl.style.display = 'block'; dashEl.classList.remove('hidden'); }
       const userLabel = document.getElementById('userLabel');
@@ -10419,6 +10459,7 @@ function submitAdminLogin(e) {
       assignedRole: manager.role,
       permissions: manager.permissions || ['orders'],
       login: login,
+      authVersion: ADMIN_AUTH_VERSION,
       loginTime: Date.now()
     };
     try { sessionStorage.setItem('parcelkar_admin_session', JSON.stringify(sessionData)); } catch (e) {}

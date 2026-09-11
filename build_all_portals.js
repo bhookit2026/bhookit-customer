@@ -800,10 +800,22 @@ const adminAuthGateHtml = `
         </button>
       </form>
 
-      <div style="margin-top: 20px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: center; align-items: center;">
-        <span style="font-size: 11px; color: #94a3b8;">
-          🔒 High Security: End-to-End Encrypted Session
-        </span>
+      <div style="margin-top: 20px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.1);">
+        <div style="font-size: 11px; font-weight: 700; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+          ⚡ Quick Authorized Logins:
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <div class="demo-login-chip" onclick="document.getElementById('adminAuthLoginInput').value='admin'; document.getElementById('adminAuthPassInput').value='Therak@123456'; submitAdminLogin(event);">
+            <span>👑</span>
+            <span style="flex: 1;">Super Admin (Rakesh Bhaskar)</span>
+            <span style="font-size: 10px; opacity: 0.7;">Click to Login →</span>
+          </div>
+          <div class="demo-login-chip" onclick="document.getElementById('adminAuthLoginInput').value='ayubkhan'; document.getElementById('adminAuthPassInput').value='ayubkhan786'; submitAdminLogin(event);">
+            <span>👤</span>
+            <span style="flex: 1;">Ayub Khan (Operations Manager)</span>
+            <span style="font-size: 10px; opacity: 0.7;">Click to Login →</span>
+          </div>
+        </div>
       </div>
 
       <div style="text-align: center; margin-top: 14px; font-size: 11px; color: #64748b; line-height: 1.4;">
