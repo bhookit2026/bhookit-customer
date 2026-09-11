@@ -501,7 +501,7 @@ const adminModalsHtml = `
           </label>
           <div style="display: flex; align-items: center; gap: 8px;">
             <span style="font-weight: 800; color: #10b981; font-size: 16px;">₹</span>
-            <input type="number" id="rcredCommission" class="input-field" placeholder="Default: ₹40" min="0" step="5" style="margin: 0; font-weight: 700; width: 140px;">
+            <input type="number" id="rcredCommission" class="input-field" placeholder="Default: ₹30" min="0" step="5" style="margin: 0; font-weight: 700; width: 140px;">
             <span style="font-size: 11px; color: var(--text-muted);">(खाली रिकामे ठेवल्यास ग्लोबल डीफॉल्ट दर लागू होईल)</span>
           </div>
         </div>
@@ -1061,3 +1061,14 @@ const partnerHtml = `${headCommon('Parcelकर Partner Hub — Restaurant & Del
 
 fs.writeFileSync('partner.html', partnerHtml, 'utf8');
 console.log('partner.html generated!');
+
+// Also update cache-busters in customer.html, index.html, and demo_all_in_one.html
+['customer.html', 'index.html', 'demo_all_in_one.html'].forEach(file => {
+  if (fs.existsSync(file)) {
+    let content = fs.readFileSync(file, 'utf8');
+    content = content.replace(/style\.css(\?v=[^"']*)?/g, `style.css?v=${BUILD_VER}`);
+    content = content.replace(/app\.js(\?v=[^"']*)?/g, `app.js?v=${BUILD_VER}`);
+    fs.writeFileSync(file, content, 'utf8');
+    console.log(`${file} cache-busters updated to ${BUILD_VER}!`);
+  }
+});

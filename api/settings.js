@@ -1,5 +1,8 @@
 // api/settings.js
 // Vercel Serverless Function to sync platform settings across all subdomains & devices
+const fs = require('fs');
+const path = require('path');
+const SETTINGS_FILE = path.join('/tmp', 'parcelkar_settings.json');
 
 let globalSettings = {
   riderDeliveryCommission: 30,
@@ -13,6 +16,30 @@ let globalSettings = {
   defaultCommission: 10
 };
 
+function getPersistedSettings() {
+  try {
+    if (fs.existsSync(SETTINGS_FILE)) {
+      const content = fs.readFileSync(SETTINGS_FILE, 'utf8');
+      if (content) {
+        const parsed = JSON.parse(content);
+        if (parsed && typeof parsed === 'object') {
+          globalSettings = { ...globalSettings, ...parsed };
+        }
+      }
+    }
+  } catch (e) {}
+  return globalSettings;
+}
+
+function savePersistedSettings(settings) {
+  try {
+    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings));
+  } catch (e) {}
+}
+
+// Initial load on start
+getPersistedSettings();
+
 module.exports = async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -25,7 +52,8 @@ module.exports = async function handler(req, res) {
   }
 
   if (req.method === 'GET') {
-    return res.status(200).json({ success: true, settings: globalSettings });
+    const current = getPersistedSettings();
+    return res.status(200).json({ success: true, settings: current });
   }
 
   if (req.method === 'POST') {
@@ -39,6 +67,7 @@ module.exports = async function handler(req, res) {
         const payload = body ? JSON.parse(body) : {};
         if (payload && typeof payload === 'object') {
           globalSettings = { ...globalSettings, ...payload };
+          savePersistedSettings(globalSettings);
         }
         return res.status(200).json({ success: true, settings: globalSettings });
       } catch (err) {

@@ -90,3 +90,4 @@ if (!appData.deliveryZones.some(z => z.name === 'Ward 10 Ambedkar Nagar')) {
 console.log('✅ triggerAdminDataSync() successfully preserved custom delivery zone');
 
 console.log('\n🎉 ALL DELIVERY ZONE PERSISTENCE TESTS PASSED!');
+process.exit(0);

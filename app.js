@@ -56,6 +56,19 @@ function persistDeliveryZones(list) {
   }
 }
 
+function getPersistedRiderCommission() {
+  try {
+    const saved = localStorage.getItem('parcelkar_rider_commission');
+    if (saved !== null && !isNaN(Number(saved)) && Number(saved) >= 0) {
+      return Number(saved);
+    }
+  } catch (e) {}
+  if (typeof appData !== 'undefined' && appData && appData.settings && appData.settings.riderDeliveryCommission !== undefined && !isNaN(Number(appData.settings.riderDeliveryCommission))) {
+    return Number(appData.settings.riderDeliveryCommission);
+  }
+  return 30;
+}
+
 // -------------------------------------------------------------
 // MULTI-LANGUAGE TRANSLATION DICTIONARY
 // -------------------------------------------------------------
@@ -522,15 +535,7 @@ try {
 
 if (appData) {
   if (!appData.settings) appData.settings = {};
-  try {
-    const savedComm = localStorage.getItem('parcelkar_rider_commission');
-    if (savedComm !== null && !isNaN(Number(savedComm))) {
-      appData.settings.riderDeliveryCommission = Number(savedComm);
-    }
-  } catch (e) {}
-  if (appData.settings.riderDeliveryCommission === undefined) {
-    appData.settings.riderDeliveryCommission = 30;
-  }
+  appData.settings.riderDeliveryCommission = getPersistedRiderCommission();
   if (!appData.adminSettings) appData.adminSettings = {};
   appData.adminSettings.superAdminName = 'Rakesh Bhaskar';
   appData.adminSettings.masterLogin = 'admin@parcelkar.com';
@@ -1177,10 +1182,22 @@ let deferredPwaPrompt = null;
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=13.1')
+    navigator.serviceWorker.register('./sw.js?v=18.0')
       .then(reg => {
-        console.log('ServiceWorker registered:', reg.scope);
         reg.update();
+        if (reg.waiting) {
+          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          if (newWorker) {
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                newWorker.postMessage({ type: 'SKIP_WAITING' });
+              }
+            });
+          }
+        });
       })
       .catch(err => console.log('ServiceWorker registration error:', err));
   });
@@ -3824,6 +3841,14 @@ function renderDeliveryView() {
   document.getElementById('riderEarnings').textContent = `₹${currentRider.earnings}`;
   document.getElementById('riderTips').textContent = `₹${currentRider.tips}`;
 
+  const currentComm = (currentRider && currentRider.commissionPerDelivery !== undefined && currentRider.commissionPerDelivery !== null && currentRider.commissionPerDelivery !== '')
+    ? currentRider.commissionPerDelivery
+    : getPersistedRiderCommission();
+  const titleEl = document.getElementById('riderEarningsCardTitle');
+  if (titleEl) {
+    titleEl.textContent = `Rider Earnings (₹${currentComm}/drop)`;
+  }
+
   const dispatchOrders = appData.orders.filter(o => o.status === 'Ready' || o.deliveryBoy === currentRider.name);
 
   renderRiderBatchMode();
@@ -3953,35 +3978,14 @@ function renderAdminView() {
   if (!Array.isArray(appData.disputes)) appData.disputes = [];
   if (!Array.isArray(appData.deliveryZones) || !appData.deliveryZones.length) appData.deliveryZones = getPersistedDeliveryZones();
   if (!appData.settings) appData.settings = {};
-  if (appData.settings.riderDeliveryCommission === undefined) {
-    try {
-      const savedComm = localStorage.getItem('parcelkar_rider_commission');
-      if (savedComm !== null && !isNaN(Number(savedComm))) {
-        appData.settings.riderDeliveryCommission = Number(savedComm);
-      }
-    } catch (e) {}
-    if (appData.settings.riderDeliveryCommission === undefined) {
-      appData.settings.riderDeliveryCommission = 30;
-    }
-  }
+  appData.settings.riderDeliveryCommission = getPersistedRiderCommission();
   if (!appData.settings.coupons) {
     appData.settings.coupons = (SEED_DATA && SEED_DATA.settings && SEED_DATA.settings.coupons) ? JSON.parse(JSON.stringify(SEED_DATA.settings.coupons)) : {};
   }
 
   const globalCommInput = document.getElementById('globalRiderCommissionInput');
   if (globalCommInput) {
-    let commVal = 30;
-    if (appData.settings && appData.settings.riderDeliveryCommission !== undefined) {
-      commVal = appData.settings.riderDeliveryCommission;
-    } else {
-      try {
-        const savedComm = localStorage.getItem('parcelkar_rider_commission');
-        if (savedComm !== null && !isNaN(Number(savedComm))) {
-          commVal = Number(savedComm);
-        }
-      } catch (e) {}
-    }
-    globalCommInput.value = commVal;
+    globalCommInput.value = getPersistedRiderCommission();
   }
 
   const gmv = appData.orders.filter(o => o.status !== 'Cancelled').reduce((sum, o) => sum + (o.total || 0), 0);
@@ -8077,7 +8081,10 @@ function advanceBatchWaypoint(stepIdx) {
     // Credit rider payout
     const rider = appData.riders[0];
     if (rider) {
-      rider.earnings += 40;
+      const payout = (rider.commissionPerDelivery !== undefined && rider.commissionPerDelivery !== null && rider.commissionPerDelivery !== '')
+        ? Number(rider.commissionPerDelivery)
+        : getPersistedRiderCommission();
+      rider.earnings += payout;
       rider.totalTrips += 1;
       const earningsEl = document.getElementById('riderEarnings');
       const tripsEl = document.getElementById('riderTotalTrips');
@@ -10977,9 +10984,14 @@ function openCreateRiderCredsModal(riderId = null) {
       if (elPin) elPin.value = r.riderPin || '1234';
       if (elVehicle) elVehicle.value = r.vehicle || 'Motorcycle';
       if (elApproved) elApproved.checked = r.approved !== false && r.active !== false;
-      if (elComm) elComm.value = r.commissionPerDelivery !== undefined && r.commissionPerDelivery !== null ? r.commissionPerDelivery : '';
+      const curDefault = getPersistedRiderCommission();
+      if (elComm) {
+        elComm.placeholder = `Default: ₹${curDefault}`;
+        elComm.value = (r.commissionPerDelivery !== undefined && r.commissionPerDelivery !== null && r.commissionPerDelivery !== '') ? r.commissionPerDelivery : '';
+      }
     }
   } else {
+    const curDefault = getPersistedRiderCommission();
     if (elId) elId.value = '';
     if (elName) elName.value = '';
     if (elPhone) elPhone.value = '';
@@ -10987,7 +10999,10 @@ function openCreateRiderCredsModal(riderId = null) {
     if (elPin) elPin.value = Math.floor(1000 + Math.random() * 9000);
     if (elVehicle) elVehicle.value = 'Motorcycle';
     if (elApproved) elApproved.checked = true;
-    if (elComm) elComm.value = (appData.settings && appData.settings.riderDeliveryCommission !== undefined) ? appData.settings.riderDeliveryCommission : 30;
+    if (elComm) {
+      elComm.placeholder = `Default: ₹${curDefault}`;
+      elComm.value = curDefault;
+    }
   }
   openModal('createRiderCredsModal');
 }
