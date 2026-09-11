@@ -106,7 +106,7 @@ const dashEl = dom.getElementById('adminDashboardContainer');
 const errEl = dom.getElementById('adminAuthError');
 
 emailInput.value = 'admin@parcelkar.com';
-passInput.value = 'admin123';
+passInput.value = 'Therak@123456';
 
 console.log(`\nAttempting login with: ${emailInput.value} / ${passInput.value}`);
 

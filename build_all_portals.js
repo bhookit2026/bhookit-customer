@@ -30,10 +30,72 @@ adminSection = adminSection.replace(
   '<button class="btn-primary" onclick="openCreateVendorCredsModal()" style="padding: 4px 12px; font-size: 11px; font-weight:700;">➕ Allocate Credentials</button>\n            <button class="btn-secondary" onclick="openInvitePartnerModal()" style="padding: 4px 12px; font-size: 11px;">+ Invite Partner</button>'
 );
 
+// Add specific IDs and attributes to Admin cards for fine-grained Role-Based Access Control (RBAC)
+adminSection = adminSection.replace(
+  '<div class="dashboard-card" style="background: linear-gradient(135deg, #18181b, #27272a); color: #fff;">',
+  '<div class="dashboard-card" id="adminExecutiveCard" style="background: linear-gradient(135deg, #18181b, #27272a); color: #fff;">'
+);
+adminSection = adminSection.replace(
+  '<h2 style="font-family: var(--font-heading); font-size: 24px;">👑 Super Admin Executive Center</h2>',
+  '<h2 id="adminExecutiveHeading" style="font-family: var(--font-heading); font-size: 24px;">👑 Super Admin Executive Center</h2>'
+);
+adminSection = adminSection.replace(
+  '<p style="opacity: 0.8; font-size: 14px;">Platform analytics, restaurant onboarding, fleet dispatch, and commissions.</p>',
+  '<p id="adminExecutiveDesc" style="opacity: 0.8; font-size: 14px;">Platform analytics, restaurant onboarding, fleet dispatch, and commissions.</p>'
+);
+adminSection = adminSection.replace(
+  '<button class="btn-secondary" onclick="exportPlatformAuditLog()" style="padding: 8px 14px; color: #fff; border-color: rgba(255,255,255,0.3);">📋 System Audit</button>',
+  '<button class="btn-secondary" id="btnAdminChangeMasterPass" onclick="openChangeAdminPassModal()" style="padding: 8px 14px; color: #fff; border-color: rgba(255,255,255,0.3);">🔐 Change Master Password</button>\n            <button class="btn-secondary" id="btnAdminSystemAudit" onclick="exportPlatformAuditLog()" style="padding: 8px 14px; color: #fff; border-color: rgba(255,255,255,0.3);">📋 System Audit</button>'
+);
+adminSection = adminSection.replace(
+  '<!-- Pending Restaurant Approvals & Vendor Management -->\n      <div class="dashboard-card">',
+  '<!-- Pending Restaurant Approvals & Vendor Management -->\n      <div class="dashboard-card" id="adminRestaurantsCard">'
+);
+adminSection = adminSection.replace(
+  '<!-- Delivery Cities & Geofenced Service Zones Management (Admin Controlled) -->\n      <div class="dashboard-card" style="border-left: 4px solid #10b981;">',
+  '<!-- Delivery Cities & Geofenced Service Zones Management (Admin Controlled) -->\n      <div class="dashboard-card" id="adminZonesCard" style="border-left: 4px solid #10b981;">'
+);
+adminSection = adminSection.replace(
+  '<!-- Dynamic Surge & Weather Dispatch Switchboard -->\n      <div class="dashboard-card" style="border-left: 4px solid #ea580c;">',
+  '<!-- Dynamic Surge & Weather Dispatch Switchboard -->\n      <div class="dashboard-card" id="adminSurgeCard" style="border-left: 4px solid #ea580c;">'
+);
+adminSection = adminSection.replace(
+  '<!-- Sakoli Delivery Zone Geo-Demand Heatmap & Fleet Telemetry -->\n      <div class="dashboard-card">',
+  '<!-- Sakoli Delivery Zone Geo-Demand Heatmap & Fleet Telemetry -->\n      <div class="dashboard-card" id="adminHeatmapCard">'
+);
+adminSection = adminSection.replace(
+  '<!-- Live Rider Fleet Telemetry & Radar Map -->\n      <div class="dashboard-card">',
+  '<!-- Live Rider Fleet Telemetry & Radar Map -->\n      <div class="dashboard-card" id="adminRadarCard">'
+);
+adminSection = adminSection.replace(
+  '<!-- Live Dispatch & Rider Assignment Console -->\n      <div class="dashboard-card">',
+  '<!-- Live Dispatch & Rider Assignment Console -->\n      <div class="dashboard-card" id="adminDispatchCard">'
+);
+adminSection = adminSection.replace(
+  '<!-- Financial Settlements Ledger -->\n      <div class="dashboard-card">',
+  '<!-- Financial Settlements Ledger -->\n      <div class="dashboard-card" id="adminSettlementsCard">'
+);
+adminSection = adminSection.replace(
+  '<!-- Global Coupons & Campaigns -->\n      <div class="dashboard-card">',
+  '<!-- Global Coupons & Campaigns -->\n      <div class="dashboard-card" id="adminCouponsCard">'
+);
+adminSection = adminSection.replace(
+  '<!-- Customer Disputes & Automated Refunds Console -->\n      <div class="dashboard-card">',
+  '<!-- Customer Disputes & Automated Refunds Console -->\n      <div class="dashboard-card" id="adminDisputesCard">'
+);
+adminSection = adminSection.replace(
+  '<!-- Platform Accounting & Reports CSV Exporter -->\n      <div class="dashboard-card" style="border-left: 4px solid #0284c7;">',
+  '<!-- Platform Accounting & Reports CSV Exporter -->\n      <div class="dashboard-card" id="adminExportsCard" style="border-left: 4px solid #0284c7;">'
+);
+adminSection = adminSection.replace(
+  '<!-- Firebase Cloud Connection & Configuration -->\n      <div class="dashboard-card">',
+  '<!-- Firebase Cloud Connection & Configuration -->\n      <div class="dashboard-card" id="adminFirebaseCard">'
+);
+
 // Inject Rider Fleet Credential Center right below Restaurant Management in Admin
 const riderFleetAdminCard = `
         <!-- Delivery Fleet & Rider Credential Management -->
-        <div class="dashboard-card" style="border-left: 4px solid #3b82f6;">
+        <div class="dashboard-card" id="adminRidersCard" style="border-left: 4px solid #3b82f6;">
           <div class="dashboard-card-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
             <div style="display: flex; align-items: center; gap: 8px;">
               <span style="font-size: 20px;">🛵</span>
@@ -48,7 +110,7 @@ const riderFleetAdminCard = `
           </p>
 
           <!-- RIDER COMMISSION PER PARCEL CONFIGURATION BANNER -->
-          <div style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(16, 185, 129, 0.05)); border: 1.5px solid rgba(59, 130, 246, 0.25); border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div id="adminRiderCommissionBanner" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(16, 185, 129, 0.05)); border: 1.5px solid rgba(59, 130, 246, 0.25); border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
             <div style="display: flex; align-items: center; gap: 12px;">
               <div style="font-size: 26px; background: #eff6ff; border-radius: 10px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(59,130,246,0.15);">
                 💰
@@ -66,7 +128,7 @@ const riderFleetAdminCard = `
 
             <div style="display: flex; align-items: center; gap: 8px; background: var(--bg-surface, #fff); padding: 6px 12px; border-radius: 10px; border: 1px solid var(--border-color, #e2e8f0); box-shadow: 0 1px 4px rgba(0,0,0,0.04);">
               <span style="font-size: 15px; font-weight: 900; color: #10b981;">₹</span>
-              <input type="number" id="globalRiderCommissionInput" class="input-field" style="width: 85px; margin: 0; padding: 5px 8px; font-size: 15px; font-weight: 800; text-align: center; border: 1.5px solid #3b82f6; border-radius: 6px;" min="0" step="5" placeholder="40">
+              <input type="number" id="globalRiderCommissionInput" class="input-field" style="width: 85px; margin: 0; padding: 5px 8px; font-size: 15px; font-weight: 800; text-align: center; border: 1.5px solid #3b82f6; border-radius: 6px;" min="0" step="5" placeholder="30">
               <span style="font-size: 12px; font-weight: 700; color: var(--text-muted);">/ parcel</span>
               <button type="button" class="btn-primary" onclick="saveAdminGlobalRiderCommission()" style="margin: 0; padding: 6px 14px; font-size: 12px; font-weight: 800; background: #3b82f6; border-color: #2563eb;">💾 Save Rate</button>
             </div>
@@ -88,7 +150,7 @@ if (!adminSection.includes('id="adminRidersTable"')) {
 // Inject Platform Managers Card right below Rider Fleet Card in Admin
 const managersAdminCard = `
         <!-- Platform Managers & Role-Based Access Control (RBAC) -->
-        <div class="dashboard-card" style="border-left: 4px solid #8b5cf6;">
+        <div class="dashboard-card" id="adminManagersCard" style="border-left: 4px solid #8b5cf6;">
           <div class="dashboard-card-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
             <div style="display: flex; align-items: center; gap: 8px;">
               <span style="font-size: 20px;">👥</span>
@@ -230,12 +292,6 @@ if (!adminSection.includes('id="adminDeliveryChargesCard"')) {
     deliveryChargesAdminCard + '\n      <!-- Sakoli Delivery Zone Geo-Demand Heatmap & Fleet Telemetry -->'
   );
 }
-
-// Inject Change Master Password button in Admin Header area
-adminSection = adminSection.replace(
-  '<button class="btn-secondary" onclick="exportPlatformAuditLog()" style="padding: 8px 14px; color: #fff; border-color: rgba(255,255,255,0.3);">📋 System Audit</button>',
-  '<button class="btn-secondary" onclick="openChangeAdminPassModal()" style="padding: 8px 14px; color: #fff; border-color: rgba(255,255,255,0.3);">🔐 Change Master Password</button>\n            <button class="btn-secondary" onclick="exportPlatformAuditLog()" style="padding: 8px 14px; color: #fff; border-color: rgba(255,255,255,0.3);">📋 System Audit</button>'
-);
 
 const BUILD_VER = Date.now();
 
@@ -834,9 +890,9 @@ const adminHtml = `${headCommon('Parcelकर Master Admin — Platform Operatio
 
       <nav class="nav-center">
         <button class="nav-item-btn active" onclick="show('admin')">📊 Platform Metrics</button>
-        <button class="nav-item-btn" onclick="openCreateVendorCredsModal()">➕ Allocate Credentials</button>
-        <button class="nav-item-btn" onclick="openAddCouponModal()">🏷️ Add Coupon</button>
-        <button class="nav-item-btn" onclick="openAdminZoneModal()">📍 Delivery Zones</button>
+        <button class="nav-item-btn" id="navAdminAllocVendor" onclick="openCreateVendorCredsModal()">➕ Allocate Credentials</button>
+        <button class="nav-item-btn" id="navAdminAddCoupon" onclick="openAddCouponModal()">🏷️ Add Coupon</button>
+        <button class="nav-item-btn" id="navAdminZones" onclick="openAdminZoneModal()">📍 Delivery Zones</button>
       </nav>
 
       <div class="nav-right">

@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="style.css?v=1789137351352">
+  <link rel="stylesheet" href="style.css?v=1789139470865">
   <style>
     /* Standalone Portal Specialized Accents */
     .portal-badge {
@@ -99,9 +99,9 @@
 
       <nav class="nav-center">
         <button class="nav-item-btn active" onclick="show('admin')">📊 Platform Metrics</button>
-        <button class="nav-item-btn" onclick="openCreateVendorCredsModal()">➕ Allocate Credentials</button>
-        <button class="nav-item-btn" onclick="openAddCouponModal()">🏷️ Add Coupon</button>
-        <button class="nav-item-btn" onclick="openAdminZoneModal()">📍 Delivery Zones</button>
+        <button class="nav-item-btn" id="navAdminAllocVendor" onclick="openCreateVendorCredsModal()">➕ Allocate Credentials</button>
+        <button class="nav-item-btn" id="navAdminAddCoupon" onclick="openAddCouponModal()">🏷️ Add Coupon</button>
+        <button class="nav-item-btn" id="navAdminZones" onclick="openAdminZoneModal()">📍 Delivery Zones</button>
       </nav>
 
       <div class="nav-right">
@@ -126,16 +126,16 @@
     <main class="container">
       <!-- 7. SUPER ADMIN EXECUTIVE COMMAND CENTER -->
     <section id="admin" class="panel">
-      <div class="dashboard-card" style="background: linear-gradient(135deg, #18181b, #27272a); color: #fff;">
+      <div class="dashboard-card" id="adminExecutiveCard" style="background: linear-gradient(135deg, #18181b, #27272a); color: #fff;">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
           <div>
-            <h2 style="font-family: var(--font-heading); font-size: 24px;">👑 Super Admin Executive Center</h2>
-            <p style="opacity: 0.8; font-size: 14px;">Platform analytics, restaurant onboarding, fleet dispatch, and commissions.</p>
+            <h2 id="adminExecutiveHeading" style="font-family: var(--font-heading); font-size: 24px;">👑 Super Admin Executive Center</h2>
+            <p id="adminExecutiveDesc" style="opacity: 0.8; font-size: 14px;">Platform analytics, restaurant onboarding, fleet dispatch, and commissions.</p>
           </div>
           <div style="display: flex; gap: 8px;">
             <button class="btn-primary" onclick="triggerAdminDataSync()" style="margin: 0; padding: 8px 14px;">🔄 Refresh Realtime Data</button>
-            <button class="btn-secondary" onclick="openChangeAdminPassModal()" style="padding: 8px 14px; color: #fff; border-color: rgba(255,255,255,0.3);">🔐 Change Master Password</button>
-            <button class="btn-secondary" onclick="exportPlatformAuditLog()" style="padding: 8px 14px; color: #fff; border-color: rgba(255,255,255,0.3);">📋 System Audit</button>
+            <button class="btn-secondary" id="btnAdminChangeMasterPass" onclick="openChangeAdminPassModal()" style="padding: 8px 14px; color: #fff; border-color: rgba(255,255,255,0.3);">🔐 Change Master Password</button>
+            <button class="btn-secondary" id="btnAdminSystemAudit" onclick="exportPlatformAuditLog()" style="padding: 8px 14px; color: #fff; border-color: rgba(255,255,255,0.3);">📋 System Audit</button>
           </div>
         </div>
       </div>
@@ -159,7 +159,7 @@
         </div>
       </div>
       <!-- Pending Restaurant Approvals & Vendor Management -->
-      <div class="dashboard-card">
+      <div class="dashboard-card" id="adminRestaurantsCard">
         <div class="dashboard-card-title" style="display: flex; justify-content: space-between; align-items: center;">
           <span>🍽️ Restaurant Partner Management &amp; KYC</span>
           <button class="btn-primary" onclick="openCreateVendorCredsModal()" style="padding: 4px 12px; font-size: 11px; font-weight:700;">➕ Allocate Credentials</button>
@@ -171,7 +171,7 @@
       </div>
       
         <!-- Delivery Fleet & Rider Credential Management -->
-        <div class="dashboard-card" style="border-left: 4px solid #3b82f6;">
+        <div class="dashboard-card" id="adminRidersCard" style="border-left: 4px solid #3b82f6;">
           <div class="dashboard-card-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
             <div style="display: flex; align-items: center; gap: 8px;">
               <span style="font-size: 20px;">🛵</span>
@@ -186,7 +186,7 @@
           </p>
 
           <!-- RIDER COMMISSION PER PARCEL CONFIGURATION BANNER -->
-          <div style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(16, 185, 129, 0.05)); border: 1.5px solid rgba(59, 130, 246, 0.25); border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div id="adminRiderCommissionBanner" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(16, 185, 129, 0.05)); border: 1.5px solid rgba(59, 130, 246, 0.25); border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
             <div style="display: flex; align-items: center; gap: 12px;">
               <div style="font-size: 26px; background: #eff6ff; border-radius: 10px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(59,130,246,0.15);">
                 💰
@@ -204,7 +204,7 @@
 
             <div style="display: flex; align-items: center; gap: 8px; background: var(--bg-surface, #fff); padding: 6px 12px; border-radius: 10px; border: 1px solid var(--border-color, #e2e8f0); box-shadow: 0 1px 4px rgba(0,0,0,0.04);">
               <span style="font-size: 15px; font-weight: 900; color: #10b981;">₹</span>
-              <input type="number" id="globalRiderCommissionInput" class="input-field" style="width: 85px; margin: 0; padding: 5px 8px; font-size: 15px; font-weight: 800; text-align: center; border: 1.5px solid #3b82f6; border-radius: 6px;" min="0" step="5" placeholder="40">
+              <input type="number" id="globalRiderCommissionInput" class="input-field" style="width: 85px; margin: 0; padding: 5px 8px; font-size: 15px; font-weight: 800; text-align: center; border: 1.5px solid #3b82f6; border-radius: 6px;" min="0" step="5" placeholder="30">
               <span style="font-size: 12px; font-weight: 700; color: var(--text-muted);">/ parcel</span>
               <button type="button" class="btn-primary" onclick="saveAdminGlobalRiderCommission()" style="margin: 0; padding: 6px 14px; font-size: 12px; font-weight: 800; background: #3b82f6; border-color: #2563eb;">💾 Save Rate</button>
             </div>
@@ -217,7 +217,7 @@
 
         
         <!-- Platform Managers & Role-Based Access Control (RBAC) -->
-        <div class="dashboard-card" style="border-left: 4px solid #8b5cf6;">
+        <div class="dashboard-card" id="adminManagersCard" style="border-left: 4px solid #8b5cf6;">
           <div class="dashboard-card-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
             <div style="display: flex; align-items: center; gap: 8px;">
               <span style="font-size: 20px;">👥</span>
@@ -236,7 +236,7 @@
         </div>
 
         <!-- Delivery Cities & Geofenced Service Zones Management (Admin Controlled) -->
-      <div class="dashboard-card" style="border-left: 4px solid #10b981;">
+      <div class="dashboard-card" id="adminZonesCard" style="border-left: 4px solid #10b981;">
         <div class="dashboard-card-title">
           <div style="display: flex; align-items: center; gap: 8px;">
             <span style="font-size: 20px;">📍</span>
@@ -258,7 +258,7 @@
         </div>
       </div>
       <!-- Dynamic Surge & Weather Dispatch Switchboard -->
-      <div class="dashboard-card" style="border-left: 4px solid #ea580c;">
+      <div class="dashboard-card" id="adminSurgeCard" style="border-left: 4px solid #ea580c;">
         <div class="dashboard-card-title">
           <div style="display: flex; align-items: center; gap: 8px;">
             <span style="font-size: 20px;">⚡</span>
@@ -405,7 +405,7 @@
         </div>
 
       <!-- Sakoli Delivery Zone Geo-Demand Heatmap & Fleet Telemetry -->
-      <div class="dashboard-card">
+      <div class="dashboard-card" id="adminHeatmapCard">
         <div class="dashboard-card-title">
           <div style="display: flex; align-items: center; gap: 8px;">
             <span style="font-size: 20px;">🗺️</span>
@@ -438,7 +438,7 @@
         </div>
       </div>
       <!-- Live Rider Fleet Telemetry & Radar Map -->
-      <div class="dashboard-card">
+      <div class="dashboard-card" id="adminRadarCard">
         <div class="dashboard-card-title">
           <span>🛵 Live Delivery Fleet Radar &amp; Telemetry</span>
           <button class="btn-secondary" onclick="simulateFleetMovement()">🔄 Refresh Fleet GPS</button>
@@ -449,7 +449,7 @@
         </div>
       </div>
       <!-- Live Dispatch & Rider Assignment Console -->
-      <div class="dashboard-card">
+      <div class="dashboard-card" id="adminDispatchCard">
         <div class="dashboard-card-title">
           <span>🚴 Rider Dispatch Console (Unassigned Ready Orders)</span>
           <button class="btn-secondary" onclick="autoDispatchOrders()">⚡ 1-Click Auto Dispatch</button>
@@ -459,7 +459,7 @@
         </div>
       </div>
       <!-- Financial Settlements Ledger -->
-      <div class="dashboard-card">
+      <div class="dashboard-card" id="adminSettlementsCard">
         <div class="dashboard-card-title">
           <span>💰 Restaurant Financial Settlements</span>
         </div>
@@ -468,7 +468,7 @@
         </div>
       </div>
       <!-- Global Coupons & Campaigns -->
-      <div class="dashboard-card">
+      <div class="dashboard-card" id="adminCouponsCard">
         <div class="dashboard-card-title">
           <span>🎟️ Promo Codes &amp; Marketing Discounts</span>
           <button class="btn-secondary" onclick="openAddCouponModal()">+ Create New Coupon</button>
@@ -478,7 +478,7 @@
         </div>
       </div>
       <!-- Customer Disputes & Automated Refunds Console -->
-      <div class="dashboard-card">
+      <div class="dashboard-card" id="adminDisputesCard">
         <div class="dashboard-card-title">
           <span>⚖️ Customer Dispute &amp; Instant Refund Desk</span>
           <span class="badge" id="adminDisputeBadge" style="background: #fee2e2; color: #b91c1c;">0 Pending Issues</span>
@@ -488,7 +488,7 @@
         </div>
       </div>
       <!-- Platform Accounting & Reports CSV Exporter -->
-      <div class="dashboard-card" style="border-left: 4px solid #0284c7;">
+      <div class="dashboard-card" id="adminExportsCard" style="border-left: 4px solid #0284c7;">
         <div class="dashboard-card-title">
           <div style="display: flex; align-items: center; gap: 8px;">
             <span style="font-size: 20px;">📥</span>
@@ -518,7 +518,7 @@
         </div>
       </div>
       <!-- Firebase Cloud Connection & Configuration -->
-      <div class="dashboard-card">
+      <div class="dashboard-card" id="adminFirebaseCard">
         <div class="dashboard-card-title">
           <span>☁️ Firebase Cloud Sync &amp; Rules</span>
           <span id="cloudStatusBadge" class="badge">Local Storage Active</span>
@@ -2546,7 +2546,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js?v=1789137351352"></script>
+  <script src="app.js?v=1789139470865"></script>
   <script src="translations.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {

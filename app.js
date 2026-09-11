@@ -217,7 +217,7 @@ const SEED_DATA = {
     superAdminName: 'Rakesh Bhaskar'
   },
   settings: {
-    riderDeliveryCommission: 40,
+    riderDeliveryCommission: 30,
     deliveryBase: 30,
     hideDeliveryCharges: true,
     deliveryAutoAddStrategy: 'cart_split',
@@ -438,12 +438,20 @@ if (typeof fetch !== 'undefined') {
     .then(res => res.json())
     .then(data => {
       if (data && data.settings) {
+        // Respect locally saved commission rate if set by admin
+        try {
+          const savedComm = localStorage.getItem('parcelkar_rider_commission');
+          if (savedComm !== null && !isNaN(Number(savedComm))) {
+            data.settings.riderDeliveryCommission = Number(savedComm);
+          }
+        } catch (e) {}
         Object.assign(appData.settings, data.settings);
         setSharedSettingsCookie(appData.settings);
         saveState();
         if (typeof updateBillTotals === 'function') updateBillTotals();
         if (typeof renderCustomerView === 'function') renderCustomerView();
         if (typeof renderCartView === 'function') renderCartView();
+        if (typeof renderAdminView === 'function') renderAdminView();
       }
     })
     .catch(() => {});
@@ -466,8 +474,14 @@ try {
 
 if (appData) {
   if (!appData.settings) appData.settings = {};
+  try {
+    const savedComm = localStorage.getItem('parcelkar_rider_commission');
+    if (savedComm !== null && !isNaN(Number(savedComm))) {
+      appData.settings.riderDeliveryCommission = Number(savedComm);
+    }
+  } catch (e) {}
   if (appData.settings.riderDeliveryCommission === undefined) {
-    appData.settings.riderDeliveryCommission = 40;
+    appData.settings.riderDeliveryCommission = 30;
   }
   if (!appData.adminSettings) appData.adminSettings = {};
   appData.adminSettings.superAdminName = 'Rakesh Bhaskar';
@@ -3863,7 +3877,7 @@ function riderCompleteDelivery(orderId) {
 
   const defaultComm = (appData.settings && appData.settings.riderDeliveryCommission !== undefined)
     ? Number(appData.settings.riderDeliveryCommission)
-    : 40;
+    : 30;
   const riderCommission = (rider && rider.commissionPerDelivery !== null && rider.commissionPerDelivery !== undefined)
     ? Number(rider.commissionPerDelivery)
     : defaultComm;
@@ -3892,12 +3906,36 @@ function renderAdminView() {
   if (!Array.isArray(appData.managers)) appData.managers = [];
   if (!Array.isArray(appData.disputes)) appData.disputes = [];
   if (!Array.isArray(appData.deliveryZones)) appData.deliveryZones = [];
+  if (!appData.settings) appData.settings = {};
+  if (appData.settings.riderDeliveryCommission === undefined) {
+    try {
+      const savedComm = localStorage.getItem('parcelkar_rider_commission');
+      if (savedComm !== null && !isNaN(Number(savedComm))) {
+        appData.settings.riderDeliveryCommission = Number(savedComm);
+      }
+    } catch (e) {}
+    if (appData.settings.riderDeliveryCommission === undefined) {
+      appData.settings.riderDeliveryCommission = 30;
+    }
+  }
+  if (!appData.settings.coupons) {
+    appData.settings.coupons = (SEED_DATA && SEED_DATA.settings && SEED_DATA.settings.coupons) ? JSON.parse(JSON.stringify(SEED_DATA.settings.coupons)) : {};
+  }
 
   const globalCommInput = document.getElementById('globalRiderCommissionInput');
   if (globalCommInput) {
-    globalCommInput.value = (appData.settings && appData.settings.riderDeliveryCommission !== undefined)
-      ? appData.settings.riderDeliveryCommission
-      : 40;
+    let commVal = 30;
+    if (appData.settings && appData.settings.riderDeliveryCommission !== undefined) {
+      commVal = appData.settings.riderDeliveryCommission;
+    } else {
+      try {
+        const savedComm = localStorage.getItem('parcelkar_rider_commission');
+        if (savedComm !== null && !isNaN(Number(savedComm))) {
+          commVal = Number(savedComm);
+        }
+      } catch (e) {}
+    }
+    globalCommInput.value = commVal;
   }
 
   const gmv = appData.orders.filter(o => o.status !== 'Cancelled').reduce((sum, o) => sum + (o.total || 0), 0);
@@ -4008,7 +4046,7 @@ function renderAdminView() {
                 <td>${rd.vehicle || '🛵 Motorcycle'}</td>
                 <td>
                   <span style="font-weight: 800; color: #10b981; font-size: 13px;">
-                    ₹${rd.commissionPerDelivery !== undefined && rd.commissionPerDelivery !== null && rd.commissionPerDelivery !== '' ? rd.commissionPerDelivery : (appData.settings?.riderDeliveryCommission || 40)}
+                    ₹${rd.commissionPerDelivery !== undefined && rd.commissionPerDelivery !== null && rd.commissionPerDelivery !== '' ? rd.commissionPerDelivery : (appData.settings?.riderDeliveryCommission || 30)}
                   </span>
                   <span style="font-size: 10px; color: var(--text-muted); display: block;">per delivery</span>
                 </td>
@@ -4084,7 +4122,7 @@ function renderAdminView() {
 
   const couponList = document.getElementById('adminCouponList');
   if (couponList) {
-    couponList.innerHTML = Object.entries(appData.settings.coupons).map(([code, c]) => `
+    couponList.innerHTML = Object.entries((appData.settings && appData.settings.coupons) || {}).map(([code, c]) => `
       <div class="food-row" style="margin-bottom: 8px;">
         <div>
           <b style="color:var(--primary);">${code}</b> • ${c.type === 'percent' ? `${c.value}% OFF` : `₹${c.value} FLAT`} (Min Spend ₹${c.min})
@@ -4118,6 +4156,11 @@ function renderAdminView() {
   // Render Platform Managers & Role-Based Access Control
   if (typeof renderAdminManagersTable === 'function') {
     renderAdminManagersTable();
+  }
+
+  // Apply Granular Role-Based Access Control (RBAC) to enforce view restrictions for Managers
+  if (typeof applyAdminRolePermissions === 'function') {
+    applyAdminRolePermissions();
   }
 }
 
@@ -10328,6 +10371,160 @@ function togglePinVisibility(elementId, actualPin) {
 // -------------------------------------------------------------
 // A. SUPER ADMIN AUTHENTICATION GATE & MASTER PASSWORD
 // -------------------------------------------------------------
+function applyAdminRolePermissions() {
+  let rawSession = null;
+  try {
+    rawSession = sessionStorage.getItem('parcelkar_admin_session') || localStorage.getItem('parcelkar_admin_session');
+  } catch (e) {}
+
+  let session = null;
+  if (rawSession) {
+    try { session = JSON.parse(rawSession); } catch(e) {}
+  }
+
+  const isSuperAdmin = !session || session.isSuperAdmin === true;
+  const perms = isSuperAdmin ? ['all'] : (session.permissions || []);
+  const role = session ? (session.assignedRole || session.role || 'admin') : 'admin';
+  const roleTitle = session ? (session.roleTitle || 'Platform Manager') : 'Super Admin (Executive)';
+  const userName = session ? (session.name || 'Admin') : 'Rakesh Bhaskar';
+
+  // Helper to toggle visibility with .rbac-hidden and display styling
+  const setVisible = (idOrEl, isVisible) => {
+    const el = typeof idOrEl === 'string' ? document.getElementById(idOrEl) : idOrEl;
+    if (el) {
+      if (isVisible) {
+        el.classList.remove('rbac-hidden');
+        el.classList.remove('hidden');
+        el.style.display = '';
+      } else {
+        el.classList.add('rbac-hidden');
+        el.classList.add('hidden');
+        el.style.display = 'none';
+      }
+    }
+  };
+
+  // 1. Top user profile badge
+  const userLabel = document.getElementById('userLabel');
+  if (userLabel) {
+    userLabel.textContent = isSuperAdmin ? '👑 Rakesh Bhaskar (Super Admin)' : `👤 ${userName} (${roleTitle})`;
+  }
+
+  // 2. Logo badge
+  const portalBadges = document.querySelectorAll('.portal-badge.badge-admin');
+  portalBadges.forEach(b => {
+    b.textContent = isSuperAdmin ? '🛡️ Master Admin' : `👤 ${roleTitle}`;
+  });
+
+  // 3. Manager Notice Banner at top of Admin dashboard
+  let noticeEl = document.getElementById('adminManagerRoleNotice');
+  if (!isSuperAdmin) {
+    if (!noticeEl) {
+      const container = document.querySelector('#adminDashboardContainer main') || document.querySelector('#admin') || document.querySelector('main');
+      if (container) {
+        noticeEl = document.createElement('div');
+        noticeEl.id = 'adminManagerRoleNotice';
+        container.insertBefore(noticeEl, container.firstChild);
+      }
+    }
+    if (noticeEl) {
+      noticeEl.className = '';
+      noticeEl.style.display = 'flex';
+      noticeEl.style.background = 'linear-gradient(135deg, rgba(139,92,246,0.12), rgba(59,130,246,0.08))';
+      noticeEl.style.border = '1.5px solid #8b5cf6';
+      noticeEl.style.borderRadius = '12px';
+      noticeEl.style.padding = '12px 18px';
+      noticeEl.style.marginBottom = '16px';
+      noticeEl.style.alignItems = 'center';
+      noticeEl.style.justifyContent = 'space-between';
+      noticeEl.style.flexWrap = 'wrap';
+      noticeEl.style.gap = '10px';
+      noticeEl.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="font-size: 26px;">🛡️</div>
+          <div>
+            <div style="font-weight: 800; font-size: 14px; color: #6d28d9;">
+              Authorized Manager Session: ${userName} (${roleTitle})
+            </div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+              Active Permissions: <b>${perms.join(', ')}</b>. Super-Admin master configuration and unauthorized options are restricted.
+            </div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <span style="background: #8b5cf6; color: #fff; font-weight: 800; padding: 4px 12px; border-radius: 999px; font-size: 11px;">
+            ${(typeof ROLE_DEFINITIONS !== 'undefined' && ROLE_DEFINITIONS[role] && ROLE_DEFINITIONS[role].badge) || '📋 Manager'}
+          </span>
+          <button class="btn-danger" onclick="adminLogout()" style="padding: 4px 10px; font-size: 11px;">🚪 Logout</button>
+        </div>
+      `;
+    }
+  } else {
+    if (noticeEl) {
+      noticeEl.style.display = 'none';
+      noticeEl.classList.add('rbac-hidden');
+    }
+  }
+
+  // 4. Executive Center Card
+  const headingEl = document.getElementById('adminExecutiveHeading') || document.querySelector('#admin h2');
+  if (headingEl) {
+    headingEl.textContent = isSuperAdmin ? '👑 Super Admin Executive Center' : `👤 ${userName} — ${roleTitle}`;
+  }
+  const descEl = document.getElementById('adminExecutiveDesc') || document.querySelector('#admin .dashboard-card p');
+  if (descEl) {
+    descEl.textContent = isSuperAdmin
+      ? 'Platform analytics, restaurant onboarding, fleet dispatch, and commissions.'
+      : `Operational Workspace for ${roleTitle}. Manage assigned modules securely.`;
+  }
+
+  // Change Master Password & System Audit buttons: ONLY SUPER ADMIN
+  setVisible('btnAdminChangeMasterPass', isSuperAdmin);
+  setVisible('btnAdminSystemAudit', isSuperAdmin);
+
+  // 5. Platform Managers & RBAC Card: ONLY SUPER ADMIN
+  setVisible('adminManagersCard', isSuperAdmin);
+
+  // 6. Delivery Charges Switchboard: ONLY SUPER ADMIN
+  setVisible('adminDeliveryChargesCard', isSuperAdmin);
+
+  // 7. Global Rider Commission Rate Banner inside Rider Fleet Card: ONLY SUPER ADMIN
+  setVisible('adminRiderCommissionBanner', isSuperAdmin);
+
+  // 8. Firebase Cloud Sync Card: ONLY SUPER ADMIN
+  setVisible('adminFirebaseCard', isSuperAdmin);
+
+  // 9. Module permissions
+  const canRestaurants = isSuperAdmin || perms.includes('restaurants') || perms.includes('kyc') || perms.includes('menu') || perms.includes('all_except_master_pass');
+  const canRiders = isSuperAdmin || perms.includes('riders') || perms.includes('all_except_master_pass');
+  const canDispatch = isSuperAdmin || perms.includes('dispatch') || perms.includes('orders') || perms.includes('all_except_master_pass');
+  const canTracking = isSuperAdmin || perms.includes('tracking') || perms.includes('dispatch') || perms.includes('all_except_master_pass');
+  const canSettlements = isSuperAdmin || perms.includes('settlements') || perms.includes('payouts') || perms.includes('all_except_master_pass');
+  const canCoupons = isSuperAdmin || perms.includes('restaurants') || perms.includes('marketing') || perms.includes('all_except_master_pass');
+  const canDisputes = isSuperAdmin || perms.includes('disputes') || perms.includes('support') || perms.includes('all_except_master_pass');
+  const canExports = isSuperAdmin || perms.includes('finance') || perms.includes('reports') || perms.includes('settlements') || perms.includes('all_except_master_pass');
+  const canZones = isSuperAdmin || perms.includes('dispatch') || perms.includes('all_except_master_pass');
+  const canSurge = isSuperAdmin || perms.includes('dispatch') || perms.includes('all_except_master_pass');
+
+  setVisible('adminRestaurantsCard', canRestaurants);
+  setVisible('adminRidersCard', canRiders);
+  setVisible('adminDispatchCard', canDispatch);
+  setVisible('adminHeatmapCard', canTracking);
+  setVisible('adminRadarCard', canTracking);
+  setVisible('adminSettlementsCard', canSettlements);
+  setVisible('adminCouponsCard', canCoupons);
+  setVisible('adminDisputesCard', canDisputes);
+  setVisible('adminExportsCard', canExports);
+  setVisible('adminZonesCard', canZones);
+  setVisible('adminSurgeCard', canSurge);
+
+  // Top navigation bar buttons
+  setVisible('navAdminAllocVendor', canRestaurants);
+  setVisible('navAdminAddCoupon', canCoupons);
+  setVisible('navAdminZones', canZones);
+}
+window.applyAdminRolePermissions = applyAdminRolePermissions;
+
 function checkAdminAuth() {
   const gateEl = document.getElementById('adminAuthGate');
   const dashEl = document.getElementById('adminDashboardContainer');
@@ -10349,6 +10546,9 @@ function checkAdminAuth() {
       const userLabel = document.getElementById('userLabel');
       if (userLabel) {
         userLabel.textContent = session.isSuperAdmin ? '👑 Rakesh Bhaskar (Super Admin)' : (session.name || 'Admin');
+      }
+      if (typeof applyAdminRolePermissions === 'function') {
+        applyAdminRolePermissions();
       }
       return true;
     }
@@ -10745,7 +10945,7 @@ function openCreateRiderCredsModal(riderId = null) {
     if (elPin) elPin.value = Math.floor(1000 + Math.random() * 9000);
     if (elVehicle) elVehicle.value = 'Motorcycle';
     if (elApproved) elApproved.checked = true;
-    if (elComm) elComm.value = (appData.settings && appData.settings.riderDeliveryCommission) ? appData.settings.riderDeliveryCommission : 40;
+    if (elComm) elComm.value = (appData.settings && appData.settings.riderDeliveryCommission !== undefined) ? appData.settings.riderDeliveryCommission : 30;
   }
   openModal('createRiderCredsModal');
 }
@@ -11151,7 +11351,28 @@ function saveAdminGlobalRiderCommission() {
   }
   if (!appData.settings) appData.settings = {};
   appData.settings.riderDeliveryCommission = val;
+  try {
+    localStorage.setItem('parcelkar_rider_commission', String(val));
+  } catch (e) {}
   saveState();
+  setSharedSettingsCookie(appData.settings);
+
+  // Notify other open tabs via BroadcastChannel
+  if (typeof settingsBroadcastChannel !== 'undefined' && settingsBroadcastChannel) {
+    try {
+      settingsBroadcastChannel.postMessage({ settings: appData.settings });
+    } catch (e) {}
+  }
+
+  // Push to serverless API
+  if (typeof fetch !== 'undefined') {
+    fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(appData.settings)
+    }).catch(() => {});
+  }
+
   showToast(`✅ रायडर प्रति पार्सल डिलिव्हरी कमिशन सेव्ह झाले: ₹${val}! 💰`, 'success');
   alert(`✅ Rider Delivery Commission Updated!\n\nनवीन कमिशन दर: ₹${val} प्रति यशस्वी पार्सल डिलिव्हरी\n(New Rate: ₹${val} per successful delivery)\n\nसर्व रायडर्सना डिलिव्हरी पूर्ण झाल्यावर हेच कमिशन जमा होईल.`);
   if (typeof renderAdminView === 'function') renderAdminView();

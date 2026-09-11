@@ -7188,5 +7188,11 @@ html, body {
   color: #ff7a59 !important;
 }
 
+/* Platform Manager RBAC Access Restriction */
+.rbac-hidden {
+  display: none !important;
+}
+
+
 
 

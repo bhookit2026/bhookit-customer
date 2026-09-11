@@ -2,7 +2,7 @@
 // Vercel Serverless Function to sync platform settings across all subdomains & devices
 
 let globalSettings = {
-  riderDeliveryCommission: 40,
+  riderDeliveryCommission: 30,
   deliveryBase: 30,
   hideDeliveryCharges: true,
   deliveryAutoAddStrategy: 'cart_split',
