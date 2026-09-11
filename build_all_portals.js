@@ -24,10 +24,10 @@ riderSection = riderSection.replace('id="delivery" class="panel hidden"', 'id="d
 adminSection = adminSection.replace('id="admin" class="panel hidden"', 'id="admin" class="panel"');
 partnerRegSection = partnerRegSection.replace('id="partnerRegistration" class="panel hidden"', 'id="partnerRegistration" class="panel"');
 
-// Inject "Allocate Credentials" button into Admin's Restaurant Management header
+// Inject smart buttons into Admin's Restaurant Management header with clean action wrapper
 adminSection = adminSection.replace(
   '<button class="btn-secondary" onclick="openInvitePartnerModal()" style="padding: 4px 12px; font-size: 11px;">+ Invite Partner</button>',
-  '<button class="btn-primary" onclick="openCreateVendorCredsModal()" style="padding: 4px 12px; font-size: 11px; font-weight:700;">➕ Allocate Credentials</button>\n            <button class="btn-secondary" onclick="openInvitePartnerModal()" style="padding: 4px 12px; font-size: 11px;">+ Invite Partner</button>'
+  '<div class="dashboard-header-actions">\n              <button class="btn-smart-header btn-primary" onclick="openCreateVendorCredsModal()">➕ Allocate Credentials</button>\n              <button class="btn-smart-header btn-secondary" onclick="openInvitePartnerModal()">+ Invite Partner</button>\n            </div>'
 );
 
 // Add specific IDs and attributes to Admin cards for fine-grained Role-Based Access Control (RBAC)
@@ -44,8 +44,8 @@ adminSection = adminSection.replace(
   '<p id="adminExecutiveDesc" style="opacity: 0.8; font-size: 14px;">Platform analytics, restaurant onboarding, fleet dispatch, and commissions.</p>'
 );
 adminSection = adminSection.replace(
-  '<button class="btn-secondary" onclick="exportPlatformAuditLog()" style="padding: 8px 14px; color: #fff; border-color: rgba(255,255,255,0.3);">📋 System Audit</button>',
-  '<button class="btn-secondary" id="btnAdminChangeMasterPass" onclick="openChangeAdminPassModal()" style="padding: 8px 14px; color: #fff; border-color: rgba(255,255,255,0.3);">🔐 Change Master Password</button>\n            <button class="btn-secondary" id="btnAdminSystemAudit" onclick="exportPlatformAuditLog()" style="padding: 8px 14px; color: #fff; border-color: rgba(255,255,255,0.3);">📋 System Audit</button>'
+  '<div style="display: flex; gap: 8px;">\n            <button class="btn-primary" onclick="triggerAdminDataSync()" style="margin: 0; padding: 8px 14px;">🔄 Refresh Realtime Data</button>\n            <button class="btn-secondary" onclick="exportPlatformAuditLog()" style="padding: 8px 14px; color: #fff; border-color: rgba(255,255,255,0.3);">📋 System Audit</button>\n          </div>',
+  '<div class="dashboard-header-actions" style="gap: 8px;">\n            <button class="btn-exec-refresh" id="btnAdminDataSync" onclick="triggerAdminDataSync()"><span class="btn-icon-spin">🔄</span> Refresh Realtime Data</button>\n            <button class="btn-exec-glass" id="btnAdminChangeMasterPass" onclick="openChangeAdminPassModal()">🔐 Change Master Password</button>\n            <button class="btn-exec-glass" id="btnAdminSystemAudit" onclick="exportPlatformAuditLog()">📋 System Audit</button>\n          </div>'
 );
 adminSection = adminSection.replace(
   '<!-- Pending Restaurant Approvals & Vendor Management -->\n      <div class="dashboard-card">',
@@ -92,6 +92,27 @@ adminSection = adminSection.replace(
   '<!-- Firebase Cloud Connection & Configuration -->\n      <div class="dashboard-card" id="adminFirebaseCard">'
 );
 
+// Polish card header action buttons across admin sections
+adminSection = adminSection.replace(
+  '<button class="btn-primary" onclick="openAdminAddZoneModal()" style="margin: 0; padding: 6px 14px; font-size: 13px;">\n            + Add New Delivery Area 📍\n          </button>',
+  '<div class="dashboard-header-actions">\n            <button class="btn-smart-header" onclick="openAdminAddZoneModal()" style="background: linear-gradient(135deg, #10b981, #059669); color: #fff; border: 1px solid #059669; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);">📍 Add Delivery Area</button>\n          </div>'
+);
+
+adminSection = adminSection.replace(
+  '<button class="btn-secondary" onclick="simulateFleetMovement()">🔄 Refresh Fleet GPS</button>',
+  '<div class="dashboard-header-actions">\n            <button class="btn-smart-header btn-secondary" onclick="simulateFleetMovement()">🔄 Refresh Fleet GPS</button>\n          </div>'
+);
+
+adminSection = adminSection.replace(
+  '<button class="btn-secondary" onclick="autoDispatchOrders()">⚡ 1-Click Auto Dispatch</button>',
+  '<div class="dashboard-header-actions">\n            <button class="btn-smart-header" onclick="autoDispatchOrders()" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; border: 1px solid #d97706; box-shadow: 0 2px 8px rgba(217, 119, 6, 0.3);">⚡ 1-Click Auto Dispatch</button>\n          </div>'
+);
+
+adminSection = adminSection.replace(
+  '<button class="btn-secondary" onclick="openAddCouponModal()">+ Create New Coupon</button>',
+  '<div class="dashboard-header-actions">\n            <button class="btn-smart-header btn-secondary" onclick="openAddCouponModal()">🏷️ + Create New Coupon</button>\n          </div>'
+);
+
 // Inject Rider Fleet Credential Center right below Restaurant Management in Admin
 const riderFleetAdminCard = `
         <!-- Delivery Fleet & Rider Credential Management -->
@@ -101,8 +122,8 @@ const riderFleetAdminCard = `
               <span style="font-size: 20px;">🛵</span>
               <span>Delivery Fleet &amp; Rider Credentials Center</span>
             </div>
-            <div style="display: flex; gap: 8px;">
-              <button class="btn-primary" onclick="openCreateRiderCredsModal()" style="padding: 4px 12px; font-size: 11px; font-weight: 700;">➕ Add Rider Credentials</button>
+            <div class="dashboard-header-actions">
+              <button class="btn-smart-header btn-primary" onclick="openCreateRiderCredsModal()" style="background: linear-gradient(135deg, #3b82f6, #2563eb); border-color: #2563eb;">➕ Add Rider Credentials</button>
             </div>
           </div>
           <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
@@ -130,7 +151,7 @@ const riderFleetAdminCard = `
               <span style="font-size: 15px; font-weight: 900; color: #10b981;">₹</span>
               <input type="number" id="globalRiderCommissionInput" class="input-field" style="width: 85px; margin: 0; padding: 5px 8px; font-size: 15px; font-weight: 800; text-align: center; border: 1.5px solid #3b82f6; border-radius: 6px;" min="0" step="5" placeholder="30">
               <span style="font-size: 12px; font-weight: 700; color: var(--text-muted);">/ parcel</span>
-              <button type="button" class="btn-primary" onclick="saveAdminGlobalRiderCommission()" style="margin: 0; padding: 6px 14px; font-size: 12px; font-weight: 800; background: #3b82f6; border-color: #2563eb;">💾 Save Rate</button>
+              <button type="button" class="btn-smart-header" onclick="saveAdminGlobalRiderCommission()" style="background: linear-gradient(135deg, #10b981, #059669); color: #fff; border: 1px solid #059669; box-shadow: 0 2px 6px rgba(16,185,129,0.3);">💾 Save Rate</button>
             </div>
           </div>
 
@@ -156,8 +177,8 @@ const managersAdminCard = `
               <span style="font-size: 20px;">👥</span>
               <span>Platform Managers &amp; Role-Based Access Control (RBAC)</span>
             </div>
-            <div style="display: flex; gap: 8px;">
-              <button class="btn-primary" onclick="openCreateManagerModal()" style="padding: 4px 12px; font-size: 11px; font-weight: 700; background: #8b5cf6; border-color: #7c3aed;">➕ Add New Manager</button>
+            <div class="dashboard-header-actions">
+              <button class="btn-smart-header" onclick="openCreateManagerModal()" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: #fff; border: 1px solid #7c3aed; box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);">➕ Add New Manager</button>
             </div>
           </div>
           <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
@@ -910,7 +931,7 @@ const adminHtml = `${headCommon('Parcelकर Master Admin — Platform Operatio
           <span>🛡️</span>
           <span id="userLabel">👑 Rakesh Bhaskar (Super Admin)</span>
         </div>
-        <button class="btn-danger" onclick="adminLogout()" style="padding: 5px 10px; font-size: 12px;" title="Log out of Super Admin">🚪 Logout</button>
+        <button class="btn-logout" onclick="adminLogout()" title="Log out of Super Admin">🚪 Logout</button>
       </div>
     </header>
 

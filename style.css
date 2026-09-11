@@ -957,12 +957,349 @@ header {
   justify-content: space-between;
 }
 
-/* Action Button Rows */
+/* Action Button Rows & Table Action Micro-Buttons */
 .action-btn-group {
-  display: flex;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: nowrap;
+  margin: 0;
+  vertical-align: middle;
+}
+
+.action-btn-group button,
+.btn-action-icon {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 5px 9px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  border-radius: 6px !important;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap !important;
+  width: auto !important;
+  height: 27px !important;
+  line-height: 1 !important;
+  border: 1px solid transparent !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  user-select: none;
+}
+
+.action-btn-group button:hover,
+.btn-action-icon:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12);
+}
+
+.action-btn-group button:active,
+.btn-action-icon:active {
+  transform: translateY(0);
+}
+
+/* Edit Chip */
+.btn-action-icon.btn-secondary,
+.action-btn-group .btn-secondary {
+  background: #f8fafc !important;
+  color: #334155 !important;
+  border-color: #cbd5e1 !important;
+}
+.btn-action-icon.btn-secondary:hover,
+.action-btn-group .btn-secondary:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  border-color: #94a3b8 !important;
+}
+
+/* Suspend Chip */
+.btn-action-icon.btn-danger,
+.action-btn-group .btn-danger {
+  background: #fff1f2 !important;
+  color: #e11d48 !important;
+  border-color: #fecdd3 !important;
+}
+.btn-action-icon.btn-danger:hover,
+.action-btn-group .btn-danger:hover {
+  background: #e11d48 !important;
+  color: #ffffff !important;
+  border-color: #e11d48 !important;
+}
+
+/* Activate Chip */
+.btn-action-icon.btn-accent,
+.action-btn-group .btn-accent {
+  background: #ecfdf5 !important;
+  color: #059669 !important;
+  border-color: #a7f3d0 !important;
+}
+.btn-action-icon.btn-accent:hover,
+.action-btn-group .btn-accent:hover {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+}
+
+/* Delete Chip */
+.btn-action-icon.btn-action-delete,
+.action-btn-group .btn-action-delete {
+  background: #fef2f2 !important;
+  color: #dc2626 !important;
+  border-color: #fecaca !important;
+}
+.btn-action-icon.btn-action-delete:hover,
+.action-btn-group .btn-action-delete:hover {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  border-color: #dc2626 !important;
+}
+
+/* WhatsApp Share Chip */
+.btn-action-icon.btn-whatsapp,
+.action-btn-group .btn-whatsapp {
+  background: #ecfdf5 !important;
+  color: #15803d !important;
+  border-color: #86efac !important;
+}
+.btn-action-icon.btn-whatsapp:hover,
+.action-btn-group .btn-whatsapp:hover {
+  background: #22c55e !important;
+  color: #ffffff !important;
+  border-color: #22c55e !important;
+}
+
+/* Login As Vendor Chip */
+.btn-action-icon.btn-action-login,
+.btn-action-icon.btn-primary,
+.action-btn-group .btn-primary {
+  background: linear-gradient(135deg, #ff4722, #ea580c) !important;
+  color: #ffffff !important;
+  border: 1px solid #ea580c !important;
+  box-shadow: 0 2px 5px rgba(234, 88, 12, 0.28) !important;
+}
+.btn-action-icon.btn-action-login:hover,
+.btn-action-icon.btn-primary:hover,
+.action-btn-group .btn-primary:hover {
+  background: linear-gradient(135deg, #ea580c, #c2410c) !important;
+  box-shadow: 0 4px 10px rgba(234, 88, 12, 0.42) !important;
+}
+
+/* Dark Theme for Action Micro-Buttons */
+[data-theme="dark"] .btn-action-icon.btn-secondary,
+[data-theme="dark"] .action-btn-group .btn-secondary {
+  background: #1e293b !important;
+  color: #cbd5e1 !important;
+  border-color: #475569 !important;
+}
+[data-theme="dark"] .btn-action-icon.btn-secondary:hover,
+[data-theme="dark"] .action-btn-group .btn-secondary:hover {
+  background: #334155 !important;
+  color: #ffffff !important;
+  border-color: #64748b !important;
+}
+[data-theme="dark"] .btn-action-icon.btn-danger,
+[data-theme="dark"] .action-btn-group .btn-danger {
+  background: rgba(225, 29, 72, 0.15) !important;
+  color: #fda4af !important;
+  border-color: rgba(225, 29, 72, 0.35) !important;
+}
+[data-theme="dark"] .btn-action-icon.btn-danger:hover,
+[data-theme="dark"] .action-btn-group .btn-danger:hover {
+  background: #e11d48 !important;
+  color: #ffffff !important;
+}
+[data-theme="dark"] .btn-action-icon.btn-accent,
+[data-theme="dark"] .action-btn-group .btn-accent {
+  background: rgba(5, 150, 105, 0.15) !important;
+  color: #6ee7b7 !important;
+  border-color: rgba(5, 150, 105, 0.35) !important;
+}
+[data-theme="dark"] .btn-action-icon.btn-accent:hover,
+[data-theme="dark"] .action-btn-group .btn-accent:hover {
+  background: #059669 !important;
+  color: #ffffff !important;
+}
+[data-theme="dark"] .btn-action-icon.btn-whatsapp,
+[data-theme="dark"] .action-btn-group .btn-whatsapp {
+  background: rgba(34, 197, 94, 0.15) !important;
+  color: #86efac !important;
+  border-color: rgba(34, 197, 94, 0.35) !important;
+}
+[data-theme="dark"] .btn-action-icon.btn-whatsapp:hover,
+[data-theme="dark"] .action-btn-group .btn-whatsapp:hover {
+  background: #22c55e !important;
+  color: #ffffff !important;
+}
+
+/* Card Header Smart Actions */
+.dashboard-card-title button,
+.dashboard-card-title .btn-primary,
+.dashboard-card-title .btn-secondary {
+  width: auto !important;
+}
+
+.dashboard-header-actions {
+  display: inline-flex;
+  align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  margin-top: 10px;
+  margin-left: auto;
+}
+
+.btn-smart-header {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 14px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap !important;
+  width: auto !important;
+  line-height: 1.2 !important;
+  border: 1px solid transparent;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.btn-smart-header:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.14);
+}
+.btn-smart-header:active {
+  transform: translateY(0);
+}
+
+.btn-smart-header.btn-primary {
+  background: linear-gradient(135deg, var(--primary, #ff4722), #ff6b4a) !important;
+  color: #fff !important;
+  box-shadow: 0 2px 8px rgba(255, 71, 34, 0.3) !important;
+}
+.btn-smart-header.btn-primary:hover {
+  box-shadow: 0 4px 14px rgba(255, 71, 34, 0.45) !important;
+}
+
+.btn-smart-header.btn-secondary {
+  background: #f8fafc !important;
+  color: #334155 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+.btn-smart-header.btn-secondary:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  border-color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .btn-smart-header.btn-secondary {
+  background: #1e293b !important;
+  color: #e2e8f0 !important;
+  border-color: #475569 !important;
+}
+[data-theme="dark"] .btn-smart-header.btn-secondary:hover {
+  background: #334155 !important;
+  color: #ffffff !important;
+}
+
+/* Executive Center Smart Action Buttons */
+.btn-exec-refresh {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #ff4722, #ea580c) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  padding: 8px 16px !important;
+  border-radius: 10px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.4) !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  width: auto !important;
+}
+.btn-exec-refresh:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(234, 88, 12, 0.55) !important;
+  filter: brightness(1.08);
+}
+.btn-exec-refresh:active {
+  transform: translateY(0);
+}
+.btn-exec-refresh.spinning .btn-icon-spin {
+  animation: spinAdminSync 0.75s linear infinite;
+  display: inline-block;
+}
+@keyframes spinAdminSync {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.btn-exec-glass {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.12) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #ffffff !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.3) !important;
+  padding: 8px 16px !important;
+  border-radius: 10px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  width: auto !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+.btn-exec-glass:hover {
+  background: rgba(255, 255, 255, 0.24) !important;
+  border-color: rgba(255, 255, 255, 0.6) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+.btn-exec-glass:active {
+  transform: translateY(0);
+}
+
+/* Logout Button */
+.btn-logout {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px;
+  background: #fef2f2 !important;
+  color: #dc2626 !important;
+  border: 1px solid #fecaca !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  width: auto !important;
+}
+.btn-logout:hover {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  border-color: #dc2626 !important;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.25) !important;
+  transform: translateY(-1px);
+}
+.btn-logout:active {
+  transform: translateY(0);
+}
+[data-theme="dark"] .btn-logout {
+  background: rgba(220, 38, 38, 0.15) !important;
+  border-color: rgba(220, 38, 38, 0.35) !important;
+  color: #fca5a5 !important;
+}
+[data-theme="dark"] .btn-logout:hover {
+  background: #dc2626 !important;
+  color: #ffffff !important;
 }
 
 .btn-secondary {
@@ -5856,26 +6193,6 @@ html, body {
 
 .cred-pin-toggle:hover {
   opacity: 1;
-}
-
-.action-btn-group {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.btn-action-icon {
-  padding: 4px 8px;
-  font-size: 11px;
-  font-weight: 700;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.15s;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
 }
 
 /* ============================================================

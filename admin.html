@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="style.css?v=1789139470865">
+  <link rel="stylesheet" href="style.css?v=1789143238491">
   <style>
     /* Standalone Portal Specialized Accents */
     .portal-badge {
@@ -119,7 +119,7 @@
           <span>🛡️</span>
           <span id="userLabel">👑 Rakesh Bhaskar (Super Admin)</span>
         </div>
-        <button class="btn-danger" onclick="adminLogout()" style="padding: 5px 10px; font-size: 12px;" title="Log out of Super Admin">🚪 Logout</button>
+        <button class="btn-logout" onclick="adminLogout()" title="Log out of Super Admin">🚪 Logout</button>
       </div>
     </header>
 
@@ -132,10 +132,10 @@
             <h2 id="adminExecutiveHeading" style="font-family: var(--font-heading); font-size: 24px;">👑 Super Admin Executive Center</h2>
             <p id="adminExecutiveDesc" style="opacity: 0.8; font-size: 14px;">Platform analytics, restaurant onboarding, fleet dispatch, and commissions.</p>
           </div>
-          <div style="display: flex; gap: 8px;">
-            <button class="btn-primary" onclick="triggerAdminDataSync()" style="margin: 0; padding: 8px 14px;">🔄 Refresh Realtime Data</button>
-            <button class="btn-secondary" id="btnAdminChangeMasterPass" onclick="openChangeAdminPassModal()" style="padding: 8px 14px; color: #fff; border-color: rgba(255,255,255,0.3);">🔐 Change Master Password</button>
-            <button class="btn-secondary" id="btnAdminSystemAudit" onclick="exportPlatformAuditLog()" style="padding: 8px 14px; color: #fff; border-color: rgba(255,255,255,0.3);">📋 System Audit</button>
+          <div class="dashboard-header-actions" style="gap: 8px;">
+            <button class="btn-exec-refresh" id="btnAdminDataSync" onclick="triggerAdminDataSync()"><span class="btn-icon-spin">🔄</span> Refresh Realtime Data</button>
+            <button class="btn-exec-glass" id="btnAdminChangeMasterPass" onclick="openChangeAdminPassModal()">🔐 Change Master Password</button>
+            <button class="btn-exec-glass" id="btnAdminSystemAudit" onclick="exportPlatformAuditLog()">📋 System Audit</button>
           </div>
         </div>
       </div>
@@ -162,8 +162,10 @@
       <div class="dashboard-card" id="adminRestaurantsCard">
         <div class="dashboard-card-title" style="display: flex; justify-content: space-between; align-items: center;">
           <span>🍽️ Restaurant Partner Management &amp; KYC</span>
-          <button class="btn-primary" onclick="openCreateVendorCredsModal()" style="padding: 4px 12px; font-size: 11px; font-weight:700;">➕ Allocate Credentials</button>
-            <button class="btn-secondary" onclick="openInvitePartnerModal()" style="padding: 4px 12px; font-size: 11px;">+ Invite Partner</button>
+          <div class="dashboard-header-actions">
+              <button class="btn-smart-header btn-primary" onclick="openCreateVendorCredsModal()">➕ Allocate Credentials</button>
+              <button class="btn-smart-header btn-secondary" onclick="openInvitePartnerModal()">+ Invite Partner</button>
+            </div>
         </div>
         <div id="adminRestaurantsTable">
           <!-- Injected dynamically -->
@@ -177,8 +179,8 @@
               <span style="font-size: 20px;">🛵</span>
               <span>Delivery Fleet &amp; Rider Credentials Center</span>
             </div>
-            <div style="display: flex; gap: 8px;">
-              <button class="btn-primary" onclick="openCreateRiderCredsModal()" style="padding: 4px 12px; font-size: 11px; font-weight: 700;">➕ Add Rider Credentials</button>
+            <div class="dashboard-header-actions">
+              <button class="btn-smart-header btn-primary" onclick="openCreateRiderCredsModal()" style="background: linear-gradient(135deg, #3b82f6, #2563eb); border-color: #2563eb;">➕ Add Rider Credentials</button>
             </div>
           </div>
           <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
@@ -206,7 +208,7 @@
               <span style="font-size: 15px; font-weight: 900; color: #10b981;">₹</span>
               <input type="number" id="globalRiderCommissionInput" class="input-field" style="width: 85px; margin: 0; padding: 5px 8px; font-size: 15px; font-weight: 800; text-align: center; border: 1.5px solid #3b82f6; border-radius: 6px;" min="0" step="5" placeholder="30">
               <span style="font-size: 12px; font-weight: 700; color: var(--text-muted);">/ parcel</span>
-              <button type="button" class="btn-primary" onclick="saveAdminGlobalRiderCommission()" style="margin: 0; padding: 6px 14px; font-size: 12px; font-weight: 800; background: #3b82f6; border-color: #2563eb;">💾 Save Rate</button>
+              <button type="button" class="btn-smart-header" onclick="saveAdminGlobalRiderCommission()" style="background: linear-gradient(135deg, #10b981, #059669); color: #fff; border: 1px solid #059669; box-shadow: 0 2px 6px rgba(16,185,129,0.3);">💾 Save Rate</button>
             </div>
           </div>
 
@@ -223,8 +225,8 @@
               <span style="font-size: 20px;">👥</span>
               <span>Platform Managers &amp; Role-Based Access Control (RBAC)</span>
             </div>
-            <div style="display: flex; gap: 8px;">
-              <button class="btn-primary" onclick="openCreateManagerModal()" style="padding: 4px 12px; font-size: 11px; font-weight: 700; background: #8b5cf6; border-color: #7c3aed;">➕ Add New Manager</button>
+            <div class="dashboard-header-actions">
+              <button class="btn-smart-header" onclick="openCreateManagerModal()" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: #fff; border: 1px solid #7c3aed; box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);">➕ Add New Manager</button>
             </div>
           </div>
           <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
@@ -242,9 +244,9 @@
             <span style="font-size: 20px;">📍</span>
             <span>Delivery Cities &amp; Geofenced Service Zones Manager</span>
           </div>
-          <button class="btn-primary" onclick="openAdminAddZoneModal()" style="margin: 0; padding: 6px 14px; font-size: 13px;">
-            + Add New Delivery Area 📍
-          </button>
+          <div class="dashboard-header-actions">
+            <button class="btn-smart-header" onclick="openAdminAddZoneModal()" style="background: linear-gradient(135deg, #10b981, #059669); color: #fff; border: 1px solid #059669; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);">📍 Add Delivery Area</button>
+          </div>
         </div>
         <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
           Manually configure operating cities, municipal ward boundaries, ETA time slots, and zone delivery fees. All additions instantly sync with customer location selector.
@@ -441,7 +443,9 @@
       <div class="dashboard-card" id="adminRadarCard">
         <div class="dashboard-card-title">
           <span>🛵 Live Delivery Fleet Radar &amp; Telemetry</span>
-          <button class="btn-secondary" onclick="simulateFleetMovement()">🔄 Refresh Fleet GPS</button>
+          <div class="dashboard-header-actions">
+            <button class="btn-smart-header btn-secondary" onclick="simulateFleetMovement()">🔄 Refresh Fleet GPS</button>
+          </div>
         </div>
         <div id="adminFleetMap" style="height: 280px; width: 100%; border-radius: var(--radius-md); border: 1.5px solid var(--border); overflow: hidden; margin-bottom: 14px; position: relative; z-index: 1;"></div>
         <div id="adminFleetCards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px;">
@@ -452,7 +456,9 @@
       <div class="dashboard-card" id="adminDispatchCard">
         <div class="dashboard-card-title">
           <span>🚴 Rider Dispatch Console (Unassigned Ready Orders)</span>
-          <button class="btn-secondary" onclick="autoDispatchOrders()">⚡ 1-Click Auto Dispatch</button>
+          <div class="dashboard-header-actions">
+            <button class="btn-smart-header" onclick="autoDispatchOrders()" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; border: 1px solid #d97706; box-shadow: 0 2px 8px rgba(217, 119, 6, 0.3);">⚡ 1-Click Auto Dispatch</button>
+          </div>
         </div>
         <div id="adminDispatchList">
           <!-- Injected dynamically -->
@@ -471,7 +477,9 @@
       <div class="dashboard-card" id="adminCouponsCard">
         <div class="dashboard-card-title">
           <span>🎟️ Promo Codes &amp; Marketing Discounts</span>
-          <button class="btn-secondary" onclick="openAddCouponModal()">+ Create New Coupon</button>
+          <div class="dashboard-header-actions">
+            <button class="btn-smart-header btn-secondary" onclick="openAddCouponModal()">🏷️ + Create New Coupon</button>
+          </div>
         </div>
         <div id="adminCouponList">
           <!-- Injected dynamically -->
@@ -2546,7 +2554,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js?v=1789139470865"></script>
+  <script src="app.js?v=1789143238491"></script>
   <script src="translations.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
