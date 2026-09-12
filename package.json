@@ -2,7 +2,7 @@
   "name": "parcelkar-customer",
   "version": "1.0.0",
   "private": true,
-  "description": "ParcelKar platform & all portals (static + serverless API on Vercel; server.js is used by Render)",
+  "description": "ParcelKar platform & all portals (static + serverless API on Vercel)",
   "scripts": {
     "start": "node server.js",
     "build": "node build_all_portals.js",

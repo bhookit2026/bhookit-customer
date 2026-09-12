@@ -232,5 +232,5 @@ if (require.main === module) {
   });
 }
 
-// Vercel serverless entrypoint (also supports Render's standalone mode above)
+// Vercel serverless entrypoint
 module.exports = handleRequest;
