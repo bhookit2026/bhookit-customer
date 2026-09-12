@@ -9,13 +9,43 @@
 const STORAGE_KEY = 'parcelkar_v11_data_v2';
 const DELIVERY_ZONES_KEY = 'parcelkar_delivery_zones';
 const DEFAULT_DELIVERY_ZONES = [
+  // Sakoli - Primary Areas
   { id: 'zone_sakoli_1', city: 'Sakoli', name: 'Main Market & Station Road', eta: '20-25 mins', baseFee: 30, active: true },
   { id: 'zone_sakoli_2', city: 'Sakoli', name: 'Ward 3, 4 & Green Avenue', eta: '20 mins', baseFee: 30, active: true },
   { id: 'zone_sakoli_3', city: 'Sakoli', name: 'College Campus & Bypass Chowk', eta: '25-30 mins', baseFee: 35, active: true },
-  { id: 'zone_sakoli_4', city: 'Sakoli', name: 'Sendurwafa Flyover Corridor', eta: '30-35 mins', baseFee: 40, active: true },
   { id: 'zone_sakoli_5', city: 'Sakoli', name: 'Bus Depot & Civil Hospital Area', eta: '20-25 mins', baseFee: 30, active: true },
-  { id: 'zone_lakhani_1', city: 'Lakhani', name: 'Lakhani Town Hub & Main Chowk', eta: '35-45 mins', baseFee: 50, active: true },
-  { id: 'zone_bhandara_1', city: 'Bhandara', name: 'Bhandara City Central & Gandhi Chowk', eta: '45-55 mins', baseFee: 70, active: true }
+
+  // Sakoli - New Expansion Areas
+  { id: 'zone_sakoli_6', city: 'Sakoli', name: 'Lakhandur Road', eta: '20-25 mins', baseFee: 30, active: true },
+  { id: 'zone_sakoli_7', city: 'Sakoli', name: 'Talao Ward', eta: '25 mins', baseFee: 30, active: true },
+  { id: 'zone_sakoli_8', city: 'Sakoli', name: 'Ganesh Ward', eta: '25 mins', baseFee: 30, active: true },
+  { id: 'zone_sakoli_9', city: 'Sakoli', name: 'Gupta Colony', eta: '20-25 mins', baseFee: 30, active: true },
+  { id: 'zone_sakoli_10', city: 'Sakoli', name: 'Civil Ward', eta: '25 mins', baseFee: 30, active: true },
+  { id: 'zone_sakoli_11', city: 'Sakoli', name: 'Ekodi Road', eta: '20-25 mins', baseFee: 30, active: true },
+  { id: 'zone_sakoli_12', city: 'Sakoli', name: 'Gadkumbhali Road', eta: '25-30 mins', baseFee: 35, active: true },
+  { id: 'zone_sakoli_13', city: 'Sakoli', name: 'Katakwar Galli', eta: '20 mins', baseFee: 30, active: true },
+  { id: 'zone_sakoli_14', city: 'Sakoli', name: 'Shivaji Ward', eta: '20 mins', baseFee: 30, active: true },
+  { id: 'zone_sakoli_15', city: 'Sakoli', name: 'Panchsheel Ward', eta: '25 mins', baseFee: 30, active: true },
+  { id: 'zone_sakoli_16', city: 'Sakoli', name: 'M.B. Patel College Road', eta: '25-30 mins', baseFee: 35, active: true },
+  { id: 'zone_sakoli_17', city: 'Sakoli', name: 'Ramabai Ambedkar Chowk', eta: '20-25 mins', baseFee: 30, active: true },
+  { id: 'zone_sakoli_18', city: 'Sakoli', name: 'Nursury Colony', eta: '25 mins', baseFee: 30, active: true },
+  { id: 'zone_sakoli_19', city: 'Sakoli', name: 'Pragati Colony', eta: '25 mins', baseFee: 30, active: true },
+  { id: 'zone_sakoli_20', city: 'Sakoli', name: 'Birsa Munda Chowk', eta: '20 mins', baseFee: 30, active: true },
+  { id: 'zone_sakoli_21', city: 'Sakoli', name: 'Jamanapur Road', eta: '25-30 mins', baseFee: 35, active: true },
+  { id: 'zone_sakoli_22', city: 'Sakoli', name: 'Nagzira Road', eta: '30-35 mins', baseFee: 40, active: true },
+  { id: 'zone_sakoli_23', city: 'Sakoli', name: 'Nipane Colony', eta: '25-30 mins', baseFee: 35, active: true },
+
+  // Sendurwafa - Separate City/Town
+  { id: 'zone_sendurwafa_1', city: 'Sendurwafa', name: 'Sendurwafa Flyover Corridor', eta: '30-35 mins', baseFee: 40, active: true },
+  { id: 'zone_sendurwafa_2', city: 'Sendurwafa', name: 'Zenda Chowk', eta: '25-30 mins', baseFee: 35, active: true },
+  { id: 'zone_sendurwafa_3', city: 'Sendurwafa', name: 'Polytechnique College Road', eta: '30-35 mins', baseFee: 40, active: true },
+  { id: 'zone_sendurwafa_4', city: 'Sendurwafa', name: 'Gadkumbhali', eta: '35-40 mins', baseFee: 45, active: true },
+
+  // Khairlanji - Separate City/Town
+  { id: 'zone_khairlanji_1', city: 'Khairlanji', name: 'Khairlanji Town Hub', eta: '40-45 mins', baseFee: 50, active: true },
+
+  // Khairlanji (separate city/town)
+  { id: 'zone_khairlanji_1', city: 'Khairlanji', name: 'Khairlanji Town Hub', eta: '40-45 mins', baseFee: 50, active: true }
 ];
 
 function getPersistedDeliveryZones() {
