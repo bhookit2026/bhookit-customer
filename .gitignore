@@ -7,3 +7,5 @@ Thumbs.db
 zomato-style.html
 .vercel
 .env*
+supabase-config.js
+.vscode/

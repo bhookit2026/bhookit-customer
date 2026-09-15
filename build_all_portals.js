@@ -3,6 +3,22 @@
 // with complete Authentication Gates and Credential Management Center
 const fs = require('fs');
 
+// --- Supabase Config Generation (build-time) ---
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing SUPABASE_URL or SUPABASE_ANON_KEY in environment. Set in Vercel project settings.');
+}
+
+const supabaseConfig = `window.__SUPABASE_CONFIG__ = {
+  url: "${supabaseUrl.replace(/"/g, '\\"')}",
+  anonKey: "${supabaseAnonKey.replace(/"/g, '\\"')}"
+};`;
+
+fs.writeFileSync('supabase-config.js', supabaseConfig);
+console.log('supabase-config.js generated!');
+
 const sourceHtml = fs.readFileSync('demo_all_in_one.html', 'utf8');
 const allModals = fs.readFileSync('_extracted_modals.html', 'utf8');
 
@@ -352,6 +368,11 @@ const headCommon = (title, desc) => `<!doctype html>
 const scriptsCommon = (activeInitRole) => `
   <!-- Toast Notification Area -->
   <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Supabase Client (CDN + config + wrapper) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="lib/supabaseClient.js"></script>
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>

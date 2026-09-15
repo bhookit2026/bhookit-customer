@@ -42,9 +42,6 @@ const DEFAULT_DELIVERY_ZONES = [
   { id: 'zone_sendurwafa_4', city: 'Sendurwafa', name: 'Gadkumbhali', eta: '35-40 mins', baseFee: 45, active: true },
 
   // Khairlanji - Separate City/Town
-  { id: 'zone_khairlanji_1', city: 'Khairlanji', name: 'Khairlanji Town Hub', eta: '40-45 mins', baseFee: 50, active: true },
-
-  // Khairlanji (separate city/town)
   { id: 'zone_khairlanji_1', city: 'Khairlanji', name: 'Khairlanji Town Hub', eta: '40-45 mins', baseFee: 50, active: true }
 ];
 
@@ -469,6 +466,428 @@ let appData = JSON.parse(localStorage.getItem(STORAGE_KEY)) ||
               JSON.parse(localStorage.getItem('bhookit_v1_data')) ||
               SEED_DATA;
 
+// ============================================================
+// Supabase Customer Auth Integration (minimal, non-breaking)
+// ============================================================
+let supabaseAuthInitialized = false;
+let supabaseAuthReady = null; // Promise that resolves when auth state is known
+let authModalEditMode = false; // Track edit mode for auth modal
+
+async function initSupabaseAuth() {
+  if (supabaseAuthInitialized) return supabaseAuthReady;
+  if (!window.supabaseClient) {
+    console.warn('Supabase client not available, skipping auth init');
+    supabaseAuthReady = Promise.resolve(false);
+    return supabaseAuthReady;
+  }
+  supabaseAuthInitialized = true;
+
+  supabaseAuthReady = (async () => {
+    // 1. Session restore on page load
+    let initialSession = null;
+    try {
+      const { data: { session }, error } = await window.supabaseClient.auth.getSession();
+      if (error) {
+        console.warn('Supabase session restore error:', error.message);
+      } else {
+        initialSession = session;
+        if (session?.user) {
+          await restoreCustomerSession(session.user);
+        }
+      }
+    } catch (e) {
+      console.warn('Supabase auth init error:', e);
+    }
+
+    // If NO Supabase session, clear demo identity but preserve local data
+    // Reuse the session already fetched above — no second getSession() call needed
+    if (!initialSession?.user) {
+      clearDemoIdentity();
+    }
+
+    // 2. Listen for auth state changes
+    window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        await restoreCustomerSession(session.user);
+      } else if (event === 'SIGNED_OUT') {
+        // Supabase signed out - localStorage currentUser handled by userLogoutAction
+      }
+    });
+  })();
+
+  return supabaseAuthReady;
+}
+
+async function restoreCustomerSession(user) {
+  try {
+    // Fetch profile to validate role
+    const { data: profile, error } = await window.supabaseClient
+      .from('profiles')
+      .select('id, role, full_name, phone, avatar_url')
+      .eq('id', user.id)
+      .single();
+
+    if (error) {
+      console.warn('Profile fetch error:', error.message);
+      // If profile missing, user might be new - sign them out
+      await window.supabaseClient.auth.signOut();
+      return;
+    }
+
+    // Role validation: only allow 'customer' role for customer portal
+    if (profile.role !== 'customer') {
+      showToast(`This portal is for customers only. Your role: ${profile.role}`, 'error');
+      await window.supabaseClient.auth.signOut();
+      return;
+    }
+
+    // Preserve ONLY non-identity local data (cart, favorites, addresses, orders)
+    const preservedLocalData = {};
+    const localKeysToPreserve = [
+      'savedAddresses', 'favorites', 'cart', 'orders', 'lastLuckySpinTime'
+    ];
+    for (const key of localKeysToPreserve) {
+      if (appData.currentUser?.[key] !== undefined) {
+        preservedLocalData[key] = appData.currentUser[key];
+      }
+    }
+
+    // Supabase profile is the source of truth for identity
+    // Wallet/VIP default to 0/false for authenticated users (not inherited from demo)
+    appData.currentUser = {
+      id: profile.id,
+      email: user.email,
+      name: profile.full_name || user.email?.split('@')[0] || 'Customer',
+      // Fall back to existing in-memory phone if DB returns null (race: stale fetch after saveProfileEdit)
+      phone: profile.phone || appData.currentUser?.phone || '',
+      avatar_url: profile.avatar_url,
+      walletBalance: 0,
+      walletLedger: [],
+      isVip: false,
+      vipExpiry: null,
+      ...preservedLocalData
+    };
+
+    saveState();
+    updateUserBadge();
+    updateWalletUI();
+    if (typeof renderAccountView === 'function') renderAccountView();
+    if (typeof renderAuthModalContent === 'function') renderAuthModalContent();
+
+    // Load Supabase-persisted addresses for this authenticated customer.
+    // Runs after currentUser is set so UI can re-render once addresses arrive.
+    await loadCustomerAddresses();
+
+  } catch (e) {
+    console.warn('Session restore failed:', e);
+  }
+}
+
+// ============================================================
+// Customer Addresses — Supabase fetch (RLS: auth.uid() = user_id)
+// ============================================================
+async function loadCustomerAddresses() {
+  try {
+    if (!window.supabaseClient) return;
+    const { data: { session } } = await window.supabaseClient.auth.getSession();
+    if (!session?.user) return; // guest / unauthenticated — leave local addresses untouched
+
+    const { data: rows, error } = await window.supabaseClient
+      .from('customer_addresses')
+      .select(
+        'id, label, full_name, phone,' +
+        'address_line1, address_line2, landmark,' +
+        'city, state, postal_code,' +
+        'latitude, longitude,' +
+        'is_default, created_at, updated_at'
+      )
+      // RLS already scopes to auth.uid(); no .eq('user_id', ...) needed
+      .order('is_default', { ascending: false })
+      .order('updated_at', { ascending: false });
+
+    if (error) {
+      console.warn('loadCustomerAddresses error:', error.message);
+      return;
+    }
+
+    // Replace savedAddresses entirely — authenticated users must NOT inherit demo/local addresses
+    appData.savedAddresses = rows || [];
+    saveState();
+
+    // Refresh Account UI and the header Deliver To
+    if (typeof renderAccountView === 'function') renderAccountView();
+    updateDeliverToHeader();
+
+  } catch (e) {
+    console.warn('loadCustomerAddresses failed:', e);
+  }
+}
+
+// ============================================================
+// Header "Deliver To" helpers
+// ============================================================
+
+/**
+ * Returns the address to use for an authenticated customer:
+ * - First address where is_default === true
+ * - Else first address in the array
+ * - Else null (no addresses saved)
+ * For guests/demo users always returns null so the zone selector
+ * continues to manage the header label.
+ */
+function getDefaultCustomerAddress() {
+  if (!appData.currentUser) return null;          // guest — no Supabase user
+  const addrs = appData.savedAddresses;           // set by loadCustomerAddresses
+  if (!Array.isArray(addrs) || addrs.length === 0) return null;
+  return addrs.find(a => a.is_default) || addrs[0];
+}
+
+/**
+ * Updates the header #currentSelectedAreaLabel element.
+ *
+ * Authenticated customer with address → "Home · Nagpur" (label · city)
+ * Authenticated customer, no addresses → "Add delivery address"
+ * Guest / demo user → leaves the label unchanged (managed by selectDeliveryZone)
+ */
+function updateDeliverToHeader() {
+  const el = document.getElementById('currentSelectedAreaLabel');
+  if (!el) return;
+
+  if (!appData.currentUser) {
+    // Guest: restore whatever the current zone says (or leave as-is)
+    return;
+  }
+
+  const addr = getDefaultCustomerAddress();
+  if (!addr) {
+    el.textContent = 'Add delivery address';
+    return;
+  }
+
+  const parts = [];
+  if (addr.label) parts.push(addr.label);
+  if (addr.city)  parts.push(addr.city);
+  el.textContent = parts.length ? parts.join(' · ') : (addr.address_line1 || 'My address');
+}
+
+window.updateDeliverToHeader = updateDeliverToHeader;
+window.getDefaultCustomerAddress = getDefaultCustomerAddress;
+
+
+async function supabaseSignup(email, password, fullName = null) {
+  if (!window.supabaseClient) throw new Error('Supabase not initialized');
+
+  const { data, error } = await window.supabaseClient.auth.signUp({
+    email,
+    password,
+    options: { data: { full_name: fullName } }
+  });
+
+  if (error) throw error;
+
+  // If email confirmation required, session may be null
+  if (data.user && !data.session) {
+    clearDemoIdentity(); // Clear demo user so UI shows "please confirm email" state
+    throw new Error('Please check your email to confirm your account.');
+  }
+
+  // Profile auto-created by DB trigger with role='customer'
+  // Optionally update full_name if provided
+  if (data.user && fullName) {
+    try {
+      await window.supabaseClient.rpc('update_own_profile', { p_full_name: fullName });
+    } catch (e) {
+      console.warn('Profile name update failed:', e);
+    }
+  }
+
+  return data;
+}
+
+async function supabaseLogin(email, password) {
+  if (!window.supabaseClient) throw new Error('Supabase not initialized');
+
+  const { data, error } = await window.supabaseClient.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error) throw error;
+
+  if (!data.session) {
+    throw new Error('Login succeeded but no session. Please check email confirmation.');
+  }
+
+  // Role validation happens in onAuthStateChange / restoreCustomerSession
+  return data;
+}
+
+async function supabaseLogout() {
+  if (!window.supabaseClient) return;
+  const { error } = await window.supabaseClient.auth.signOut();
+  if (error) throw error;
+}
+
+// ============================================================
+// Customer Profile Edit (uses secure RPC)
+// ============================================================
+
+function normalizePhoneIndia(phone) {
+  if (!phone) return '';
+  const digits = phone.replace(/\D/g, '');
+  // Remove leading +91 or 91
+  let clean = digits;
+  if (clean.startsWith('91') && clean.length === 12) {
+    clean = clean.slice(2);
+  } else if (clean.startsWith('0') && clean.length === 11) {
+    clean = clean.slice(1);
+  }
+  return clean;
+}
+
+function validatePhoneIndia(phone) {
+  const normalized = normalizePhoneIndia(phone);
+  if (!normalized) return { valid: true, normalized: '' }; // Optional field
+  if (normalized.length !== 10) return { valid: false, error: 'Mobile number must be 10 digits' };
+  if (!/^[6-9]\d{9}$/.test(normalized)) return { valid: false, error: 'Invalid Indian mobile number format' };
+  return { valid: true, normalized };
+}
+
+async function saveProfileEdit() {
+  if (!window.supabaseClient) {
+    showToast('Supabase not initialized', 'error');
+    return;
+  }
+  const { data: { session } } = await window.supabaseClient.auth.getSession();
+  if (!session?.user) {
+    showToast('Not authenticated', 'error');
+    return;
+  }
+
+  const fullName = document.getElementById('editFullName')?.value?.trim() || '';
+  const phoneInput = document.getElementById('editPhone')?.value?.trim() || '';
+  const phoneValidation = validatePhoneIndia(phoneInput);
+  if (!phoneValidation.valid) {
+    showToast(phoneValidation.error, 'error');
+    return;
+  }
+  const phone = phoneValidation.normalized;
+
+  const errEl = document.getElementById('editProfileError');
+  if (errEl) errEl.textContent = '';
+
+  const saveBtn = document.getElementById('btnSaveProfile');
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.textContent = '🔄 Saving...';
+  }
+
+  try {
+    // Call secure RPC - only updates non-null params (COALESCE in RPC)
+    const { error } = await window.supabaseClient.rpc('update_own_profile', {
+      p_full_name: fullName || null,
+      p_phone: phone || null
+    });
+    if (error) throw error;
+
+    // Refetch profile and update local state
+    const { data: profile, error: fetchError } = await window.supabaseClient
+      .from('profiles')
+      .select('id, role, full_name, phone, avatar_url')
+      .eq('id', session.user.id)
+      .single();
+    if (fetchError) throw fetchError;
+
+    // Update appData.currentUser with fresh data
+    const preservedLocalData = {};
+    const localKeysToPreserve = ['savedAddresses', 'favorites', 'cart', 'orders', 'lastLuckySpinTime'];
+    for (const key of localKeysToPreserve) {
+      if (appData.currentUser?.[key] !== undefined) {
+        preservedLocalData[key] = appData.currentUser[key];
+      }
+    }
+    appData.currentUser = {
+      id: profile.id,
+      email: session.user.email,
+      name: profile.full_name || session.user.email?.split('@')[0] || 'Customer',
+      phone: profile.phone || '',
+      avatar_url: profile.avatar_url,
+      walletBalance: appData.currentUser?.walletBalance || 0,
+      walletLedger: appData.currentUser?.walletLedger || [],
+      isVip: appData.currentUser?.isVip || false,
+      vipExpiry: appData.currentUser?.vipExpiry || null,
+      ...preservedLocalData
+    };
+    saveState();
+
+    // Exit edit mode and refresh UI
+    authModalEditMode = false;
+    updateUserBadge();
+    updateWalletUI();
+    if (typeof renderAccountView === 'function') renderAccountView();
+    if (typeof renderAuthModalContent === 'function') renderAuthModalContent();
+    showToast('Profile updated successfully', 'success');
+
+  } catch (e) {
+    const msg = e.message || 'Failed to update profile';
+    if (errEl) errEl.textContent = msg;
+    showToast(msg, 'error');
+  } finally {
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.textContent = '💾 Save Changes';
+    }
+  }
+}
+
+function cancelProfileEdit() {
+  authModalEditMode = false;
+  if (typeof renderAuthModalContent === 'function') renderAuthModalContent();
+  if (typeof renderAccountView === 'function') renderAccountView(); // also refresh the panel
+}
+
+function openEditProfile() {
+  if (!appData.currentUser) return;
+  authModalEditMode = true;
+  if (typeof renderAuthModalContent === 'function') renderAuthModalContent();
+  if (typeof renderAccountView === 'function') renderAccountView(); // also refresh the panel
+}
+
+// Initialize auth when DOM is ready (runs alongside existing DOMContentLoaded)
+document.addEventListener('DOMContentLoaded', () => {
+  initSupabaseAuth();
+});
+
+// Clear demo identity fields, preserve local data (cart, favorites, etc.)
+function clearDemoIdentity() {
+  if (!appData.currentUser) return;
+  const isDemoUser = appData.currentUser.id === 'user_demo_1' || 
+                     appData.currentUser.email === 'rakesh.user@demo.com' ||
+                     appData.currentUser.email === 'customer@bhookit.com';
+  if (!isDemoUser) return;
+
+  const preservedLocalData = {};
+  const localKeysToPreserve = [
+    'savedAddresses', 'favorites', 'cart', 'orders', 'lastLuckySpinTime'
+  ];
+  for (const key of localKeysToPreserve) {
+    if (appData.currentUser[key] !== undefined) {
+      preservedLocalData[key] = appData.currentUser[key];
+    }
+  }
+
+  appData.currentUser = {
+    ...preservedLocalData
+    // identity fields (id, name, email, phone, avatar_url) intentionally omitted
+    // wallet/VIP not preserved - will default when real user logs in
+  };
+  saveState();
+  updateUserBadge();
+  if (typeof renderAccountView === 'function') renderAccountView();
+  if (typeof renderAuthModalContent === 'function') renderAuthModalContent();
+}
+
+// ============================================================
 // Cross-Domain Shared Settings Helpers (.parcelkar.com)
 function setSharedSettingsCookie(settings) {
   try {
@@ -2570,7 +2989,7 @@ async function submitOrder() {
   }
 
   const name = document.getElementById('custName')?.value.trim() || appData.currentUser?.name || 'Rakesh Bhaskar';
-  const phone = document.getElementById('custPhone')?.value.trim() || appData.currentUser?.phone || '9876543210';
+  const phone = document.getElementById('custPhone')?.value.trim() || appData.currentUser?.phone || '';
   const address = document.getElementById('custAddress')?.value.trim() || appData.currentUser?.address || '';
   let payment = document.getElementById('paymentMethod')?.value || 'UPI';
   if (payment === 'COD' && appData.paymentSettings && appData.paymentSettings.codEnabled === false) {
@@ -3016,7 +3435,7 @@ function openTableBookingModal(restId) {
   const nameInput = document.getElementById('tbGuestName');
   const phoneInput = document.getElementById('tbGuestPhone');
   if (nameInput) nameInput.value = appData.currentUser?.name || 'Rakesh Bhaskar';
-  if (phoneInput) phoneInput.value = appData.currentUser?.phone || '9876543210';
+  if (phoneInput) phoneInput.value = appData.currentUser?.phone || '';
 
   // Reset chips
   selectedTbTimeSlot = '07:30 PM (Dinner)';
@@ -3071,7 +3490,7 @@ function confirmTableReservation() {
   const date = document.getElementById('tbDateInput')?.value;
   const seatingZone = document.getElementById('tbSeatingSelect')?.value || 'Indoor AC Family Section';
   const guestName = (document.getElementById('tbGuestName')?.value || '').trim() || (appData.currentUser?.name || 'Rakesh Bhaskar');
-  const guestPhone = (document.getElementById('tbGuestPhone')?.value || '').trim() || (appData.currentUser?.phone || '9876543210');
+  const guestPhone = (document.getElementById('tbGuestPhone')?.value || '').trim() || (appData.currentUser?.phone || '');
   const notes = (document.getElementById('tbSpecialNotes')?.value || '').trim();
 
   if (!date) {
@@ -3153,9 +3572,11 @@ function renderCustomerTableBookings() {
   const container = document.getElementById('customerTableBookingsContainer');
   if (!container) return;
 
+  const currentPhone = appData.currentUser?.phone;
+  const currentName = appData.currentUser?.name || 'Rakesh Bhaskar';
   const myBookings = (appData.tableBookings || []).filter(b => 
-    b.customerPhone === (appData.currentUser?.phone || '9876543210') || 
-    b.customerName === (appData.currentUser?.name || 'Rakesh Bhaskar')
+    (currentPhone && b.customerPhone === currentPhone) || 
+    b.customerName === currentName
   );
 
   const badge = document.getElementById('tbCountBadge');
@@ -3263,9 +3684,11 @@ function setTableBookingStatus(bookingId, status) {
 // 3. ORDERS & INVOICES
 // -------------------------------------------------------------
 function renderOrdersView() {
+  const currentPhone = appData.currentUser?.phone;
+  const currentName = appData.currentUser?.name || 'Rakesh Bhaskar';
   const myBookings = (appData.tableBookings || []).filter(b => 
-    b.customerPhone === (appData.currentUser?.phone || '9876543210') || 
-    b.customerName === (appData.currentUser?.name || 'Rakesh Bhaskar')
+    (currentPhone && b.customerPhone === currentPhone) || 
+    b.customerName === currentName
   );
   const badge = document.getElementById('tbCountBadge');
   if (badge) badge.textContent = myBookings.length;
@@ -4456,11 +4879,11 @@ function renderAuthModalContent() {
       <div style="display: flex; flex-direction: column; gap: 12px;">
         <div>
           <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Email Address</label>
-          <input type="email" id="loginEmail" class="input-field" placeholder="e.g. user@demo.com" style="width: 100%;" value="customer@bhookit.com">
+          <input type="email" id="loginEmail" class="input-field" placeholder="e.g. user@demo.com" style="width: 100%;">
         </div>
         <div>
           <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Password</label>
-          <input type="password" id="loginPass" class="input-field" placeholder="Password (min 6 chars)" style="width: 100%;" value="pass123">
+          <input type="password" id="loginPass" class="input-field" placeholder="Password (min 6 chars)" style="width: 100%;">
         </div>
         <div style="display: flex; gap: 10px; margin-top: 6px;">
           <button class="btn-primary" onclick="userLoginAction()" style="flex: 1; padding: 12px; font-weight: 800; font-size: 14px;">🔑 Login</button>
@@ -4497,103 +4920,139 @@ function renderAuthModalContent() {
         </div>
       </div>
     `;
-  } else {
+} else {
     const user = appData.currentUser;
     const userName = user.name || 'Valued Customer';
     const userEmail = user.email || 'customer@bhookit.com';
-    const userPhone = user.phone || '9876543210';
-    const userAddress = user.address || (typeof getCurrentAddress === 'function' ? getCurrentAddress() : 'Sakoli, Maharashtra');
-    const walletBal = (typeof appData.walletBalance === 'number') ? appData.walletBalance : 250;
+    const userPhone = user.phone || '';
+    const userAddress = user.address || 'Address not added';
+    const walletBal = Number(user.walletBalance || 0);
 
-    container.innerHTML = `
-      <button class="modal-close-btn" onclick="closeModal('authModal')">✕</button>
-      <div style="text-align: center; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
-        <div style="width: 60px; height: 60px; margin: 0 auto 10px; background: linear-gradient(135deg, #ff4722, #ea580c); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 4px 12px rgba(255,71,34,0.3);">
-          👤
+    if (authModalEditMode) {
+      // EDIT MODE: Profile edit form
+      container.innerHTML = `
+        <button class="modal-close-btn" onclick="cancelProfileEdit()">✕</button>
+        <div style="text-align: center; margin-bottom: 18px;">
+          <h3 class="modal-title" style="margin: 0; font-size: 20px;">✏️ Edit Profile</h3>
+          <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Update your name and mobile number. Email cannot be changed here.</p>
         </div>
-        <h3 style="margin: 0; font-size: 20px; font-weight: 800; font-family: var(--font-heading);">${userName}</h3>
-        <span style="font-size: 12px; color: var(--text-muted);">${userEmail}</span>
-      </div>
+        <p id="editProfileError" style="color: var(--danger); font-size: 12px; margin: 4px 0 12px; text-align: center;"></p>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div>
+            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Email (read-only)</label>
+            <input type="email" id="editEmail" class="input-field" value="${userEmail}" readonly style="width: 100%; background: var(--bg-surface-alt); cursor: not-allowed;">
+          </div>
+          <div>
+            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Full Name</label>
+            <input type="text" id="editFullName" class="input-field" placeholder="e.g. Rakesh Bhaskar" style="width: 100%;" value="${userName}" maxlength="100">
+          </div>
+          <div>
+            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Mobile Number</label>
+            <input type="tel" id="editPhone" class="input-field" placeholder="e.g. 9876543210 or +91 9876543210" style="width: 100%;" value="${userPhone}" maxlength="15">
+            <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">10-digit Indian mobile. +91 prefix optional.</p>
+          </div>
+          <div style="display: flex; gap: 10px; margin-top: 6px;">
+            <button class="btn-secondary" onclick="cancelProfileEdit()" style="flex: 1; padding: 12px; font-weight: 700;">✕ Cancel</button>
+            <button class="btn-primary" id="btnSaveProfile" onclick="saveProfileEdit()" style="flex: 1; padding: 12px; font-weight: 800; font-size: 14px;">💾 Save Changes</button>
+          </div>
+        </div>
+      `;
+    } else {
+      // VIEW MODE: Show profile info with Edit button
+      container.innerHTML = `
+        <button class="modal-close-btn" onclick="closeModal('authModal')">✕</button>
+        <div style="text-align: center; padding-bottom: 14px; border-bottom: 1px solid var(--border);">
+          <div style="width: 60px; height: 60px; margin: 0 auto 10px; background: linear-gradient(135deg, #ff4722, #ea580c); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 4px 12px rgba(255,71,34,0.3);">
+            👤
+          </div>
+          <h3 style="margin: 0; font-size: 20px; font-weight: 800; font-family: var(--font-heading);">${userName}</h3>
+          <span style="font-size: 12px; color: var(--text-muted);">${userEmail}</span>
+        </div>
 
-      <div style="margin: 16px 0; display: flex; flex-direction: column; gap: 10px;">
-        <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--bg-surface-alt, #f8fafc); border-radius: 10px; border: 1px solid var(--border);">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 18px;">📱</span>
-            <div>
-              <div style="font-size: 11px; color: var(--text-muted); font-weight: 700;">Phone Number</div>
-              <div style="font-size: 13px; font-weight: 600;">+91 ${userPhone}</div>
+        <div style="margin: 16px 0; display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--bg-surface-alt, #f8fafc); border-radius: 10px; border: 1px solid var(--border);">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 18px;">📱</span>
+              <div>
+                <div style="font-size: 11px; color: var(--text-muted); font-weight: 700;">Phone Number</div>
+                <div style="font-size: 13px; font-weight: 600;">+91 ${userPhone || 'Not added'}</div>
+              </div>
             </div>
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--bg-surface-alt, #f8fafc); border-radius: 10px; border: 1px solid var(--border);">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 18px;">📍</span>
+              <div>
+                <div style="font-size: 11px; color: var(--text-muted); font-weight: 700;">Delivery Address</div>
+                <div style="font-size: 13px; font-weight: 600;">${userAddress}</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(5,150,105,0.05)); border-radius: 10px; border: 1px solid rgba(16,185,129,0.2);">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 18px;">💳</span>
+              <div>
+                <div style="font-size: 11px; color: #059669; font-weight: 700;">Wallet Balance</div>
+                <div style="font-size: 14px; font-weight: 800; color: #059669;">₹${walletBal}</div>
+              </div>
+            </div>
+            <button class="btn-secondary" onclick="closeModal('authModal'); openWalletModal();" style="padding: 4px 10px; font-size: 11px;">View Wallet</button>
+          </div>
+
+          <!-- Weekly Spin & Win Rewards in Account -->
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: linear-gradient(135deg, rgba(236, 72, 153, 0.12), rgba(139, 92, 246, 0.12)); border: 1.5px solid rgba(236, 72, 153, 0.35); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;" onclick="closeModal('authModal'); openGamificationModal();" title="Weekly Lucky Rewards">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 24px;">🎰</span>
+              <div>
+                <div style="font-size: 13px; font-weight: 800; color: #ec4899;">Weekly Spin & Win 🎰</div>
+                <div style="font-size: 11px; color: var(--text-muted);">Win Free Dessert or Free Delivery once a week!</div>
+              </div>
+            </div>
+            <span style="font-size: 11px; font-weight: 800; color: #fff; background: linear-gradient(135deg, #ec4899, #8b5cf6); padding: 5px 12px; border-radius: 20px; white-space: nowrap;">Play ➔</span>
+          </div>
+
+          <!-- App Language Selector in Account -->
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--bg-surface-alt, #f8fafc); border: 1px solid var(--border); border-radius: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 20px;">🌐</span>
+              <div>
+                <div style="font-size: 12px; font-weight: 800; color: var(--text-main);">App Language</div>
+                <div style="font-size: 11px; color: var(--text-muted);">भाषा निवडा / भाषा चुनें</div>
+              </div>
+            </div>
+            <select id="accountLangSelect" class="lang-selector" onchange="setLanguage(this.value)" style="padding: 6px 10px; font-size: 12px; font-weight: 700; border-radius: 8px; border: 1.5px solid var(--primary); background: var(--bg-card); color: var(--text-main); cursor: pointer;">
+              <option value="en" ${currentLanguage === 'en' ? 'selected' : ''}>🇬🇧 English</option>
+              <option value="mr" ${currentLanguage === 'mr' ? 'selected' : ''}>🇮🇳 मराठी</option>
+              <option value="hi" ${currentLanguage === 'hi' ? 'selected' : ''}>🇮🇳 हिन्दी</option>
+            </select>
           </div>
         </div>
 
-        <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--bg-surface-alt, #f8fafc); border-radius: 10px; border: 1px solid var(--border);">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 18px;">📍</span>
-            <div>
-              <div style="font-size: 11px; color: var(--text-muted); font-weight: 700;">Delivery Address</div>
-              <div style="font-size: 13px; font-weight: 600;">${userAddress}</div>
-            </div>
-          </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
+          <button class="btn-secondary" onclick="closeModal('authModal'); show('orders');" style="padding: 10px; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <span>📦</span>
+            <span>My Orders</span>
+          </button>
+          <button class="btn-secondary" onclick="closeModal('authModal'); show('track');" style="padding: 10px; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <span>📍</span>
+            <span>Live Track</span>
+          </button>
         </div>
 
-        <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(5,150,105,0.05)); border-radius: 10px; border: 1px solid rgba(16,185,129,0.2);">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 18px;">💳</span>
-            <div>
-              <div style="font-size: 11px; color: #059669; font-weight: 700;">Wallet Balance</div>
-              <div style="font-size: 14px; font-weight: 800; color: #059669;">₹${walletBal}</div>
-            </div>
-          </div>
-          <button class="btn-secondary" onclick="closeModal('authModal'); openWalletModal();" style="padding: 4px 10px; font-size: 11px;">View Wallet</button>
+        <div style="border-top: 1px solid var(--border); padding-top: 12px; display: flex; flex-direction: column; gap: 8px;">
+          <button class="btn-primary" onclick="openEditProfile()" style="width: 100%; padding: 11px; font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 10px;">
+            <span>✏️</span>
+            <span>Edit Profile</span>
+          </button>
+          <button class="btn-danger" onclick="userLogoutAction()" style="width: 100%; padding: 11px; font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 10px;">
+            <span>🚪</span>
+            <span>Logout from Account</span>
+          </button>
         </div>
-
-        <!-- Weekly Spin & Win Rewards in Account -->
-        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: linear-gradient(135deg, rgba(236, 72, 153, 0.12), rgba(139, 92, 246, 0.12)); border: 1.5px solid rgba(236, 72, 153, 0.35); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;" onclick="closeModal('authModal'); openGamificationModal();" title="Weekly Lucky Rewards">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 24px;">🎰</span>
-            <div>
-              <div style="font-size: 13px; font-weight: 800; color: #ec4899;">Weekly Spin &amp; Win 🎰</div>
-              <div style="font-size: 11px; color: var(--text-muted);">Win Free Dessert or Free Delivery once a week!</div>
-            </div>
-          </div>
-          <span style="font-size: 11px; font-weight: 800; color: #fff; background: linear-gradient(135deg, #ec4899, #8b5cf6); padding: 5px 12px; border-radius: 20px; white-space: nowrap;">Play ➔</span>
-        </div>
-
-        <!-- App Language Selector in Account -->
-        <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--bg-surface-alt, #f8fafc); border: 1px solid var(--border); border-radius: 10px;">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 20px;">🌐</span>
-            <div>
-              <div style="font-size: 12px; font-weight: 800; color: var(--text-main);">App Language</div>
-              <div style="font-size: 11px; color: var(--text-muted);">भाषा निवडा / भाषा चुनें</div>
-            </div>
-          </div>
-          <select id="accountLangSelect" class="lang-selector" onchange="setLanguage(this.value)" style="padding: 6px 10px; font-size: 12px; font-weight: 700; border-radius: 8px; border: 1.5px solid var(--primary); background: var(--bg-card); color: var(--text-main); cursor: pointer;">
-            <option value="en" ${currentLanguage === 'en' ? 'selected' : ''}>🇬🇧 English</option>
-            <option value="mr" ${currentLanguage === 'mr' ? 'selected' : ''}>🇮🇳 मराठी</option>
-            <option value="hi" ${currentLanguage === 'hi' ? 'selected' : ''}>🇮🇳 हिन्दी</option>
-          </select>
-        </div>
-      </div>
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
-        <button class="btn-secondary" onclick="closeModal('authModal'); show('orders');" style="padding: 10px; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px;">
-          <span>📦</span>
-          <span>My Orders</span>
-        </button>
-        <button class="btn-secondary" onclick="closeModal('authModal'); show('track');" style="padding: 10px; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px;">
-          <span>📍</span>
-          <span>Live Track</span>
-        </button>
-      </div>
-
-      <div style="border-top: 1px solid var(--border); padding-top: 12px;">
-        <button class="btn-danger" onclick="userLogoutAction()" style="width: 100%; padding: 11px; font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 10px;">
-          <span>🚪</span>
-          <span>Logout from Account</span>
-        </button>
-      </div>
-    `;
+      `;
+    }
   }
 }
 
@@ -4606,12 +5065,48 @@ function renderAccountView() {
 
   const isUser = !!appData.currentUser;
   const user = appData.currentUser || { name: 'Guest User', email: 'guest@parcelkar.com', phone: '', address: '' };
-  const walletBal = (typeof appData.walletBalance === 'number') ? appData.walletBalance : (user.walletBalance || 250);
+  const walletBal = Number(user.walletBalance || 0);
 
   const weeklyStatus = (typeof getWeeklySpinStatus === 'function') ? getWeeklySpinStatus() : { canSpin: true };
   let html = '';
 
   if (isUser) {
+    // If edit mode is active, render the edit form directly into the panel
+    if (authModalEditMode) {
+      const userName = user.name || 'Valued Customer';
+      const userEmail = user.email || '';
+      const userPhone = user.phone || '';
+      container.innerHTML = `
+        <div style="max-width: 680px; margin: 0 auto; padding: 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-sm);">
+          <div style="text-align: center; margin-bottom: 18px;">
+            <h3 style="margin: 0; font-size: 20px; font-weight: 800;">✏️ Edit Profile</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Update your name and mobile number. Email cannot be changed here.</p>
+          </div>
+          <p id="editProfileError" style="color: var(--danger); font-size: 12px; margin: 4px 0 12px; text-align: center;"></p>
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div>
+              <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Email (read-only)</label>
+              <input type="email" id="editEmail" class="input-field" value="${userEmail}" readonly style="width: 100%; background: var(--bg-surface-alt); cursor: not-allowed;">
+            </div>
+            <div>
+              <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Full Name</label>
+              <input type="text" id="editFullName" class="input-field" placeholder="e.g. Rakesh Bhaskar" style="width: 100%;" value="${userName}" maxlength="100">
+            </div>
+            <div>
+              <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Mobile Number</label>
+              <input type="tel" id="editPhone" class="input-field" placeholder="e.g. 9876543210 or +91 9876543210" style="width: 100%;" value="${userPhone}" maxlength="15">
+              <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">10-digit Indian mobile. +91 prefix optional.</p>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 6px;">
+              <button class="btn-secondary" onclick="cancelProfileEdit()" style="flex: 1; padding: 12px; font-weight: 700;">✕ Cancel</button>
+              <button class="btn-primary" id="btnSaveProfile" onclick="saveProfileEdit()" style="flex: 1; padding: 12px; font-weight: 800; font-size: 14px;">💾 Save Changes</button>
+            </div>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
     html = `
       <div class="account-page-wrapper" style="max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px;">
         <!-- Profile Header Card -->
@@ -4623,13 +5118,13 @@ function renderAccountView() {
             <div>
               <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                 <h2 style="margin: 0; font-size: 19px; font-weight: 800; color: var(--text-main); font-family: var(--font-heading);">${user.name}</h2>
-                <span class="vip-tag-gold" style="font-size: 10px; padding: 2px 8px; border-radius: 999px;">👑 VIP Member</span>
+                ${user.isVip ? '<span class="vip-tag-gold" style="font-size: 10px; padding: 2px 8px; border-radius: 999px;">👑 VIP Member</span>' : ''}
               </div>
-              <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">${user.email} • +91 ${user.phone || '9876543210'}</div>
-              <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">📍 ${user.address || 'Sakoli, Maharashtra'}</div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">${user.email} • +91 ${user.phone || 'Not added'}</div>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">📍 ${(() => { const addrs = appData.savedAddresses || []; const def = addrs.find(a => a.is_default) || addrs[0]; return def ? [def.address_line1, def.city, def.state, def.postal_code].filter(Boolean).join(', ') : 'Address not added'; })()}</div>
             </div>
           </div>
-          <button class="btn-secondary" onclick="openAuth()" style="padding: 6px 12px; font-size: 11px; white-space: nowrap;">✏️ Edit</button>
+          <button class="btn-secondary" onclick="openEditProfile()" style="padding: 6px 12px; font-size: 11px; white-space: nowrap;">✏️ Edit</button>
         </div>
 
         <!-- Wallet Card -->
@@ -4643,6 +5138,49 @@ function renderAccountView() {
           </div>
           <button class="btn-primary" onclick="openWalletModal()" style="padding: 8px 16px; font-size: 12px; font-weight: 700; background: #059669; border-color: #059669;">+ Add Money</button>
         </div>
+
+        <!-- 📍 SAVED DELIVERY ADDRESSES -->
+        ${(() => {
+          const addrs = appData.savedAddresses || [];
+          const addrCards = addrs.map(a => {
+            const parts = [a.address_line1];
+            if (a.address_line2) parts.push(a.address_line2);
+            if (a.landmark) parts.push('Near ' + a.landmark);
+            parts.push([a.city, a.state, a.postal_code].filter(Boolean).join(', '));
+            const addrText = parts.join(', ');
+            const labelIcon = a.label === 'Home' ? '🏠' : a.label === 'Work' ? '💼' : '📍';
+            const safeId = `'${a.id}'`;
+            return `<div style="padding: 14px 16px; background: var(--bg-surface-alt, #f8fafc); border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span style="font-size: 14px;">${labelIcon}</span>
+                <span style="font-size: 13px; font-weight: 800; color: var(--text-main);">${a.label || 'Address'}</span>
+                ${a.is_default ? '<span style="font-size: 10px; font-weight: 700; color: #fff; background: #ff4722; padding: 2px 8px; border-radius: 999px;">Default</span>' : ''}
+              </div>
+              ${a.full_name ? `<div style="font-size: 12px; font-weight: 700; color: var(--text-main);">${a.full_name}${a.phone ? ' · +91 ' + a.phone : ''}</div>` : ''}
+              <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">${addrText}</div>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px;">
+                <button class="btn-secondary" onclick="openCustomerAddressForm(${safeId})" style="padding: 5px 12px; font-size: 11px; font-weight: 700; border-radius: 8px;">✏️ Edit</button>
+                ${!a.is_default ? `<button class="btn-secondary" onclick="setDefaultCustomerAddress(${safeId})" style="padding: 5px 12px; font-size: 11px; font-weight: 700; border-radius: 8px;">⭐ Set Default</button>` : ''}
+                <button class="btn-secondary" onclick="deleteCustomerAddress(${safeId})" style="padding: 5px 12px; font-size: 11px; font-weight: 700; border-radius: 8px; color: var(--danger); border-color: rgba(239,68,68,0.35);">🗑️ Delete</button>
+              </div>
+            </div>`;
+          }).join('');
+
+          return `<div class="dashboard-card" style="padding: 16px 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-sm);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 20px;">📍</span>
+                <div style="font-size: 14px; font-weight: 800; color: var(--text-main);">Delivery Addresses</div>
+              </div>
+              <button class="btn-primary" onclick="openCustomerAddressForm()" style="padding: 6px 14px; font-size: 11px; font-weight: 700; border-radius: 8px;">+ Add Address</button>
+            </div>
+            ${addrs.length === 0
+              ? '<div style="font-size: 13px; color: var(--text-muted); text-align: center; padding: 12px 0;">No saved addresses yet. Add one to speed up checkout.</div>'
+              : `<div style="display: flex; flex-direction: column; gap: 10px;">${addrCards}</div>`
+            }
+          </div>`;
+        })()
+        }
 
         <!-- 🎰 WEEKLY SPIN & WIN REWARDS SECTION -->
         <div class="dashboard-card spin-and-win-account-card" style="padding: 18px 20px; background: linear-gradient(135deg, rgba(236, 72, 153, 0.12), rgba(139, 92, 246, 0.12)); border: 1.5px solid rgba(236, 72, 153, 0.4); border-radius: 16px; box-shadow: 0 4px 16px rgba(236, 72, 153, 0.15); display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
@@ -4743,11 +5281,11 @@ function renderAccountView() {
           <div style="display: flex; flex-direction: column; gap: 12px; text-align: left;">
             <div>
               <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Email Address</label>
-              <input type="email" id="accPageLoginEmail" class="input-field" placeholder="e.g. user@demo.com" style="width: 100%;" value="customer@bhookit.com">
+              <input type="email" id="accPageLoginEmail" class="input-field" placeholder="e.g. user@demo.com" style="width: 100%;">
             </div>
             <div>
               <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Password</label>
-              <input type="password" id="accPageLoginPass" class="input-field" placeholder="Password (min 6 chars)" style="width: 100%;" value="pass123">
+              <input type="password" id="accPageLoginPass" class="input-field" placeholder="Password (min 6 chars)" style="width: 100%;">
             </div>
             <div style="display: flex; gap: 10px; margin-top: 6px;">
               <button class="btn-primary" onclick="userLoginAction('accPageLoginEmail', 'accPageLoginPass')" style="flex: 1; padding: 12px; font-weight: 800; font-size: 14px;">🔑 Login</button>
@@ -4832,39 +5370,105 @@ function openAuth() {
   }
 }
 
-function userLogoutAction() {
+async function userLogoutAction() {
   if (confirm('Do you want to log out from Parcelकर?')) {
+    // Await Supabase sign out so its internal auth lock is fully released
+    // before the UI allows a new login attempt (fixes "Failed to fetch" on re-login)
+    if (window.supabaseClient) {
+      try {
+        await window.supabaseClient.auth.signOut();
+      } catch (e) {
+        console.warn('Supabase signOut error:', e);
+      }
+    }
+    // Preserve localStorage behavior
     appData.currentUser = null;
+    appData.savedAddresses = [];            // clear Supabase addresses so demo mode sees no stale data
     if (typeof saveState === 'function') saveState();
     updateUserBadge();
     if (typeof renderAccountView === 'function') renderAccountView();
+    // Restore guest/demo header label to current delivery zone (or default text)
+    const zoneLabelEl = document.getElementById('currentSelectedAreaLabel');
+    if (zoneLabelEl) {
+      // Show the zone-based label if a zone is selected, otherwise fallback
+      const zone = (typeof currentSelectedZone !== 'undefined' && currentSelectedZone)
+        ? currentSelectedZone
+        : null;
+      zoneLabelEl.textContent = zone
+        ? `${zone.city} (${zone.name.split('&')[0].trim()})`
+        : 'Sakoli (Main Market Road)';
+    }
     closeModal('authModal');
     showToast('Logged out successfully.', 'info');
   }
 }
 
-function userLoginAction(emailId = 'loginEmail', passId = 'loginPass') {
+async function userLoginAction(emailId = 'loginEmail', passId = 'loginPass') {
   const email = document.getElementById(emailId)?.value.trim() || document.getElementById('loginEmail')?.value.trim();
   const pass = document.getElementById(passId)?.value || document.getElementById('loginPass')?.value;
   if (!email || !pass) return alert('Please enter email and password.');
 
-  appData.currentUser = {
-    id: 'usr_' + Date.now(),
-    name: email.split('@')[0],
-    email,
-    phone: '9876543210',
-    address: 'Sakoli City Center'
-  };
+  const errEl = document.getElementById('authErrorMessage');
+  if (errEl) errEl.textContent = '';
 
-  saveState();
-  updateUserBadge();
-  if (typeof renderAccountView === 'function') renderAccountView();
-  closeModal('authModal');
-  showToast(`Welcome back, ${appData.currentUser.name}!`, 'success');
+  try {
+    // Show loading state
+    const loginBtn = document.querySelector(`button[onclick*="userLoginAction"]`);
+    if (loginBtn) {
+      loginBtn.disabled = true;
+      loginBtn.textContent = '🔄 Signing in...';
+    }
+
+    await supabaseLogin(email, pass);
+    // Session restore and role validation handled by onAuthStateChange -> restoreCustomerSession
+    // If successful, restoreCustomerSession will update appData.currentUser and UI
+
+  } catch (e) {
+    const msg = e.message || 'Login failed. Please check your credentials.';
+    if (errEl) errEl.textContent = msg;
+    showToast(msg, 'error');
+  } finally {
+    const loginBtn = document.querySelector(`button[onclick*="userLoginAction"]`);
+    if (loginBtn) {
+      loginBtn.disabled = false;
+      loginBtn.textContent = '🔑 Login';
+    }
+  }
 }
 
-function userSignupAction(emailId = 'loginEmail', passId = 'loginPass') {
-  userLoginAction(emailId, passId);
+async function userSignupAction(emailId = 'loginEmail', passId = 'loginPass') {
+  const email = document.getElementById(emailId)?.value.trim() || document.getElementById('loginEmail')?.value.trim();
+  const pass = document.getElementById(passId)?.value || document.getElementById('loginPass')?.value;
+  if (!email || !pass) return alert('Please enter email and password.');
+
+  const errEl = document.getElementById('authErrorMessage');
+  if (errEl) errEl.textContent = '';
+
+  try {
+    const signupBtn = document.querySelector(`button[onclick*="userSignupAction"]`);
+    if (signupBtn) {
+      signupBtn.disabled = true;
+      signupBtn.textContent = '🔄 Creating account...';
+    }
+
+    // Extract name from email for profile
+    const nameFromEmail = email.split('@')[0];
+
+    await supabaseSignup(email, pass, nameFromEmail);
+    // If email confirmation required, supabaseSignup throws with friendly message
+    // If auto-confirmed, onAuthStateChange -> restoreCustomerSession handles the rest
+
+  } catch (e) {
+    const msg = e.message || 'Sign up failed. Please try again.';
+    if (errEl) errEl.textContent = msg;
+    showToast(msg, 'error');
+  } finally {
+    const signupBtn = document.querySelector(`button[onclick*="userSignupAction"]`);
+    if (signupBtn) {
+      signupBtn.disabled = false;
+      signupBtn.textContent = '✨ Sign Up';
+    }
+  }
 }
 
 function updateUserBadge() {
@@ -4901,6 +5505,247 @@ window.renderAuthModalContent = renderAuthModalContent;
 window.userLogoutAction = userLogoutAction;
 window.openAuth = openAuth;
 window.updateUserBadge = updateUserBadge;
+window.openEditProfile = openEditProfile;
+window.cancelProfileEdit = cancelProfileEdit;
+window.saveProfileEdit = saveProfileEdit;
+
+// ============================================================
+// Customer Address Actions
+// ============================================================
+
+function openCustomerAddressForm(addressId) {
+  // Remove any stale modal from a previous open
+  const existing = document.getElementById('customerAddressModal');
+  if (existing) existing.remove();
+
+  // Find existing address when editing, empty object when adding
+  const addrs = appData.savedAddresses || [];
+  const addr = addressId ? addrs.find(a => a.id === addressId) : null;
+  const isEdit = !!addr;
+  const title = isEdit ? '✏️ Edit Address' : '📍 Add New Address';
+
+  // Escape helper for attribute values
+  const esc = v => (v || '').toString().replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+  const labelOptions = ['Home', 'Work', 'Other'].map(l =>
+    `<option value="${l}" ${(addr?.label === l) ? 'selected' : ''}>${l}</option>`
+  ).join('');
+
+  const modal = document.createElement('div');
+  modal.id = 'customerAddressModal';
+  modal.className = 'modal-backdrop';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);overflow-y:auto;padding:16px;';
+  modal.innerHTML = `
+    <div class="modal-card" style="background:var(--bg-card);border-radius:20px;padding:24px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,0.3);max-height:90vh;overflow-y:auto;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+        <h3 style="margin:0;font-size:18px;font-weight:800;color:var(--text-main);">${title}</h3>
+        <button onclick="closeModal('customerAddressModal')" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-muted);">✕</button>
+      </div>
+      <p id="addrFormError" style="color:var(--danger,#ef4444);font-size:12px;margin:0 0 10px;min-height:16px;"></p>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div>
+          <label style="font-size:12px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:4px;">Label</label>
+          <select id="addrLabel" class="input-field" style="width:100%;">
+            ${labelOptions}
+          </select>
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:4px;">Receiver Name</label>
+          <input type="text" id="addrFullName" class="input-field" placeholder="e.g. Rakesh Bhaskar" value="${esc(addr?.full_name)}" maxlength="100" style="width:100%;">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:4px;">Mobile Number</label>
+          <input type="tel" id="addrPhone" class="input-field" placeholder="10-digit Indian mobile (+91 optional)" value="${esc(addr?.phone)}" maxlength="15" style="width:100%;">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:4px;">Address Line 1 <span style="color:var(--danger,#ef4444);">*</span></label>
+          <input type="text" id="addrLine1" class="input-field" placeholder="Flat / Building / Street" value="${esc(addr?.address_line1)}" maxlength="200" style="width:100%;">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:4px;">Address Line 2</label>
+          <input type="text" id="addrLine2" class="input-field" placeholder="Area / Colony (optional)" value="${esc(addr?.address_line2)}" maxlength="200" style="width:100%;">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:4px;">Landmark</label>
+          <input type="text" id="addrLandmark" class="input-field" placeholder="Near school, temple, etc. (optional)" value="${esc(addr?.landmark)}" maxlength="200" style="width:100%;">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:4px;">City <span style="color:var(--danger,#ef4444);">*</span></label>
+            <input type="text" id="addrCity" class="input-field" placeholder="e.g. Nagpur" value="${esc(addr?.city)}" maxlength="100" style="width:100%;">
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:4px;">State <span style="color:var(--danger,#ef4444);">*</span></label>
+            <input type="text" id="addrState" class="input-field" placeholder="e.g. Maharashtra" value="${esc(addr?.state)}" maxlength="100" style="width:100%;">
+          </div>
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:4px;">PIN Code</label>
+          <input type="text" id="addrPin" class="input-field" placeholder="6-digit PIN (optional)" value="${esc(addr?.postal_code)}" maxlength="6" inputmode="numeric" style="width:100%;">
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+          <input type="checkbox" id="addrIsDefault" ${addr?.is_default ? 'checked' : ''} style="width:16px;height:16px;cursor:pointer;">
+          <label for="addrIsDefault" style="font-size:13px;font-weight:600;cursor:pointer;">Set as default delivery address</label>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:8px;">
+          <button class="btn-secondary" onclick="closeModal('customerAddressModal')" style="flex:1;padding:12px;font-weight:700;">✕ Cancel</button>
+          <button class="btn-primary" id="addrSaveBtn" onclick="saveCustomerAddress(${isEdit ? `'${addressId}'` : 'null'})" style="flex:1;padding:12px;font-weight:800;font-size:14px;">💾 Save Address</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  // Use same openModal logic to handle body overflow
+  document.body.style.overflow = 'hidden';
+}
+
+async function saveCustomerAddress(addressId) {
+  const errEl = document.getElementById('addrFormError');
+  const saveBtn = document.getElementById('addrSaveBtn');
+
+  // Read form values
+  const label       = document.getElementById('addrLabel')?.value?.trim() || null;
+  const fullName    = document.getElementById('addrFullName')?.value?.trim() || null;
+  const phoneRaw    = document.getElementById('addrPhone')?.value?.trim() || '';
+  const line1       = document.getElementById('addrLine1')?.value?.trim() || '';
+  const line2       = document.getElementById('addrLine2')?.value?.trim() || null;
+  const landmark    = document.getElementById('addrLandmark')?.value?.trim() || null;
+  const city        = document.getElementById('addrCity')?.value?.trim() || '';
+  const state       = document.getElementById('addrState')?.value?.trim() || '';
+  const pinRaw      = document.getElementById('addrPin')?.value?.trim() || '';
+  const isDefault   = document.getElementById('addrIsDefault')?.checked ?? false;
+
+  // --- Validation ---
+  const setErr = msg => { if (errEl) errEl.textContent = msg; };
+  setErr('');
+
+  if (!line1) { setErr('Address Line 1 is required.'); return; }
+  if (!city)  { setErr('City is required.'); return; }
+  if (!state) { setErr('State is required.'); return; }
+
+  // Phone: optional, but if provided must be valid Indian 10-digit
+  let phone = null;
+  if (phoneRaw) {
+    const pv = validatePhoneIndia(phoneRaw);
+    if (!pv.valid) { setErr(pv.error); return; }
+    phone = pv.normalized;
+  }
+
+  // PIN: optional, but if provided must be exactly 6 digits
+  let postalCode = null;
+  if (pinRaw) {
+    if (!/^\d{6}$/.test(pinRaw)) { setErr('PIN Code must be exactly 6 digits.'); return; }
+    postalCode = pinRaw;
+  }
+
+  if (!window.supabaseClient) { setErr('Supabase not initialized.'); return; }
+
+  // Prevent double-submit
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '🔄 Saving...'; }
+
+  try {
+    let rpcError;
+
+    if (!addressId) {
+      // --- ADD ---
+      // Exact params from add_customer_address() in 002_customer_addresses.sql
+      const { error } = await window.supabaseClient.rpc('add_customer_address', {
+        p_label:        label,
+        p_full_name:    fullName,
+        p_phone:        phone,
+        p_address_line1: line1,
+        p_address_line2: line2,
+        p_landmark:     landmark,
+        p_city:         city,
+        p_state:        state,
+        p_postal_code:  postalCode,
+        p_latitude:     null,
+        p_longitude:    null,
+        p_is_default:   isDefault
+      });
+      rpcError = error;
+    } else {
+      // --- UPDATE ---
+      // Exact params from update_customer_address() in 002_customer_addresses.sql
+      const { error } = await window.supabaseClient.rpc('update_customer_address', {
+        p_address_id:    addressId,
+        p_label:         label,
+        p_full_name:     fullName,
+        p_phone:         phone,
+        p_address_line1: line1,
+        p_address_line2: line2,
+        p_landmark:      landmark,
+        p_city:          city,
+        p_state:         state,
+        p_postal_code:   postalCode,
+        p_latitude:      null,
+        p_longitude:     null,
+        p_is_default:    isDefault
+      });
+      rpcError = error;
+    }
+
+    if (rpcError) throw rpcError;
+
+    // Success: reload addresses, close modal, refresh UI
+    closeModal('customerAddressModal');
+    const modal = document.getElementById('customerAddressModal');
+    if (modal) modal.remove();
+    await loadCustomerAddresses();
+    if (typeof renderAccountView === 'function') renderAccountView();
+    showToast(addressId ? 'Address updated!' : 'Address added!', 'success');
+
+  } catch (e) {
+    const msg = e?.message || 'Failed to save address.';
+    setErr(msg);
+    showToast(msg, 'error');
+  } finally {
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 Save Address'; }
+  }
+}
+
+async function deleteCustomerAddress(addressId) {
+  if (!confirm('Delete this address?')) return;
+  if (!window.supabaseClient) { showToast('Supabase not initialized.', 'error'); return; }
+
+  try {
+    // Exact param from delete_customer_address(p_address_id UUID)
+    const { error } = await window.supabaseClient.rpc('delete_customer_address', {
+      p_address_id: addressId
+    });
+    if (error) throw error;
+
+    await loadCustomerAddresses();
+    if (typeof renderAccountView === 'function') renderAccountView();
+    showToast('Address deleted.', 'success');
+  } catch (e) {
+    showToast(e?.message || 'Failed to delete address.', 'error');
+  }
+}
+
+async function setDefaultCustomerAddress(addressId) {
+  if (!window.supabaseClient) { showToast('Supabase not initialized.', 'error'); return; }
+
+  try {
+    // Exact param from set_default_customer_address(p_address_id UUID)
+    const { error } = await window.supabaseClient.rpc('set_default_customer_address', {
+      p_address_id: addressId
+    });
+    if (error) throw error;
+
+    await loadCustomerAddresses();
+    if (typeof renderAccountView === 'function') renderAccountView();
+    showToast('Default address updated!', 'success');
+  } catch (e) {
+    showToast(e?.message || 'Failed to set default address.', 'error');
+  }
+}
+
+window.openCustomerAddressForm = openCustomerAddressForm;
+window.saveCustomerAddress = saveCustomerAddress;
+window.deleteCustomerAddress = deleteCustomerAddress;
+window.setDefaultCustomerAddress = setDefaultCustomerAddress;
+
 
 // -------------------------------------------------------------
 // 9B. FULL SCREEN SEARCH ENGINE (Swiggy / Zomato Style)
@@ -6465,7 +7310,7 @@ function evaluateFoodieBotQuery(rawText) {
 
   // 5. WALLET & CASHBACK INTENT
   if (/(wallet|cashback|balance|refund|पाकीट|वॉलेट|पैसे|कॅशबॅक|रिफंड)/i.test(lower)) {
-    const bal = (appData.currentUser && appData.currentUser.walletBalance) || 250;
+    const bal = Number(appData.currentUser?.walletBalance || 0);
     if (lang === 'mr') {
       return {
         text: `💳 **तुमच्या Parcelकर वॉलेटमध्ये शिल्लक: ₹${bal}**\n• प्रत्येक ऑर्डरवर मिळवा **५% इन्स्टंट कॅशबॅक**\n• प्रत्येक प्रमाणित रिव्ह्यूवर **₹२० बोनस** जमा होतो!\nवॉलेटचे पैसे पुढील कोणत्याही ऑर्डरवर वापरता येतात.`,
@@ -9039,10 +9884,13 @@ function selectDeliveryZone(zoneId) {
   currentSelectedZone = zone;
   currentSelectedCity = zone.city;
 
-  // Update header & search labels
-  const label = document.getElementById('currentSelectedAreaLabel');
-  if (label) {
-    label.textContent = `${zone.city} (${zone.name.split('&')[0].trim()})`;
+  // Update header & search labels — but only if no auth customer address is overriding the header
+  const isAuthWithAddress = !!(appData.currentUser && Array.isArray(appData.savedAddresses) && appData.savedAddresses.length > 0);
+  if (!isAuthWithAddress) {
+    const label = document.getElementById('currentSelectedAreaLabel');
+    if (label) {
+      label.textContent = `${zone.city} (${zone.name.split('&')[0].trim()})`;
+    }
   }
   const searchLabel = document.getElementById('searchAreaLabel');
   if (searchLabel) {
@@ -9301,7 +10149,7 @@ function detectGpsLocation() {
 // -------------------------------------------------------------
 // INITIALIZATION
 // -------------------------------------------------------------
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const searchInput = document.getElementById('foodSearchInput');
   if (searchInput) searchInput.addEventListener('input', renderCustomerView);
 
@@ -9317,6 +10165,10 @@ document.addEventListener('DOMContentLoaded', () => {
   initTheme();
   renderNotifications();
   applyLanguageTranslations();
+
+  // Wait for Supabase auth to be ready before rendering customer-dependent UI
+  await initSupabaseAuth();
+
   updateUserBadge();
   updateCartBadge();
   updateWalletUI();

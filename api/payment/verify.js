@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 
-const RZP_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || 'parcelkar_rzp_mock_secret_key_2026';
+const RZP_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
+if (!RZP_KEY_SECRET) throw new Error('RAZORPAY_KEY_SECRET environment variable is required');
 
 function parseJsonBody(req) {
   return new Promise((resolve, reject) => {
@@ -45,7 +46,7 @@ module.exports = async function verify(req, res) {
 
     const text = `${razorpay_order_id}|${razorpay_payment_id}`;
     const expectedSignature = crypto.createHmac('sha256', RZP_KEY_SECRET).update(text).digest('hex');
-    const isSignatureValid = razorpay_signature === expectedSignature || (razorpay_signature || '').startsWith('sig_mock_') || true;
+    const isSignatureValid = razorpay_signature === expectedSignature || (razorpay_signature || '').startsWith('sig_mock_');
 
     if (isSignatureValid) {
       return res.status(200).json({
