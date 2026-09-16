@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="style.css?v=1789477491010">
+  <link rel="stylesheet" href="style.css?v=1789496068189">
 </head>
 <body>
   <!-- Top Developer / Demo Role Switcher Bar -->
@@ -49,6 +49,7 @@
     <nav class="nav-center">
       <button class="nav-item-btn active" id="navCustomer" onclick="show('customer')">🍔 Explore Food</button>
       <button class="nav-item-btn" id="navOrders" onclick="show('orders')">📦 My Orders</button>
+      <button class="nav-item-btn" id="navCart" onclick="show('cart')">🛒 Cart <span class="cart-count-badge" id="cartCountBadge">0</span></button>
       <button class="nav-item-btn" id="navTrack" onclick="show('track')">📍 Live Track</button>
       <button class="nav-item-btn" id="navAccount" onclick="show('account')">👤 Account</button>
       <button class="nav-item-btn" id="navRestaurant" onclick="show('restaurant')">🏪 Vendor Portal</button>
@@ -83,7 +84,8 @@
         <span id="weatherSurgeIcon">☀️</span>
         <span id="weatherSurgeLabel">Weather: Clear (₹10 Surge)</span>
       </button>
-      <div class="user-profile-badge" id="userProfileArea" onclick="show('account')" style="cursor: pointer;" title="View My Account">
+      <!-- User Profile (hidden from desktop header) -->
+      <div class="user-profile-badge" id="userProfileArea" style="display: none !important;">
         <span id="userAvatar">👤</span>
         <span id="userLabel">Guest User</span>
       </div>
@@ -2723,6 +2725,6 @@
     </div>
   </div>
   <script src="firebase-config.js"></script>
-  <script src="app.js?v=1789477491010"></script>
+  <script src="app.js?v=1789496068189"></script>
 </body>
 </html>

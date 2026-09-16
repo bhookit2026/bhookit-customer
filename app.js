@@ -614,9 +614,13 @@ async function loadCustomerAddresses() {
     appData.savedAddresses = rows || [];
     saveState();
 
+    // Ensure selected delivery address ID is valid for checkout
+    ensureValidSelectedDeliveryAddress();
+
     // Refresh Account UI and the header Deliver To
     if (typeof renderAccountView === 'function') renderAccountView();
     updateDeliverToHeader();
+    if (typeof renderSavedAddresses === 'function') renderSavedAddresses();
 
   } catch (e) {
     console.warn('loadCustomerAddresses failed:', e);
@@ -672,6 +676,94 @@ function updateDeliverToHeader() {
 
 window.updateDeliverToHeader = updateDeliverToHeader;
 window.getDefaultCustomerAddress = getDefaultCustomerAddress;
+
+/**
+ * Helper to check if current user is an authenticated Supabase customer
+ */
+function isAuthCustomer() {
+  return !!(appData.currentUser && appData.currentUser.id && !appData.currentUser.id.startsWith('user_demo_') && Array.isArray(appData.savedAddresses));
+}
+
+/**
+ * Formats a customer address record into a clean string for custAddress
+ */
+function formatCustomerAddressText(addr) {
+  if (!addr) return '';
+  const parts = [];
+  if (addr.address_line1) parts.push(addr.address_line1.trim());
+  if (addr.address_line2) parts.push(addr.address_line2.trim());
+  if (addr.landmark) parts.push(`Near ${addr.landmark.trim()}`);
+  const cityStateZip = [addr.city, addr.state, addr.postal_code]
+    .filter(v => v && String(v).trim())
+    .map(v => String(v).trim())
+    .join(', ');
+  if (cityStateZip) parts.push(cityStateZip);
+  return parts.filter(Boolean).join(', ');
+}
+
+/**
+ * Ensures appData.selectedDeliveryAddressId is valid:
+ * - keep selectedDeliveryAddressId if that ID exists in appData.savedAddresses
+ * - otherwise select is_default === true
+ * - otherwise first address
+ * - otherwise null
+ */
+function ensureValidSelectedDeliveryAddress() {
+  if (!isAuthCustomer()) return null;
+  const addrs = appData.savedAddresses;
+  if (!Array.isArray(addrs) || addrs.length === 0) {
+    appData.selectedDeliveryAddressId = null;
+    return null;
+  }
+  let selected = null;
+  if (appData.selectedDeliveryAddressId) {
+    selected = addrs.find(a => a.id === appData.selectedDeliveryAddressId);
+  }
+  if (!selected) {
+    selected = addrs.find(a => a.is_default) || addrs[0] || null;
+    appData.selectedDeliveryAddressId = selected ? selected.id : null;
+  }
+  return selected;
+}
+
+window.isAuthCustomer = isAuthCustomer;
+window.formatCustomerAddressText = formatCustomerAddressText;
+window.ensureValidSelectedDeliveryAddress = ensureValidSelectedDeliveryAddress;
+
+/**
+ * Resolves the immutable delivery address for an order:
+ * 1. If order.customer.deliveryAddress exists (snapshot), formats cleanly from snapshot fields:
+ *    address_line1, address_line2, landmark, city, state, postal_code.
+ * 2. Otherwise falls back to order.customer.address (for historical/old/guest orders).
+ * 3. Never reads from current savedAddresses, currentUser.address, or DB.
+ */
+function getOrderDeliveryAddress(order) {
+  if (!order || !order.customer) return '';
+
+  const snap = order.customer.deliveryAddress;
+  if (snap && typeof snap === 'object') {
+    const parts = [];
+    if (snap.address_line1) parts.push(String(snap.address_line1).trim());
+    if (snap.address_line2) parts.push(String(snap.address_line2).trim());
+    if (snap.landmark) {
+      const lm = String(snap.landmark).trim();
+      if (lm) parts.push(/^near\s+/i.test(lm) ? lm : `Near ${lm}`);
+    }
+    const cityStateZip = [snap.city, snap.state, snap.postal_code]
+      .filter(v => v && String(v).trim())
+      .map(v => String(v).trim())
+      .join(', ');
+    if (cityStateZip) parts.push(cityStateZip);
+
+    const formatted = parts.filter(Boolean).join(', ');
+    if (formatted) return formatted;
+  }
+
+  // Fallback for old/guest orders that only have customer.address text
+  return (order.customer.address || '').trim();
+}
+
+window.getOrderDeliveryAddress = getOrderDeliveryAddress;
 
 
 async function supabaseSignup(email, password, fullName = null) {
@@ -1437,14 +1529,15 @@ function sendRiderWhatsApp(orderId) {
   const order = appData.orders.find(o => o.id === orderId);
   if (!order) return;
 
+  const dropAddress = getOrderDeliveryAddress(order);
   const message = `🛵 *PARCELKAR DISPATCH - DELIVERY TASK*%0A%0A` +
     `📦 *Order #${order.id}*%0A` +
     `🏪 *Pickup Store:* ${order.restaurantName}%0A` +
-    `📍 *Drop Destination:* ${order.customer.address}%0A` +
+    `📍 *Drop Destination:* ${dropAddress}%0A` +
     `👤 *Customer:* ${order.customer.name}%0A` +
     `📞 *Phone:* ${order.customer.phone}%0A` +
     `💵 *Collect Cash:* ${order.payment === 'COD' ? `₹${order.total}` : '₹0 (Prepaid Online)'}%0A%0A` +
-    `🗑ºï️ *Navigation:* https://maps.google.com/?q=${encodeURIComponent(order.customer.address)}`;
+    `🗺️ *Navigation:* https://maps.google.com/?q=${encodeURIComponent(dropAddress)}`;
 
   window.open(`https://wa.me/?text=${message}`, '_blank');
 }
@@ -1799,6 +1892,54 @@ function renderSavedAddresses() {
   const container = document.getElementById('savedAddressesContainer');
   if (!container) return;
 
+  if (isAuthCustomer()) {
+    const addresses = appData.savedAddresses || [];
+    if (!addresses.length) {
+      container.innerHTML = `
+        <div style="padding: 10px 0;">
+          <p style="font-size: 12px; color: var(--text-muted); margin: 0 0 8px 0;">No delivery address added.</p>
+          <button type="button" class="btn-secondary" onclick="openCustomerAddressForm()" style="padding: 4px 12px; font-size: 11px; font-weight: 700;">+ Add Address</button>
+        </div>
+      `;
+      const addrInput = document.getElementById('custAddress');
+      if (addrInput) {
+        addrInput.value = '';
+      }
+      return;
+    }
+
+    // Always ensure valid selection (default address first, else first available)
+    const selectedAddr = ensureValidSelectedDeliveryAddress();
+    const addrInput = document.getElementById('custAddress');
+    if (addrInput && selectedAddr && (!addrInput.value || addrInput.value === appData.currentUser?.address)) {
+      addrInput.value = formatCustomerAddressText(selectedAddr);
+    }
+
+    // Order: display default Supabase address (is_default === true) first
+    const sortedAddresses = [...addresses].sort((a, b) => (b.is_default ? 1 : 0) - (a.is_default ? 1 : 0));
+
+    container.innerHTML = sortedAddresses.map(addr => {
+      const isSelected = selectedAddr && selectedAddr.id === addr.id;
+      const labelIcon = addr.label === 'Home' ? '🏠' : addr.label === 'Work' ? '💼' : '📍';
+      const addrText = formatCustomerAddressText(addr);
+      const safeId = `'${addr.id}'`;
+      const contactParts = [addr.full_name, addr.phone].filter(v => v && String(v).trim());
+      const contactInfo = contactParts.length ? `<div style="font-size: 11px; color: var(--text-muted); margin: 2px 0;">👤 ${contactParts.join(' · ')}</div>` : '';
+      return `
+        <div class="address-card ${isSelected ? 'selected' : ''}" onclick="selectSavedAddress(${safeId})" style="cursor: pointer;">
+          <div class="address-card-header">
+            <span>${labelIcon} ${addr.label || 'Address'}</span>
+            ${isSelected ? '<span style="color: var(--accent, #10b981); font-size: 11px; font-weight: 700;">🟢 Selected</span>' : (addr.is_default ? '<span style="color: var(--text-muted); font-size: 10px;">(Default)</span>' : '')}
+          </div>
+          ${contactInfo}
+          <div class="address-card-text">${addrText}</div>
+        </div>
+      `;
+    }).join('');
+    return;
+  }
+
+  // Existing guest / demo behavior
   const addresses = appData.currentUser?.savedAddresses || [];
   if (!addresses.length) {
     container.innerHTML = '<p style="font-size: 12px; color: var(--text-muted); padding: 6px 0;">No saved addresses yet. Click "+ Add New Address" above.</p>';
@@ -1816,19 +1957,46 @@ function renderSavedAddresses() {
   `).join('');
 }
 
-function selectSavedAddress(index) {
+function selectSavedAddress(target) {
+  if (isAuthCustomer()) {
+    const addrs = appData.savedAddresses || [];
+    let addr = addrs.find(a => a.id === target);
+    if (!addr && typeof target === 'number') {
+      addr = addrs[target];
+    }
+    if (addr) {
+      appData.selectedDeliveryAddressId = addr.id;
+      if (typeof saveState === 'function') saveState();
+      renderSavedAddresses();
+      const addrInput = document.getElementById('custAddress');
+      if (addrInput) {
+        addrInput.value = formatCustomerAddressText(addr);
+        if (typeof playSound === 'function') playSound('rating');
+      }
+    }
+    return;
+  }
+
+  // Existing guest / demo flow
   const addresses = appData.currentUser?.savedAddresses || [];
-  addresses.forEach((a, i) => a.isDefault = (i === index));
-  saveState();
-  renderSavedAddresses();
-  const addrInput = document.getElementById('custAddress');
-  if (addrInput && addresses[index]) {
-    addrInput.value = addresses[index].address;
-    playSound('rating');
+  const index = typeof target === 'number' ? target : addresses.findIndex(a => a.id === target);
+  if (index >= 0 && addresses[index]) {
+    addresses.forEach((a, i) => a.isDefault = (i === index));
+    saveState();
+    renderSavedAddresses();
+    const addrInput = document.getElementById('custAddress');
+    if (addrInput && addresses[index]) {
+      addrInput.value = addresses[index].address;
+      playSound('rating');
+    }
   }
 }
 
 function openAddressModal() {
+  if (isAuthCustomer()) {
+    openCustomerAddressForm();
+    return;
+  }
   selectedNewAddressType = 'Home';
   selectAddressType('Home');
   const flatInput = document.getElementById('newAddrFlat');
@@ -1847,6 +2015,10 @@ function selectAddressType(type) {
 }
 
 function saveNewAddress() {
+  if (isAuthCustomer()) {
+    openCustomerAddressForm();
+    return;
+  }
   const flat = document.getElementById('newAddrFlat')?.value.trim();
   const street = document.getElementById('newAddrStreet')?.value.trim();
 
@@ -2071,6 +2243,7 @@ function show(panelId) {
   const navMap = {
     customer: 'navCustomer',
     orders: 'navOrders',
+    cart: 'navCart',
     track: 'navTrack',
     account: 'navAccount',
     restaurant: 'navRestaurant',
@@ -2654,7 +2827,16 @@ function renderCartView() {
   const addrInput = document.getElementById('custAddress');
   if (nameInput && !nameInput.value) nameInput.value = appData.currentUser.name;
   if (phoneInput && !phoneInput.value) phoneInput.value = appData.currentUser.phone;
-  if (addrInput && !addrInput.value) addrInput.value = appData.currentUser.address;
+  if (addrInput && !addrInput.value) {
+    if (isAuthCustomer()) {
+      const selected = ensureValidSelectedDeliveryAddress();
+      if (selected) {
+        addrInput.value = formatCustomerAddressText(selected);
+      }
+    } else if (appData.currentUser?.address) {
+      addrInput.value = appData.currentUser.address;
+    }
+  }
 
   renderSavedAddresses();
   updateBillTotals();
@@ -2988,9 +3170,40 @@ async function submitOrder() {
     return alert(t('emptyCart'));
   }
 
-  const name = document.getElementById('custName')?.value.trim() || appData.currentUser?.name || 'Rakesh Bhaskar';
+  const isDineIn = currentServiceMode === 'dinein';
+
+  // Customer Name & Phone resolution
+  const name = document.getElementById('custName')?.value.trim() || appData.currentUser?.name || (isAuthCustomer() ? 'Customer' : 'Rakesh Bhaskar');
   const phone = document.getElementById('custPhone')?.value.trim() || appData.currentUser?.phone || '';
-  const address = document.getElementById('custAddress')?.value.trim() || appData.currentUser?.address || '';
+
+  // Delivery Address resolution — authenticated users MUST use Supabase address
+  let address = '';
+  let selectedDeliveryAddressObj = null;
+
+  if (isDineIn) {
+    address = `[DINE-IN] ${document.getElementById('dineInTableSelect')?.value || 'Table #01 (AC Family Hall)'}`;
+  } else if (isAuthCustomer()) {
+    selectedDeliveryAddressObj = ensureValidSelectedDeliveryAddress();
+    if (!selectedDeliveryAddressObj) {
+      showToast('Please add a delivery address to place your order.', 'warning');
+      if (typeof openCustomerAddressForm === 'function') openCustomerAddressForm();
+      return;
+    }
+    const typedAddr = document.getElementById('custAddress')?.value.trim();
+    address = typedAddr || formatCustomerAddressText(selectedDeliveryAddressObj);
+    if (!address) {
+      showToast('Please select or enter a delivery address.', 'warning');
+      return;
+    }
+  } else {
+    // Guest checkout
+    address = document.getElementById('custAddress')?.value.trim() || appData.currentUser?.address || '';
+    if (!address) {
+      showToast('Please enter your delivery address.', 'warning');
+      return;
+    }
+  }
+
   let payment = document.getElementById('paymentMethod')?.value || 'UPI';
   if (payment === 'COD' && appData.paymentSettings && appData.paymentSettings.codEnabled === false) {
     alert('⚠️ Cash on Delivery (COD) is currently disabled by Admin. Please select UPI or Cards.');
@@ -2998,7 +3211,6 @@ async function submitOrder() {
   }
 
   const isVip = appData.currentUser && appData.currentUser.isVip;
-  const isDineIn = currentServiceMode === 'dinein';
   const isHideDel = !!(appData.settings && appData.settings.hideDeliveryCharges) && !isDineIn;
 
   let subtotal = 0;
@@ -3082,7 +3294,11 @@ async function submitOrder() {
     customer: { 
       name, 
       phone, 
-      address: isDineIn ? `[DINE-IN] ${document.getElementById('dineInTableSelect')?.value || 'Table #01 (AC Family Hall)'}` : address 
+      address,
+      ...(selectedDeliveryAddressObj ? { 
+        deliveryAddressId: selectedDeliveryAddressObj.id,
+        deliveryAddress: { ...selectedDeliveryAddressObj } 
+      } : {})
     },
     items: finalOrderItems,
     subtotal,
@@ -3716,9 +3932,15 @@ function renderOrdersView() {
         <span class="status-pill ${o.status.toLowerCase().replace(/\s+/g, '-')}">${o.status}</span>
       </div>
 
-      <div style="font-size: 13px; margin-bottom: 12px; color: var(--text-main);">
+      <div style="font-size: 13px; margin-bottom: 6px; color: var(--text-main);">
         ${o.items.map(i => `${i.qty}x ${i.name}`).join(', ')}
       </div>
+
+      ${o.serviceMode !== 'dinein' && getOrderDeliveryAddress(o) ? `
+        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">
+          📍 <b>Delivery to:</b> ${getOrderDeliveryAddress(o)}
+        </div>
+      ` : ''}
 
       ${o.status !== 'Delivered' && o.status !== 'Cancelled' && o.serviceMode !== 'dinein' ? `
         <div style="margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; background: #fffbeb; border: 1.5px dashed #f59e0b; padding: 6px 12px; border-radius: 8px;">
@@ -3891,7 +4113,7 @@ function renderTrackingView() {
         <div style="font-size: 15px; font-weight: 700; color: var(--primary); margin-top: 4px;" id="trackEtaDisplay">
           ${order.status === 'Delivered' ? '✅ Arrived & Delivered' : '⏱️ Arriving in ~' + (order.etaMinutes || 15) + ' mins'}
         </div>
-        <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Delivery to: ${order.customer.address}</div>
+        <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Delivery to: ${getOrderDeliveryAddress(order)}</div>
       </div>
     </div>
 
@@ -3981,7 +4203,7 @@ function initLeafletTrackingMap(order) {
   // Destination Marker (Customer)
   L.marker(DELIVERY_WAYPOINTS[DELIVERY_WAYPOINTS.length - 1], { icon: custIcon })
     .addTo(activeLeafletMap)
-    .bindPopup(`<b>Delivery Destination</b><br>${order.customer.address}`);
+    .bindPopup(`<b>Delivery Destination</b><br>${getOrderDeliveryAddress(order)}`);
 
   // Transit Route Line
   routePolyline = L.polyline(DELIVERY_WAYPOINTS, {
@@ -4800,7 +5022,7 @@ function showGSTInvoice(orderId) {
   document.getElementById('invDate').textContent = new Date(order.createdAt).toLocaleDateString();
   document.getElementById('invCustName').textContent = order.customer.name;
   document.getElementById('invCustPhone').textContent = order.customer.phone;
-  document.getElementById('invCustAddress').textContent = order.customer.address;
+  document.getElementById('invCustAddress').textContent = getOrderDeliveryAddress(order);
   document.getElementById('invRestName').textContent = order.restaurantName;
   document.getElementById('invPaymentMode').textContent = `${order.payment} (${order.paymentStatus})${order.transactionId ? ' • Txn: ' + order.transactionId : ''}`;
 
@@ -5384,6 +5606,7 @@ async function userLogoutAction() {
     // Preserve localStorage behavior
     appData.currentUser = null;
     appData.savedAddresses = [];            // clear Supabase addresses so demo mode sees no stale data
+    appData.selectedDeliveryAddressId = null; // clear selected address ID on logout
     if (typeof saveState === 'function') saveState();
     updateUserBadge();
     if (typeof renderAccountView === 'function') renderAccountView();
@@ -9111,7 +9334,7 @@ function openWhatsAppBotModal(orderId) {
         📦 <b>ORDER RECEIPT #${order.id}</b><br><br>
         ${itemList}<br><br>
         💵 <b>Total Paid:</b> ₹${order.total} (${order.payment})<br>
-        📍 <b>Delivery To:</b> ${order.customer.address}<br>
+        📍 <b>Delivery To:</b> ${getOrderDeliveryAddress(order)}<br>
         🛵 <b>Assigned Courier:</b> ${riderName}<br>
         🔐 <b>Delivery PIN / OTP:</b> <span style="background:#dcfce7; color:#166534; font-weight:800; padding:1px 6px; border-radius:4px;">${order.deliveryOtp || '5821'}</span>
         <div class="wa-time">${timeStr} ✓✓</div>
@@ -9902,10 +10125,12 @@ function selectDeliveryZone(zoneId) {
     appData.settings.deliveryBase = zone.baseFee;
   }
 
-  // Pre-fill delivery address in Cart if available
-  const custAddr = document.getElementById('custAddress');
-  if (custAddr && (!custAddr.value || custAddr.value.startsWith('['))) {
-    custAddr.value = `[${zone.city}] ${zone.name}, Landmark, House/Flat No...`;
+  // Pre-fill delivery address in Cart if available (guests only — auth users use Supabase address)
+  if (!isAuthCustomer()) {
+    const custAddr = document.getElementById('custAddress');
+    if (custAddr && (!custAddr.value || custAddr.value.startsWith('['))) {
+      custAddr.value = `[${zone.city}] ${zone.name}, Landmark, House/Flat No...`;
+    }
   }
 
   closeModal('locationSelectorModal');
