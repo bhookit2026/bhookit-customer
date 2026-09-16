@@ -486,6 +486,7 @@ function clearStaleCustomerAuth() {
 
   saveState();
   updateUserBadge();
+  updateWalletUI();
   if (typeof renderAccountView === 'function') renderAccountView();
   if (typeof renderAuthModalContent === 'function') renderAuthModalContent();
   if (typeof renderOrdersView === 'function') renderOrdersView();
@@ -598,8 +599,8 @@ async function restoreCustomerSession(user) {
     if (typeof renderAccountView === 'function') renderAccountView();
     if (typeof renderAuthModalContent === 'function') renderAuthModalContent();
 
-    // Load Supabase-persisted addresses for this authenticated customer.
-    // Runs after currentUser is set so UI can re-render once addresses arrive.
+    // Load Supabase-persisted customer data (wallet, addresses, orders)
+    await loadCustomerWallet();
     await loadCustomerAddresses();
     await loadCustomerOrders();
 
@@ -608,6 +609,96 @@ async function restoreCustomerSession(user) {
     clearStaleCustomerAuth();
   }
 }
+
+// ============================================================
+// Customer Wallet & Ledger — Supabase fetch (RLS: auth.uid() = user_id)
+// ============================================================
+async function loadCustomerWallet() {
+  if (!isAuthCustomer()) {
+    return; // Guest/demo users continue using local demo wallet
+  }
+
+  if (!window.supabaseClient) {
+    console.warn('loadCustomerWallet: Supabase client not initialized');
+    return;
+  }
+
+  try {
+    // 1. Fetch own wallet record (RLS ensures user_id = auth.uid())
+    const { data: walletRow, error: walletErr } = await window.supabaseClient
+      .from('customer_wallets')
+      .select('user_id, balance, updated_at')
+      .maybeSingle();
+
+    if (walletErr) {
+      console.warn('loadCustomerWallet: customer_wallets query error:', walletErr.message);
+      if (appData.currentUser) {
+        appData.currentUser.walletBalance = 0;
+      }
+    } else if (walletRow) {
+      if (appData.currentUser) {
+        appData.currentUser.walletBalance = Number(walletRow.balance || 0);
+      }
+    } else {
+      if (appData.currentUser) {
+        appData.currentUser.walletBalance = 0;
+      }
+    }
+
+    // 2. Fetch own ledger transactions (RLS ensures user_id = auth.uid())
+    const { data: ledgerRows, error: ledgerErr } = await window.supabaseClient
+      .from('wallet_transactions')
+      .select('id, order_id, type, amount, balance_after, transaction_type, description, idempotency_key, created_at')
+      .order('created_at', { ascending: false });
+
+    if (ledgerErr) {
+      console.warn('loadCustomerWallet: wallet_transactions query error:', ledgerErr.message);
+      if (appData.currentUser) {
+        appData.currentUser.walletLedger = [];
+      }
+    } else if (Array.isArray(ledgerRows)) {
+      if (appData.currentUser) {
+        appData.currentUser.walletLedger = ledgerRows.map(tx => {
+          let formattedDate = '';
+          try {
+            formattedDate = tx.created_at ? new Date(tx.created_at).toLocaleDateString('en-IN') : '';
+          } catch (e) {
+            formattedDate = tx.created_at || '';
+          }
+          return {
+            id: tx.id,
+            type: tx.type,
+            title: tx.description,
+            amount: Number(tx.amount || 0),
+            date: formattedDate,
+            orderId: tx.order_id,
+            balanceAfter: Number(tx.balance_after || 0),
+            transactionType: tx.transaction_type,
+            idempotencyKey: tx.idempotency_key,
+            createdAt: tx.created_at
+          };
+        });
+      }
+    } else {
+      if (appData.currentUser) {
+        appData.currentUser.walletLedger = [];
+      }
+    }
+
+    saveState();
+    updateWalletUI();
+    if (typeof renderAccountView === 'function') renderAccountView();
+
+  } catch (err) {
+    console.warn('loadCustomerWallet unexpected error:', err);
+    if (appData.currentUser) {
+      appData.currentUser.walletBalance = 0;
+      appData.currentUser.walletLedger = [];
+      updateWalletUI();
+    }
+  }
+}
+window.loadCustomerWallet = loadCustomerWallet;
 
 // ============================================================
 // Customer Addresses — Supabase fetch (RLS: auth.uid() = user_id)
@@ -1871,7 +1962,7 @@ let deferredPwaPrompt = null;
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=18.0')
+    navigator.serviceWorker.register('./sw.js?v=19.0')
       .then(reg => {
         reg.update();
         if (reg.waiting) {
@@ -3312,18 +3403,19 @@ function setDeliveryScheduleMode(mode) {
 let pendingOrderForPayment = null;
 let currentRzpOrderId = null;
 let pendingUpiPayment = null;
+let isOrderSubmissionInFlight = false;
 const PARCELKAR_UPI_VPA = 'parcelkar@axl';
 // -------------------------------------------------------------
-// SUPABASE ORDER PERSISTENCE HELPER (STEP 6C)
+// SUPABASE ORDER PERSISTENCE HELPER (STEP 6C / STEP 6H.7)
 // -------------------------------------------------------------
 /**
- * Persists an authenticated customer order to Supabase via public.create_customer_order RPC.
+ * Persists an authenticated customer order to Supabase via public.create_customer_order_v2 RPC.
  * - Authenticated Supabase customers only.
+ * - Atomic order + wallet mutation in database transaction.
  * - Omits user_id (forced by RPC from auth.uid()).
- * - Omits created_at and updated_at (managed by database).
- * - Preserves immutable delivery_address_snapshot and order data.
  * - Captures returned database order UUID as newOrder.dbId.
- * - Protects against duplicate submissions.
+ * - Handles both 'success' and 'already_processed' idempotency return states.
+ * - Reloads authoritative customer wallet balance & ledger upon success.
  */
 async function persistCustomerOrderToSupabase(newOrder) {
   if (!isAuthCustomer()) {
@@ -3357,17 +3449,17 @@ async function persistCustomerOrderToSupabase(newOrder) {
       customer_address: newOrder.customer?.address || null,
       delivery_address_id: newOrder.customer?.deliveryAddressId || null,
       delivery_address_snapshot: newOrder.customer?.deliveryAddress || null,
-      subtotal: Math.max(0, Number(newOrder.subtotal) || 0),
-      delivery_fee: Math.max(0, Number(newOrder.deliveryFee) || 0),
+      subtotal: Number(Math.max(0, Number(newOrder.subtotal) || 0).toFixed(2)),
+      delivery_fee: Number(Math.max(0, Number(newOrder.deliveryFee) || 0).toFixed(2)),
       delivery_fee_hidden: !!newOrder.deliveryFeeHidden,
-      delivery_fee_included: Math.max(0, Number(newOrder.deliveryFeeIncluded) || 0),
-      surge_fee: Math.max(0, Number(newOrder.surgeFee) || 0),
-      rider_tip: Math.max(0, Number(newOrder.riderTip) || 0),
-      taxes: Math.max(0, Number(newOrder.taxes) || 0),
-      discount: Math.max(0, Number(newOrder.discount) || 0),
+      delivery_fee_included: Number(Math.max(0, Number(newOrder.deliveryFeeIncluded) || 0).toFixed(2)),
+      surge_fee: Number(Math.max(0, Number(newOrder.surgeFee) || 0).toFixed(2)),
+      rider_tip: Number(Math.max(0, Number(newOrder.riderTip) || 0).toFixed(2)),
+      taxes: Number(Math.max(0, Number(newOrder.taxes) || 0).toFixed(2)),
+      discount: Number(Math.max(0, Number(newOrder.discount) || 0).toFixed(2)),
       coupon_code: newOrder.couponCode || null,
-      wallet_redeemed: Math.max(0, Number(newOrder.walletRedeemed) || 0),
-      total: Math.max(0, Number(newOrder.total) || 0),
+      wallet_redeemed: Number(Math.max(0, Number(newOrder.walletRedeemed) || 0).toFixed(2)),
+      total: Number(Math.max(0, Number(newOrder.total) || 0).toFixed(2)),
       status: newOrder.status || 'New',
       delivery_otp: newOrder.deliveryOtp || null,
       delivery_boy: newOrder.deliveryBoy || null,
@@ -3387,16 +3479,16 @@ async function persistCustomerOrderToSupabase(newOrder) {
       restaurant_name: item.restaurantName || null,
       food_id: item.foodId != null ? String(item.foodId) : null,
       name: item.name || 'Item',
-      base_price: Math.max(0, Number(item.basePrice != null ? item.basePrice : item.price) || 0),
-      price: Math.max(0, Number(item.price) || 0),
+      base_price: Number(Math.max(0, Number(item.basePrice != null ? item.basePrice : item.price) || 0).toFixed(2)),
+      price: Number(Math.max(0, Number(item.price) || 0).toFixed(2)),
       qty: Math.max(1, Number(item.qty) || 1),
       addons: Array.isArray(item.addons) ? item.addons : [],
       allergies: Array.isArray(item.allergies) ? item.allergies : [],
       chef_notes: item.chefNotes || null,
-      delivery_share: Math.max(0, Number(item.deliveryShare) || 0)
+      delivery_share: Number(Math.max(0, Number(item.deliveryShare) || 0).toFixed(2))
     }));
 
-    const { data, error } = await window.supabaseClient.rpc('create_customer_order', {
+    const { data, error } = await window.supabaseClient.rpc('create_customer_order_v2', {
       p_order,
       p_items
     });
@@ -3406,7 +3498,7 @@ async function persistCustomerOrderToSupabase(newOrder) {
     }
 
     const resObj = Array.isArray(data) ? data[0] : (typeof data === 'object' && data !== null ? data : null);
-    if (!resObj || !resObj.order_id) {
+    if (!resObj || !resObj.order_id || (resObj.status !== 'success' && resObj.status !== 'already_processed')) {
       throw new Error('Database did not return a valid order confirmation.');
     }
 
@@ -3416,12 +3508,23 @@ async function persistCustomerOrderToSupabase(newOrder) {
 
     newOrder.dbId = resObj.order_id;
     newOrder._persistedToSupabase = true;
+    newOrder._persistedStatus = resObj.status;
+    if (resObj.wallet_redeemed != null) {
+      newOrder.walletRedeemed = Number(resObj.wallet_redeemed);
+    }
+
+    // Step 6H: Authoritative wallet reload from Supabase
+    await loadCustomerWallet();
+
     return true;
 
   } catch (err) {
     console.error('persistCustomerOrderToSupabase failed:', err);
     const msg = err?.message || 'Failed to place order in database.';
     showToast(`Order failed: ${msg}`, 'error');
+    try {
+      await loadCustomerWallet();
+    } catch (e) {}
     return false;
   }
 }
@@ -3429,6 +3532,11 @@ async function persistCustomerOrderToSupabase(newOrder) {
 window.persistCustomerOrderToSupabase = persistCustomerOrderToSupabase;
 
 async function submitOrder() {
+  if (isOrderSubmissionInFlight) {
+    console.warn('submitOrder: order submission already in flight, ignoring duplicate click');
+    return;
+  }
+
   if (!currentCart.length) {
     showToast('Your cart is empty. Please add food first.', 'warning');
     return alert(t('emptyCart'));
@@ -3474,6 +3582,9 @@ async function submitOrder() {
     return;
   }
 
+  // All pre-submission validations passed — arm the submission guard
+  isOrderSubmissionInFlight = true;
+
   const isVip = appData.currentUser && appData.currentUser.isVip;
   const isHideDel = !!(appData.settings && appData.settings.hideDeliveryCharges) && !isDineIn;
 
@@ -3513,7 +3624,10 @@ async function submitOrder() {
   const tip = isDineIn ? 0 : (currentDriverTip || 0);
 
   const taxes = Math.round(subtotal * ((appData.settings.gstRate || 5) / 100));
-  const subAfterDiscount = Math.max(0, subtotal + deliveryFee + surgeFee + tip + taxes - appliedDiscount);
+  const effectiveDeliveryFee = isHideDel ? 0 : deliveryFee;
+  const grossBeforeDiscount = subtotal + effectiveDeliveryFee + surgeFee + tip + taxes;
+  const effectiveDiscount = Math.min(appliedDiscount, grossBeforeDiscount);
+  const subAfterDiscount = grossBeforeDiscount - effectiveDiscount;
 
   let walletDeduction = 0;
   if (isWalletRedeemedInCart && appData.currentUser) {
@@ -3566,13 +3680,13 @@ async function submitOrder() {
     },
     items: finalOrderItems,
     subtotal,
-    deliveryFee: isHideDel ? 0 : deliveryFee,
+    deliveryFee: effectiveDeliveryFee,
     deliveryFeeHidden: isHideDel,
     deliveryFeeIncluded: isHideDel ? deliveryAmountAbsorbed : 0,
     surgeFee,
     riderTip: tip,
     taxes,
-    discount: appliedDiscount,
+    discount: effectiveDiscount,
     couponCode: appliedCouponCode,
     walletRedeemed: walletDeduction,
     total,
@@ -3594,8 +3708,9 @@ async function submitOrder() {
     chatHistory: []
   };
 
-  // Deduct wallet if redeemed
-  if (walletDeduction > 0 && appData.currentUser) {
+  // Step 6H: Deduct wallet if redeemed — GUEST/DEMO local simulation only.
+  // For authenticated customers, Supabase create_customer_order_v2 is authoritative.
+  if (walletDeduction > 0 && appData.currentUser && !isAuthCustomer()) {
     appData.currentUser.walletBalance -= walletDeduction;
     if (!Array.isArray(appData.currentUser.walletLedger)) appData.currentUser.walletLedger = [];
     appData.currentUser.walletLedger.unshift({
@@ -3609,15 +3724,25 @@ async function submitOrder() {
     updateWalletUI();
   }
 
-  // If Online Payment and remaining total > 0, open the interactive gateway modal
-  if (total > 0 && (payment === 'UPI' || payment === 'CARD')) {
-    pendingOrderForPayment = newOrder;
-    openPaymentGateway(newOrder);
-    return;
-  }
+  try {
+    // If Online Payment and remaining total > 0, open the interactive gateway modal
+    if (total > 0 && (payment === 'UPI' || payment === 'CARD')) {
+      pendingOrderForPayment = newOrder;
+      openPaymentGateway(newOrder);
+      return; // Keep submission guard active while payment modal is open
+    }
 
-  // Finalize directly for COD or Full Wallet Payment
-  await finalizeOrderPlacement(newOrder);
+    // Finalize directly for COD or Full Wallet Payment
+    await finalizeOrderPlacement(newOrder);
+  } catch (err) {
+    console.error('submitOrder unexpected error:', err);
+    showToast('An unexpected error occurred while placing order.', 'error');
+  } finally {
+    // If online payment modal was not opened, release the in-flight guard
+    if (!pendingOrderForPayment) {
+      isOrderSubmissionInFlight = false;
+    }
+  }
 }
 
 // Open Payment Gateway Modal
@@ -3674,8 +3799,10 @@ function switchGatewayTab(tab) {
 
 function cancelGatewayPayment() {
   closeModal('paymentGatewayModal');
+  pendingOrderForPayment = null;
   pendingUpiPayment = null;
   sessionStorage.removeItem('parcelkar_pending_upi');
+  isOrderSubmissionInFlight = false;
   showToast('Payment cancelled by user. You can retry or choose Cash on Delivery.', 'warning');
 }
 
@@ -3727,19 +3854,26 @@ function showUpiReturnUi() {
 }
 
 async function confirmUpiPaid() {
-  if (!pendingUpiPayment || !pendingUpiPayment.order) return;
+  if (!pendingUpiPayment || !pendingUpiPayment.order) {
+    isOrderSubmissionInFlight = false;
+    return;
+  }
   const o = pendingUpiPayment.order;
   o.transactionId = 'UPTXN' + Date.now().toString(36).toUpperCase();
   o.paymentStatus = 'Paid';
-  const success = await finalizeOrderPlacement(o);
-  if (!success) {
-    return;
+  try {
+    const success = await finalizeOrderPlacement(o);
+    if (!success) {
+      return;
+    }
+    closeModal('paymentGatewayModal');
+    pendingOrderForPayment = null;
+    pendingUpiPayment = null;
+    sessionStorage.removeItem('parcelkar_pending_upi');
+    showToast('Payment received via UPI ✓', 'success');
+  } finally {
+    isOrderSubmissionInFlight = false;
   }
-  closeModal('paymentGatewayModal');
-  pendingOrderForPayment = null;
-  pendingUpiPayment = null;
-  sessionStorage.removeItem('parcelkar_pending_upi');
-  showToast('Payment received via UPI ✓', 'success');
 }
 
 function retryUpiPayment() {
@@ -3750,6 +3884,7 @@ function retryUpiPayment() {
   if (procState) procState.classList.add('hidden');
   if (actionArea) actionArea.classList.remove('hidden');
   pendingUpiPayment = null;
+  isOrderSubmissionInFlight = false;
   showToast('Payment not completed. You can retry or choose Cash on Delivery.', 'warning');
 }
 
@@ -3772,7 +3907,10 @@ function armUpiReturnWatcher() {
 }
 
 async function processGatewayPayment(isSuccess) {
-  if (!pendingOrderForPayment) return;
+  if (!pendingOrderForPayment) {
+    isOrderSubmissionInFlight = false;
+    return;
+  }
 
   if (isSuccess) {
     const upiPanel = document.getElementById('gatewayUpiPanel');
@@ -3796,6 +3934,7 @@ async function processGatewayPayment(isSuccess) {
     setTimeout(() => {
       procState.classList.add('hidden');
       actionArea.classList.remove('hidden');
+      isOrderSubmissionInFlight = false;
       alert('❌ Payment Failed: Issuing bank declined transaction. Please retry or choose Cash on Delivery.');
       showToast('Payment Simulation Failed (Test Scenario)', 'warning');
     }, 1200);
@@ -3823,47 +3962,43 @@ async function processGatewayPayment(isSuccess) {
   }
 
   setTimeout(async () => {
-    pendingOrderForPayment.transactionId = txnId;
-    pendingOrderForPayment.paymentStatus = 'Paid';
-    const success = await finalizeOrderPlacement(pendingOrderForPayment);
-    if (success) {
-      closeModal('paymentGatewayModal');
-      pendingOrderForPayment = null;
-    } else {
-      const actionArea = document.getElementById('gatewayActionArea');
-      const procState = document.getElementById('gatewayProcessingState');
-      if (procState) procState.classList.add('hidden');
-      if (actionArea) actionArea.classList.remove('hidden');
+    try {
+      pendingOrderForPayment.transactionId = txnId;
+      pendingOrderForPayment.paymentStatus = 'Paid';
+      const success = await finalizeOrderPlacement(pendingOrderForPayment);
+      if (success) {
+        closeModal('paymentGatewayModal');
+        pendingOrderForPayment = null;
+      } else {
+        const actionArea = document.getElementById('gatewayActionArea');
+        const procState = document.getElementById('gatewayProcessingState');
+        if (procState) procState.classList.add('hidden');
+        if (actionArea) actionArea.classList.remove('hidden');
+      }
+    } finally {
+      isOrderSubmissionInFlight = false;
     }
   }, 1000);
 }
 
 async function finalizeOrderPlacement(newOrder) {
-  // Step 6C: For authenticated Supabase customers, persist order to Supabase before local finalization
+  // Step 6C/6H: For authenticated Supabase customers, persist order to Supabase before local finalization
   if (isAuthCustomer()) {
     const success = await persistCustomerOrderToSupabase(newOrder);
     if (!success) {
-      // Revert wallet deduction if it was applied in submitOrder (exactly once)
-      if (newOrder.walletRedeemed > 0 && appData.currentUser && !newOrder._walletRollbackDone) {
-        appData.currentUser.walletBalance = (appData.currentUser.walletBalance || 0) + newOrder.walletRedeemed;
-        if (Array.isArray(appData.currentUser.walletLedger) && appData.currentUser.walletLedger.length > 0) {
-          appData.currentUser.walletLedger.shift();
-        }
-        newOrder._walletRollbackDone = true;
-        saveState();
-        updateWalletUI();
-      }
+      // Step 6H: create_customer_order_v2 is atomic. Database rollback is automatic.
+      // Do NOT credit local walletBalance or mutate walletLedger.
       return false;
     }
   }
 
   appData.orders.unshift(newOrder);
 
-  // Credit 5% Loyalty Cashback (15% for VIP Gold members)
+  // Credit 5% Loyalty Cashback (15% for VIP Gold members) — Guest/Demo local simulation only
   const isVip = appData.currentUser && appData.currentUser.isVip;
   const cashbackRate = isVip ? 0.15 : 0.05;
   const cashback = Math.round(newOrder.subtotal * cashbackRate);
-  if (cashback > 0 && appData.currentUser) {
+  if (cashback > 0 && appData.currentUser && !isAuthCustomer()) {
     appData.currentUser.walletBalance = (appData.currentUser.walletBalance || 0) + cashback;
     if (!Array.isArray(appData.currentUser.walletLedger)) appData.currentUser.walletLedger = [];
     appData.currentUser.walletLedger.unshift({
@@ -4275,7 +4410,7 @@ function renderOrdersView() {
 const cancellingOrderIds = new Set();
 
 /**
- * Calls Supabase RPC public.cancel_customer_order(p_order_id) to atomically cancel an order.
+ * Calls Supabase RPC public.cancel_customer_order_v2(p_order_id) to atomically cancel an order and process wallet refund.
  * Strictly used for authenticated customers.
  * Requires order.dbId.
  * Does NOT send user_id, status, payment status, or refund amount.
@@ -4294,12 +4429,12 @@ async function cancelCustomerOrderInSupabase(order) {
   }
 
   try {
-    const { data, error } = await window.supabaseClient.rpc('cancel_customer_order', {
+    const { data, error } = await window.supabaseClient.rpc('cancel_customer_order_v2', {
       p_order_id: order.dbId
     });
 
     if (error) {
-      console.error('cancel_customer_order RPC returned error:', error);
+      console.error('cancel_customer_order_v2 RPC returned error:', error);
       return { success: false, error, message: error.message || 'Cancellation rejected by database' };
     }
 
@@ -4332,46 +4467,72 @@ async function cancelOrder(orderId) {
       }
 
       const res = await cancelCustomerOrderInSupabase(order);
-      if (!res.success) {
-        // RPC failed (e.g. status no longer New/Accepted or already Cancelled)
+      const resData = res.data;
+      const isSuccessOrAlready = res.success && resData && (resData.status === 'success' || resData.status === 'already_processed');
+
+      if (!isSuccessOrAlready) {
+        // RPC failed (e.g. status no longer New/Accepted or already Cancelled mismatch)
         // DO NOT locally set Cancelled
         // DO NOT restore inventory
         // DO NOT issue refund
-        console.warn('Authenticated cancellation failed:', res.message);
-        showToast(res.message || `Cannot cancel Order #${order.id}. Current status may have changed.`, 'error');
-        // Reload orders using loadCustomerOrders() to render current server status
+        console.warn('Authenticated cancellation failed:', res.message || resData?.message);
+        showToast(res.message || (resData && resData.message) || `Cannot cancel Order #${order.id}. Current status may have changed.`, 'error');
+        // Reload orders and wallet using server source of truth
         await loadCustomerOrders();
+        await loadCustomerWallet();
         renderOrdersView();
         return;
       }
 
-      // ONLY AFTER RPC SUCCESS:
-      order.status = res.data?.status || 'Cancelled';
+      // Fresh success vs already processed
+      const isAlreadyProcessed = resData.status === 'already_processed';
+      const walletRefunded = Number(resData.wallet_refunded) || 0;
+      const externalRefundRequired = Boolean(resData.external_refund_required);
 
-      // 1. Local UI inventory restoration for compatibility (occurs only once and only after RPC success)
-      restoreInventoryForOrder(order);
+      // 1. Inventory restoration: ONLY on fresh success, NEVER on already_processed or failure
+      if (resData.status === 'success' && !order._inventoryRestored) {
+        restoreInventoryForOrder(order);
+        order._inventoryRestored = true;
+      }
 
-      // 2. REFUND SAFETY:
-      // For authenticated Supabase customers, DISABLE the existing local automatic refund mutation.
-      // Do NOT modify walletBalance, walletLedger, paymentStatus, or calculate refundAmt.
-      const wasPaid = order.paymentStatus === 'Paid' || order.payment !== 'COD' || (order.walletRedeemed && order.walletRedeemed > 0);
-      if (wasPaid) {
-        order.refundStatus = 'Pending (Will be processed separately)';
+      // 2. REFUND MESSAGING (Derived purely from database response):
+      let refundMessage = '';
+      if (walletRefunded > 0) {
+        refundMessage += ` ₹${walletRefunded.toFixed(2)} refunded to Parcelकर Wallet.`;
+      }
+      if (externalRefundRequired) {
+        refundMessage += ' Online/bank payment refund will be processed separately.';
+      }
+
+      // Update refundStatus for display in order cards (purely descriptive UI label)
+      if (walletRefunded > 0 && externalRefundRequired) {
+        order.refundStatus = `₹${walletRefunded.toFixed(2)} Refunded to Wallet. Bank refund pending.`;
+      } else if (walletRefunded > 0) {
+        order.refundStatus = `₹${walletRefunded.toFixed(2)} Refunded to Wallet`;
+      } else if (externalRefundRequired) {
+        order.refundStatus = 'Online refund pending';
       } else {
-        order.refundStatus = 'Not Applicable (COD)';
+        order.refundStatus = 'Not Applicable (COD / Zero Wallet)';
       }
 
       // 3. Audio Bell Alert & Kitchen Voice Cancellation Warning
       playSound('classic_bell');
       speakVoiceAlert(`Attention ${order.restaurantName || 'Kitchen'}! Order #${order.id} has been cancelled by customer.`);
 
-      pushNotification('❌', `Order #${order.id} cancelled.${wasPaid ? ' Refund processing will be handled separately.' : ''}`);
+      const notificationMsg = isAlreadyProcessed
+        ? `Order #${order.id} was already cancelled.${refundMessage}`
+        : `Order #${order.id} cancelled.${refundMessage}`;
+      pushNotification('❌', notificationMsg);
       saveState();
 
-      showToast(`Order #${order.id} cancelled.${wasPaid ? ' Refund processing will be handled separately.' : ''} Supplies restored.`, 'warning');
+      const toastMsg = isAlreadyProcessed
+        ? `Order #${order.id} was already cancelled.${refundMessage}`
+        : `Order #${order.id} cancelled.${refundMessage}${resData.status === 'success' ? ' Supplies restored.' : ''}`;
+      showToast(toastMsg, isAlreadyProcessed ? 'info' : 'warning');
 
-      // 4. Server Source of Truth: reload customer orders from Supabase so My Orders reflects actual row
+      // 4. Server Source of Truth: reload customer orders and wallet from Supabase
       await loadCustomerOrders();
+      await loadCustomerWallet();
       renderOrdersView();
       renderRestaurantView();
     } else {
