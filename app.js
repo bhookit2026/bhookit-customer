@@ -472,11 +472,31 @@ let appData = JSON.parse(localStorage.getItem(STORAGE_KEY)) ||
 let supabaseAuthInitialized = false;
 let supabaseAuthReady = null; // Promise that resolves when auth state is known
 let authModalEditMode = false; // Track edit mode for auth modal
+let supabaseSessionUser = null; // Verified active Supabase session user (source of truth)
+
+function clearStaleCustomerAuth() {
+  supabaseSessionUser = null;
+  if (!appData.currentUser) return;
+
+  // Clear authenticated customer identity from localStorage/memory
+  appData.currentUser = null;
+  appData.savedAddresses = [];
+  appData.selectedDeliveryAddressId = null;
+  appData.orders = [];
+
+  saveState();
+  updateUserBadge();
+  if (typeof renderAccountView === 'function') renderAccountView();
+  if (typeof renderAuthModalContent === 'function') renderAuthModalContent();
+  if (typeof renderOrdersView === 'function') renderOrdersView();
+  updateDeliverToHeader();
+}
 
 async function initSupabaseAuth() {
   if (supabaseAuthInitialized) return supabaseAuthReady;
   if (!window.supabaseClient) {
     console.warn('Supabase client not available, skipping auth init');
+    clearStaleCustomerAuth();
     supabaseAuthReady = Promise.resolve(false);
     return supabaseAuthReady;
   }
@@ -499,18 +519,17 @@ async function initSupabaseAuth() {
       console.warn('Supabase auth init error:', e);
     }
 
-    // If NO Supabase session, clear demo identity but preserve local data
-    // Reuse the session already fetched above — no second getSession() call needed
+    // If NO Supabase session, clear stale customer identity from localStorage/memory
     if (!initialSession?.user) {
-      clearDemoIdentity();
+      clearStaleCustomerAuth();
     }
 
     // 2. Listen for auth state changes
     window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
         await restoreCustomerSession(session.user);
-      } else if (event === 'SIGNED_OUT') {
-        // Supabase signed out - localStorage currentUser handled by userLogoutAction
+      } else if (event === 'SIGNED_OUT' || !session?.user) {
+        clearStaleCustomerAuth();
       }
     });
   })();
@@ -531,6 +550,7 @@ async function restoreCustomerSession(user) {
       console.warn('Profile fetch error:', error.message);
       // If profile missing, user might be new - sign them out
       await window.supabaseClient.auth.signOut();
+      clearStaleCustomerAuth();
       return;
     }
 
@@ -538,6 +558,7 @@ async function restoreCustomerSession(user) {
     if (profile.role !== 'customer') {
       showToast(`This portal is for customers only. Your role: ${profile.role}`, 'error');
       await window.supabaseClient.auth.signOut();
+      clearStaleCustomerAuth();
       return;
     }
 
@@ -551,6 +572,9 @@ async function restoreCustomerSession(user) {
         preservedLocalData[key] = appData.currentUser[key];
       }
     }
+
+    // Record verified Supabase session
+    supabaseSessionUser = user;
 
     // Supabase profile is the source of truth for identity
     // Wallet/VIP default to 0/false for authenticated users (not inherited from demo)
@@ -577,9 +601,11 @@ async function restoreCustomerSession(user) {
     // Load Supabase-persisted addresses for this authenticated customer.
     // Runs after currentUser is set so UI can re-render once addresses arrive.
     await loadCustomerAddresses();
+    await loadCustomerOrders();
 
   } catch (e) {
     console.warn('Session restore failed:', e);
+    clearStaleCustomerAuth();
   }
 }
 
@@ -626,6 +652,151 @@ async function loadCustomerAddresses() {
     console.warn('loadCustomerAddresses failed:', e);
   }
 }
+
+// ============================================================
+// Customer Orders — Supabase fetch (RLS: auth.uid() = user_id)
+// ============================================================
+async function loadCustomerOrders() {
+  if (!isAuthCustomer()) {
+    return; // preserve existing guest/demo local order behavior
+  }
+
+  try {
+    if (!window.supabaseClient) return;
+
+    // 1. Fetch authenticated customer's orders (RLS enforces user_id = auth.uid())
+    const { data: orderRows, error: ordersErr } = await window.supabaseClient
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (ordersErr) {
+      console.warn('loadCustomerOrders orders query failed:', ordersErr.message);
+      appData.orders = [];
+      saveState();
+      if (typeof renderOrdersView === 'function') renderOrdersView();
+      return;
+    }
+
+    if (!orderRows || orderRows.length === 0) {
+      appData.orders = [];
+      saveState();
+      if (typeof renderOrdersView === 'function') renderOrdersView();
+      return;
+    }
+
+    // 2. Fetch related order_items for these order UUIDs
+    const orderIds = orderRows.map(r => r.id);
+    const { data: itemRows, error: itemsErr } = await window.supabaseClient
+      .from('order_items')
+      .select('*')
+      .in('order_id', orderIds);
+
+    if (itemsErr) {
+      console.warn('loadCustomerOrders order_items query failed:', itemsErr.message);
+      appData.orders = [];
+      saveState();
+      if (typeof renderOrdersView === 'function') renderOrdersView();
+      return;
+    }
+
+    // Group items by order_id
+    const itemsByOrderId = {};
+    (itemRows || []).forEach(item => {
+      if (!itemsByOrderId[item.order_id]) {
+        itemsByOrderId[item.order_id] = [];
+      }
+      itemsByOrderId[item.order_id].push({
+        restaurantId: item.restaurant_id,
+        restaurantName: item.restaurant_name,
+        foodId: item.food_id,
+        name: item.name,
+        basePrice: Number(item.base_price || 0),
+        price: Number(item.price || 0),
+        qty: Number(item.qty || 1),
+        addons: item.addons || [],
+        allergies: item.allergies || [],
+        chefNotes: item.chef_notes || '',
+        deliveryShare: Number(item.delivery_share || 0)
+      });
+    });
+
+    // 3. Map database rows to UI order shape
+    const mappedOrders = orderRows.map(row => ({
+      dbId: row.id,
+      id: row.order_code,
+      invoiceNo: row.invoice_no,
+      userId: row.user_id,
+
+      restaurantId: row.restaurant_id,
+      restaurantName: row.restaurant_name,
+
+      isMultiVendorHub: row.is_multi_vendor_hub,
+      vendorNames: row.vendor_names || [],
+
+      allergies: row.allergies || [],
+      chefNotes: row.chef_notes || '',
+
+      serviceMode: row.service_mode,
+      tableNumber: row.table_number,
+
+      customer: {
+        name: row.customer_name || '',
+        phone: row.customer_phone || '',
+        address: row.customer_address || '',
+        deliveryAddressId: row.delivery_address_id || null,
+        deliveryAddress: row.delivery_address_snapshot || null
+      },
+
+      items: itemsByOrderId[row.id] || [],
+
+      subtotal: Number(row.subtotal || 0),
+      deliveryFee: Number(row.delivery_fee || 0),
+      deliveryFeeHidden: !!row.delivery_fee_hidden,
+      deliveryFeeIncluded: Number(row.delivery_fee_included || 0),
+      surgeFee: Number(row.surge_fee || 0),
+      riderTip: Number(row.rider_tip || 0),
+      taxes: Number(row.taxes || 0),
+      discount: Number(row.discount || 0),
+      couponCode: row.coupon_code || '',
+      walletRedeemed: Number(row.wallet_redeemed || 0),
+      total: Number(row.total || 0),
+
+      status: row.status,
+
+      deliveryOtp: row.delivery_otp,
+      deliveryBoy: row.delivery_boy,
+      riderPhone: row.rider_phone,
+
+      payment: row.payment_method,
+      paymentStatus: row.payment_status,
+      transactionId: row.transaction_id,
+
+      createdAt: row.created_at,
+
+      etaMinutes: row.eta_minutes,
+      deliveryProgress: row.delivery_progress,
+
+      scheduleMode: row.schedule_mode,
+      scheduledSlot: row.scheduled_slot,
+
+      chatHistory: row.chat_history || [],
+      _persistedToSupabase: true
+    }));
+
+    appData.orders = mappedOrders;
+    saveState();
+    if (typeof renderOrdersView === 'function') renderOrdersView();
+
+  } catch (err) {
+    console.warn('loadCustomerOrders unexpected error:', err);
+    appData.orders = [];
+    saveState();
+    if (typeof renderOrdersView === 'function') renderOrdersView();
+  }
+}
+
+window.loadCustomerOrders = loadCustomerOrders;
 
 // ============================================================
 // Header "Deliver To" helpers
@@ -681,7 +852,7 @@ window.getDefaultCustomerAddress = getDefaultCustomerAddress;
  * Helper to check if current user is an authenticated Supabase customer
  */
 function isAuthCustomer() {
-  return !!(appData.currentUser && appData.currentUser.id && !appData.currentUser.id.startsWith('user_demo_') && Array.isArray(appData.savedAddresses));
+  return !!(supabaseSessionUser && appData.currentUser && appData.currentUser.id && !appData.currentUser.id.startsWith('user_demo_') && Array.isArray(appData.savedAddresses));
 }
 
 /**
@@ -950,33 +1121,9 @@ document.addEventListener('DOMContentLoaded', () => {
   initSupabaseAuth();
 });
 
-// Clear demo identity fields, preserve local data (cart, favorites, etc.)
+// Clear identity fields safely without losing guest cart/favorites
 function clearDemoIdentity() {
-  if (!appData.currentUser) return;
-  const isDemoUser = appData.currentUser.id === 'user_demo_1' || 
-                     appData.currentUser.email === 'rakesh.user@demo.com' ||
-                     appData.currentUser.email === 'customer@bhookit.com';
-  if (!isDemoUser) return;
-
-  const preservedLocalData = {};
-  const localKeysToPreserve = [
-    'savedAddresses', 'favorites', 'cart', 'orders', 'lastLuckySpinTime'
-  ];
-  for (const key of localKeysToPreserve) {
-    if (appData.currentUser[key] !== undefined) {
-      preservedLocalData[key] = appData.currentUser[key];
-    }
-  }
-
-  appData.currentUser = {
-    ...preservedLocalData
-    // identity fields (id, name, email, phone, avatar_url) intentionally omitted
-    // wallet/VIP not preserved - will default when real user logs in
-  };
-  saveState();
-  updateUserBadge();
-  if (typeof renderAccountView === 'function') renderAccountView();
-  if (typeof renderAuthModalContent === 'function') renderAuthModalContent();
+  clearStaleCustomerAuth();
 }
 
 // ============================================================
@@ -2275,7 +2422,10 @@ function show(panelId) {
 
   if (panelId === 'customer') renderCustomerView();
   if (panelId === 'cart') renderCartView();
-  if (panelId === 'orders') renderOrdersView();
+  if (panelId === 'orders') {
+    if (isAuthCustomer()) loadCustomerOrders();
+    renderOrdersView();
+  }
   if (panelId === 'track') renderTrackingView();
   if (panelId === 'account') renderAccountView();
   if (panelId === 'restaurant') renderRestaurantView();
@@ -3163,6 +3313,120 @@ let pendingOrderForPayment = null;
 let currentRzpOrderId = null;
 let pendingUpiPayment = null;
 const PARCELKAR_UPI_VPA = 'parcelkar@axl';
+// -------------------------------------------------------------
+// SUPABASE ORDER PERSISTENCE HELPER (STEP 6C)
+// -------------------------------------------------------------
+/**
+ * Persists an authenticated customer order to Supabase via public.create_customer_order RPC.
+ * - Authenticated Supabase customers only.
+ * - Omits user_id (forced by RPC from auth.uid()).
+ * - Omits created_at and updated_at (managed by database).
+ * - Preserves immutable delivery_address_snapshot and order data.
+ * - Captures returned database order UUID as newOrder.dbId.
+ * - Protects against duplicate submissions.
+ */
+async function persistCustomerOrderToSupabase(newOrder) {
+  if (!isAuthCustomer()) {
+    return true; // Guest/demo users do not persist to Supabase
+  }
+
+  // Prevent duplicate submission of the same order
+  if (newOrder._persistedToSupabase || newOrder.dbId) {
+    return true;
+  }
+
+  if (!window.supabaseClient) {
+    showToast('Supabase client not initialized. Cannot place order.', 'error');
+    return false;
+  }
+
+  try {
+    const p_order = {
+      order_code: newOrder.id,
+      invoice_no: newOrder.invoiceNo || null,
+      restaurant_id: newOrder.restaurantId != null ? String(newOrder.restaurantId) : null,
+      restaurant_name: newOrder.restaurantName || null,
+      is_multi_vendor_hub: !!newOrder.isMultiVendorHub,
+      vendor_names: Array.isArray(newOrder.vendorNames) ? newOrder.vendorNames : [],
+      allergies: Array.isArray(newOrder.allergies) ? newOrder.allergies : [],
+      chef_notes: newOrder.chefNotes || null,
+      service_mode: newOrder.serviceMode || 'delivery',
+      table_number: newOrder.tableNumber || null,
+      customer_name: newOrder.customer?.name || null,
+      customer_phone: newOrder.customer?.phone || null,
+      customer_address: newOrder.customer?.address || null,
+      delivery_address_id: newOrder.customer?.deliveryAddressId || null,
+      delivery_address_snapshot: newOrder.customer?.deliveryAddress || null,
+      subtotal: Math.max(0, Number(newOrder.subtotal) || 0),
+      delivery_fee: Math.max(0, Number(newOrder.deliveryFee) || 0),
+      delivery_fee_hidden: !!newOrder.deliveryFeeHidden,
+      delivery_fee_included: Math.max(0, Number(newOrder.deliveryFeeIncluded) || 0),
+      surge_fee: Math.max(0, Number(newOrder.surgeFee) || 0),
+      rider_tip: Math.max(0, Number(newOrder.riderTip) || 0),
+      taxes: Math.max(0, Number(newOrder.taxes) || 0),
+      discount: Math.max(0, Number(newOrder.discount) || 0),
+      coupon_code: newOrder.couponCode || null,
+      wallet_redeemed: Math.max(0, Number(newOrder.walletRedeemed) || 0),
+      total: Math.max(0, Number(newOrder.total) || 0),
+      status: newOrder.status || 'New',
+      delivery_otp: newOrder.deliveryOtp || null,
+      delivery_boy: newOrder.deliveryBoy || null,
+      rider_phone: newOrder.riderPhone || null,
+      payment_method: newOrder.payment || 'COD',
+      payment_status: newOrder.paymentStatus || 'Pending',
+      transaction_id: newOrder.transactionId || null,
+      eta_minutes: Number(newOrder.etaMinutes) || 30,
+      delivery_progress: Math.max(0, Math.min(100, Number(newOrder.deliveryProgress) || 15)),
+      schedule_mode: newOrder.scheduleMode || 'now',
+      scheduled_slot: newOrder.scheduledSlot || null,
+      chat_history: Array.isArray(newOrder.chatHistory) ? newOrder.chatHistory : []
+    };
+
+    const p_items = (newOrder.items || []).map(item => ({
+      restaurant_id: item.restaurantId != null ? String(item.restaurantId) : null,
+      restaurant_name: item.restaurantName || null,
+      food_id: item.foodId != null ? String(item.foodId) : null,
+      name: item.name || 'Item',
+      base_price: Math.max(0, Number(item.basePrice != null ? item.basePrice : item.price) || 0),
+      price: Math.max(0, Number(item.price) || 0),
+      qty: Math.max(1, Number(item.qty) || 1),
+      addons: Array.isArray(item.addons) ? item.addons : [],
+      allergies: Array.isArray(item.allergies) ? item.allergies : [],
+      chef_notes: item.chefNotes || null,
+      delivery_share: Math.max(0, Number(item.deliveryShare) || 0)
+    }));
+
+    const { data, error } = await window.supabaseClient.rpc('create_customer_order', {
+      p_order,
+      p_items
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    const resObj = Array.isArray(data) ? data[0] : (typeof data === 'object' && data !== null ? data : null);
+    if (!resObj || !resObj.order_id) {
+      throw new Error('Database did not return a valid order confirmation.');
+    }
+
+    if (resObj.order_code && resObj.order_code !== newOrder.id) {
+      console.warn(`Supabase order_code mismatch: returned ${resObj.order_code}, expected ${newOrder.id}`);
+    }
+
+    newOrder.dbId = resObj.order_id;
+    newOrder._persistedToSupabase = true;
+    return true;
+
+  } catch (err) {
+    console.error('persistCustomerOrderToSupabase failed:', err);
+    const msg = err?.message || 'Failed to place order in database.';
+    showToast(`Order failed: ${msg}`, 'error');
+    return false;
+  }
+}
+
+window.persistCustomerOrderToSupabase = persistCustomerOrderToSupabase;
 
 async function submitOrder() {
   if (!currentCart.length) {
@@ -3353,7 +3617,7 @@ async function submitOrder() {
   }
 
   // Finalize directly for COD or Full Wallet Payment
-  finalizeOrderPlacement(newOrder);
+  await finalizeOrderPlacement(newOrder);
 }
 
 // Open Payment Gateway Modal
@@ -3462,13 +3726,16 @@ function showUpiReturnUi() {
   if (ret) ret.classList.remove('hidden');
 }
 
-function confirmUpiPaid() {
+async function confirmUpiPaid() {
   if (!pendingUpiPayment || !pendingUpiPayment.order) return;
   const o = pendingUpiPayment.order;
-  closeModal('paymentGatewayModal');
   o.transactionId = 'UPTXN' + Date.now().toString(36).toUpperCase();
   o.paymentStatus = 'Paid';
-  finalizeOrderPlacement(o);
+  const success = await finalizeOrderPlacement(o);
+  if (!success) {
+    return;
+  }
+  closeModal('paymentGatewayModal');
   pendingOrderForPayment = null;
   pendingUpiPayment = null;
   sessionStorage.removeItem('parcelkar_pending_upi');
@@ -3555,16 +3822,41 @@ async function processGatewayPayment(isSuccess) {
     console.log('Local verification complete');
   }
 
-  setTimeout(() => {
-    closeModal('paymentGatewayModal');
+  setTimeout(async () => {
     pendingOrderForPayment.transactionId = txnId;
     pendingOrderForPayment.paymentStatus = 'Paid';
-    finalizeOrderPlacement(pendingOrderForPayment);
-    pendingOrderForPayment = null;
+    const success = await finalizeOrderPlacement(pendingOrderForPayment);
+    if (success) {
+      closeModal('paymentGatewayModal');
+      pendingOrderForPayment = null;
+    } else {
+      const actionArea = document.getElementById('gatewayActionArea');
+      const procState = document.getElementById('gatewayProcessingState');
+      if (procState) procState.classList.add('hidden');
+      if (actionArea) actionArea.classList.remove('hidden');
+    }
   }, 1000);
 }
 
-function finalizeOrderPlacement(newOrder) {
+async function finalizeOrderPlacement(newOrder) {
+  // Step 6C: For authenticated Supabase customers, persist order to Supabase before local finalization
+  if (isAuthCustomer()) {
+    const success = await persistCustomerOrderToSupabase(newOrder);
+    if (!success) {
+      // Revert wallet deduction if it was applied in submitOrder (exactly once)
+      if (newOrder.walletRedeemed > 0 && appData.currentUser && !newOrder._walletRollbackDone) {
+        appData.currentUser.walletBalance = (appData.currentUser.walletBalance || 0) + newOrder.walletRedeemed;
+        if (Array.isArray(appData.currentUser.walletLedger) && appData.currentUser.walletLedger.length > 0) {
+          appData.currentUser.walletLedger.shift();
+        }
+        newOrder._walletRollbackDone = true;
+        saveState();
+        updateWalletUI();
+      }
+      return false;
+    }
+  }
+
   appData.orders.unshift(newOrder);
 
   // Credit 5% Loyalty Cashback (15% for VIP Gold members)
@@ -3612,6 +3904,7 @@ function finalizeOrderPlacement(newOrder) {
   showToast(`${t('orderPlacedSuccess')} ${newOrder.id} (${newOrder.payment} • ${newOrder.paymentStatus})`, 'success');
   currentTrackedOrderId = newOrder.id;
   show('track');
+  return true;
 }
 
 // -------------------------------------------------------------
@@ -3978,52 +4271,159 @@ function renderOrdersView() {
   `).join('');
 }
 
-function cancelOrder(orderId) {
+// In-flight guard to prevent multiple simultaneous cancellation requests
+const cancellingOrderIds = new Set();
+
+/**
+ * Calls Supabase RPC public.cancel_customer_order(p_order_id) to atomically cancel an order.
+ * Strictly used for authenticated customers.
+ * Requires order.dbId.
+ * Does NOT send user_id, status, payment status, or refund amount.
+ */
+async function cancelCustomerOrderInSupabase(order) {
+  if (!isAuthCustomer()) {
+    return { success: false, message: 'User is not an authenticated Supabase customer' };
+  }
+
+  if (!order || !order.dbId) {
+    return { success: false, message: 'Order database ID (dbId) is missing' };
+  }
+
+  if (!window.supabaseClient) {
+    return { success: false, message: 'Supabase client not initialized' };
+  }
+
+  try {
+    const { data, error } = await window.supabaseClient.rpc('cancel_customer_order', {
+      p_order_id: order.dbId
+    });
+
+    if (error) {
+      console.error('cancel_customer_order RPC returned error:', error);
+      return { success: false, error, message: error.message || 'Cancellation rejected by database' };
+    }
+
+    return { success: true, data };
+  } catch (err) {
+    console.error('cancelCustomerOrderInSupabase unexpected error:', err);
+    return { success: false, error: err, message: err.message || 'Unexpected cancellation error' };
+  }
+}
+window.cancelCustomerOrderInSupabase = cancelCustomerOrderInSupabase;
+
+async function cancelOrder(orderId) {
   const order = appData.orders.find(o => o.id === orderId);
   if (!order) return;
   if (!confirm(`Are you sure you want to cancel Order #${order.id}?`)) return;
 
-  order.status = 'Cancelled';
-
-  // 1. Auto Restock Depleted Raw Ingredients & Supplies
-  restoreInventoryForOrder(order);
-
-  // 2. Instant Wallet Refund if paid online or wallet was redeemed
-  const wasPaid = order.paymentStatus === 'Paid' || order.payment !== 'COD' || (order.walletRedeemed && order.walletRedeemed > 0);
-  let refundAmt = 0;
-
-  if (wasPaid) {
-    refundAmt = order.total + (order.walletRedeemed || 0);
-    order.refundStatus = `Refunded ₹${refundAmt} to Wallet`;
-    order.paymentStatus = 'Refunded';
-
-    if (!appData.currentUser) appData.currentUser = { walletBalance: 0, walletLedger: [] };
-    appData.currentUser.walletBalance = (appData.currentUser.walletBalance || 0) + refundAmt;
-    if (!Array.isArray(appData.currentUser.walletLedger)) appData.currentUser.walletLedger = [];
-
-    appData.currentUser.walletLedger.unshift({
-      id: 'tx_' + Date.now(),
-      type: 'credit',
-      title: `🔄 Instant Order Cancellation Refund (Order #${order.id})`,
-      amount: refundAmt,
-      date: new Date().toLocaleDateString('en-IN')
-    });
-    updateWalletUI();
-  } else {
-    order.refundStatus = 'Not Applicable (COD)';
+  // In-flight guard to prevent multiple simultaneous cancellation requests
+  const guardKey = order.dbId || order.id;
+  if (cancellingOrderIds.has(guardKey)) {
+    console.warn(`Cancellation already in progress for order ${guardKey}`);
+    return;
   }
+  cancellingOrderIds.add(guardKey);
 
-  // 3. Audio Bell Alert & Kitchen Voice Cancellation Warning
-  playSound('classic_bell');
-  speakVoiceAlert(`Attention ${order.restaurantName}! Order #${order.id} has been cancelled by customer.`);
+  try {
+    if (isAuthCustomer()) {
+      if (!order.dbId) {
+        showToast(`Cannot cancel Order #${order.id}: Missing database ID. Please refresh.`, 'error');
+        return;
+      }
 
-  pushNotification('❌', `Order #${order.id} cancelled.${refundAmt > 0 ? ` ₹${refundAmt} refunded instantly to your Parcelकर Wallet!` : ''}`);
-  saveState();
+      const res = await cancelCustomerOrderInSupabase(order);
+      if (!res.success) {
+        // RPC failed (e.g. status no longer New/Accepted or already Cancelled)
+        // DO NOT locally set Cancelled
+        // DO NOT restore inventory
+        // DO NOT issue refund
+        console.warn('Authenticated cancellation failed:', res.message);
+        showToast(res.message || `Cannot cancel Order #${order.id}. Current status may have changed.`, 'error');
+        // Reload orders using loadCustomerOrders() to render current server status
+        await loadCustomerOrders();
+        renderOrdersView();
+        return;
+      }
 
-  showToast(`Order #${order.id} cancelled. ${refundAmt > 0 ? `₹${refundAmt} credited to wallet!` : ''} Supplies restored.`, 'warning');
-  renderOrdersView();
-  renderRestaurantView();
+      // ONLY AFTER RPC SUCCESS:
+      order.status = res.data?.status || 'Cancelled';
+
+      // 1. Local UI inventory restoration for compatibility (occurs only once and only after RPC success)
+      restoreInventoryForOrder(order);
+
+      // 2. REFUND SAFETY:
+      // For authenticated Supabase customers, DISABLE the existing local automatic refund mutation.
+      // Do NOT modify walletBalance, walletLedger, paymentStatus, or calculate refundAmt.
+      const wasPaid = order.paymentStatus === 'Paid' || order.payment !== 'COD' || (order.walletRedeemed && order.walletRedeemed > 0);
+      if (wasPaid) {
+        order.refundStatus = 'Pending (Will be processed separately)';
+      } else {
+        order.refundStatus = 'Not Applicable (COD)';
+      }
+
+      // 3. Audio Bell Alert & Kitchen Voice Cancellation Warning
+      playSound('classic_bell');
+      speakVoiceAlert(`Attention ${order.restaurantName || 'Kitchen'}! Order #${order.id} has been cancelled by customer.`);
+
+      pushNotification('❌', `Order #${order.id} cancelled.${wasPaid ? ' Refund processing will be handled separately.' : ''}`);
+      saveState();
+
+      showToast(`Order #${order.id} cancelled.${wasPaid ? ' Refund processing will be handled separately.' : ''} Supplies restored.`, 'warning');
+
+      // 4. Server Source of Truth: reload customer orders from Supabase so My Orders reflects actual row
+      await loadCustomerOrders();
+      renderOrdersView();
+      renderRestaurantView();
+    } else {
+      // -------------------------------------------------------------
+      // Guest / Demo Orders: preserve existing local cancellation logic
+      // -------------------------------------------------------------
+      order.status = 'Cancelled';
+
+      // 1. Auto Restock Depleted Raw Ingredients & Supplies
+      restoreInventoryForOrder(order);
+
+      // 2. Instant Wallet Refund if paid online or wallet was redeemed
+      const wasPaid = order.paymentStatus === 'Paid' || order.payment !== 'COD' || (order.walletRedeemed && order.walletRedeemed > 0);
+      let refundAmt = 0;
+
+      if (wasPaid) {
+        refundAmt = order.total + (order.walletRedeemed || 0);
+        order.refundStatus = `Refunded ₹${refundAmt} to Wallet`;
+        order.paymentStatus = 'Refunded';
+
+        if (!appData.currentUser) appData.currentUser = { walletBalance: 0, walletLedger: [] };
+        appData.currentUser.walletBalance = (appData.currentUser.walletBalance || 0) + refundAmt;
+        if (!Array.isArray(appData.currentUser.walletLedger)) appData.currentUser.walletLedger = [];
+
+        appData.currentUser.walletLedger.unshift({
+          id: 'tx_' + Date.now(),
+          type: 'credit',
+          title: `🔄 Instant Order Cancellation Refund (Order #${order.id})`,
+          amount: refundAmt,
+          date: new Date().toLocaleDateString('en-IN')
+        });
+        updateWalletUI();
+      } else {
+        order.refundStatus = 'Not Applicable (COD)';
+      }
+
+      // 3. Audio Bell Alert & Kitchen Voice Cancellation Warning
+      playSound('classic_bell');
+      speakVoiceAlert(`Attention ${order.restaurantName}! Order #${order.id} has been cancelled by customer.`);
+
+      pushNotification('❌', `Order #${order.id} cancelled.${refundAmt > 0 ? ` ₹${refundAmt} refunded instantly to your Parcelकर Wallet!` : ''}`);
+      saveState();
+
+      showToast(`Order #${order.id} cancelled. ${refundAmt > 0 ? `₹${refundAmt} credited to wallet!` : ''} Supplies restored.`, 'warning');
+      renderOrdersView();
+      renderRestaurantView();
+    }
+  } finally {
+    cancellingOrderIds.delete(guardKey);
+  }
 }
+window.cancelOrder = cancelOrder;
 
 function viewTrackingFor(orderId) {
   currentTrackedOrderId = orderId;
@@ -5087,7 +5487,7 @@ function renderAuthModalContent() {
   const container = document.querySelector('#authModal .modal-content');
   if (!container) return;
 
-  const isUser = !!appData.currentUser;
+  const isUser = !!(appData.currentUser && appData.currentUser.id);
   if (!isUser) {
     container.innerHTML = `
       <button class="modal-close-btn" onclick="closeModal('authModal')">✕</button>
@@ -5285,7 +5685,7 @@ function renderAccountView() {
   const container = document.getElementById('accountViewContainer');
   if (!container) return;
 
-  const isUser = !!appData.currentUser;
+  const isUser = !!(appData.currentUser && appData.currentUser.id);
   const user = appData.currentUser || { name: 'Guest User', email: 'guest@parcelkar.com', phone: '', address: '' };
   const walletBal = Number(user.walletBalance || 0);
 
@@ -5603,13 +6003,7 @@ async function userLogoutAction() {
         console.warn('Supabase signOut error:', e);
       }
     }
-    // Preserve localStorage behavior
-    appData.currentUser = null;
-    appData.savedAddresses = [];            // clear Supabase addresses so demo mode sees no stale data
-    appData.selectedDeliveryAddressId = null; // clear selected address ID on logout
-    if (typeof saveState === 'function') saveState();
-    updateUserBadge();
-    if (typeof renderAccountView === 'function') renderAccountView();
+    clearStaleCustomerAuth();
     // Restore guest/demo header label to current delivery zone (or default text)
     const zoneLabelEl = document.getElementById('currentSelectedAreaLabel');
     if (zoneLabelEl) {
@@ -5642,9 +6036,12 @@ async function userLoginAction(emailId = 'loginEmail', passId = 'loginPass') {
       loginBtn.textContent = '🔄 Signing in...';
     }
 
-    await supabaseLogin(email, pass);
-    // Session restore and role validation handled by onAuthStateChange -> restoreCustomerSession
-    // If successful, restoreCustomerSession will update appData.currentUser and UI
+    const data = await supabaseLogin(email, pass);
+    if (data?.session?.user) {
+      await restoreCustomerSession(data.session.user);
+    }
+    closeModal('authModal');
+    showToast('Logged in successfully!', 'success');
 
   } catch (e) {
     const msg = e.message || 'Login failed. Please check your credentials.';
@@ -5677,9 +6074,12 @@ async function userSignupAction(emailId = 'loginEmail', passId = 'loginPass') {
     // Extract name from email for profile
     const nameFromEmail = email.split('@')[0];
 
-    await supabaseSignup(email, pass, nameFromEmail);
-    // If email confirmation required, supabaseSignup throws with friendly message
-    // If auto-confirmed, onAuthStateChange -> restoreCustomerSession handles the rest
+    const data = await supabaseSignup(email, pass, nameFromEmail);
+    if (data?.session?.user) {
+      await restoreCustomerSession(data.session.user);
+      closeModal('authModal');
+      showToast('Account created and logged in!', 'success');
+    }
 
   } catch (e) {
     const msg = e.message || 'Sign up failed. Please try again.';
@@ -5701,7 +6101,7 @@ function updateUserBadge() {
   const mobIcon = document.getElementById('mobNavAuthIcon');
   const mobBtn = document.getElementById('mobNavAuthBtn');
   
-  const isUser = !!appData.currentUser;
+  const isUser = !!(appData.currentUser && appData.currentUser.id);
   const userName = isUser ? (appData.currentUser.name || 'User') : (typeof t === 'function' ? t('guest') : 'Guest');
   
   if (label) label.textContent = userName;
