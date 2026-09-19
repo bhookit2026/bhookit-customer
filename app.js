@@ -476,6 +476,21 @@ let supabaseSessionUser = null; // Verified active Supabase session user (source
 
 function clearStaleCustomerAuth() {
   supabaseSessionUser = null;
+
+  // Clear in-memory payment session context on auth change/logout (Step 6J.5H)
+  pendingOrderForPayment = null;
+  pendingRazorpayPayment = null;
+  pendingRazorpayVerification = null;
+  currentRzpOrderId = null;
+  isRazorpayCheckoutOpen = false;
+  isOrderSubmissionInFlight = false;
+  isPaymentVerificationInFlight = false;
+  if (typeof window !== 'undefined') {
+    window.pendingOrderForPayment = null;
+    window.pendingRazorpayPayment = null;
+    window.pendingRazorpayVerification = null;
+  }
+
   if (!appData.currentUser) return;
 
   // Clear authenticated customer identity from localStorage/memory
@@ -3403,6 +3418,10 @@ function setDeliveryScheduleMode(mode) {
 let pendingOrderForPayment = null;
 let currentRzpOrderId = null;
 let pendingUpiPayment = null;
+let pendingRazorpayPayment = null;
+let pendingRazorpayVerification = null;
+let isRazorpayCheckoutOpen = false;
+let isPaymentVerificationInFlight = false;
 let isOrderSubmissionInFlight = false;
 const PARCELKAR_UPI_VPA = 'parcelkar@axl';
 // -------------------------------------------------------------
@@ -3531,9 +3550,726 @@ async function persistCustomerOrderToSupabase(newOrder) {
 
 window.persistCustomerOrderToSupabase = persistCustomerOrderToSupabase;
 
+/**
+ * Persists an authenticated customer online order to Supabase via public.create_customer_order_v3 RPC.
+ * - Forces authoritative state: status = 'Payment_Pending', payment_status = 'Pending'.
+ * - Zero browser claims of 'Paid' or 'New'.
+ * - Captures returned database order UUID as newOrder.dbId.
+ * - Atomically locks and debits wallet if wallet_redeemed > 0.
+ * - Handles both 'success' and 'already_processed' idempotency return states.
+ * - Reloads authoritative customer wallet balance upon success.
+ * - Preserves cart and order state on failure.
+ */
+async function persistCustomerOrderV3ToSupabase(newOrder) {
+  if (!isAuthCustomer()) {
+    return { success: false, error: 'Customer authentication required' };
+  }
+
+  // Prevent duplicate submission of the same order
+  if (newOrder._persistedToSupabase || newOrder.dbId) {
+    return { success: true, order_id: newOrder.dbId, status: newOrder._persistedStatus || 'already_processed' };
+  }
+
+  if (!window.supabaseClient) {
+    showToast('Supabase client not initialized. Cannot place order.', 'error');
+    return { success: false, error: 'Supabase client not initialized' };
+  }
+
+  try {
+    const p_order = {
+      order_code: newOrder.id,
+      invoice_no: newOrder.invoiceNo || null,
+      restaurant_id: newOrder.restaurantId != null ? String(newOrder.restaurantId) : null,
+      restaurant_name: newOrder.restaurantName || null,
+      is_multi_vendor_hub: !!newOrder.isMultiVendorHub,
+      vendor_names: Array.isArray(newOrder.vendorNames) ? newOrder.vendorNames : [],
+      allergies: Array.isArray(newOrder.allergies) ? newOrder.allergies : [],
+      chef_notes: newOrder.chefNotes || null,
+      service_mode: newOrder.serviceMode || 'delivery',
+      table_number: newOrder.tableNumber || null,
+      customer_name: newOrder.customer?.name || null,
+      customer_phone: newOrder.customer?.phone || null,
+      customer_address: newOrder.customer?.address || null,
+      delivery_address_id: newOrder.customer?.deliveryAddressId || null,
+      delivery_address_snapshot: newOrder.customer?.deliveryAddress || null,
+      subtotal: Number(Math.max(0, Number(newOrder.subtotal) || 0).toFixed(2)),
+      delivery_fee: Number(Math.max(0, Number(newOrder.deliveryFee) || 0).toFixed(2)),
+      delivery_fee_hidden: !!newOrder.deliveryFeeHidden,
+      delivery_fee_included: Number(Math.max(0, Number(newOrder.deliveryFeeIncluded) || 0).toFixed(2)),
+      surge_fee: Number(Math.max(0, Number(newOrder.surgeFee) || 0).toFixed(2)),
+      rider_tip: Number(Math.max(0, Number(newOrder.riderTip) || 0).toFixed(2)),
+      taxes: Number(Math.max(0, Number(newOrder.taxes) || 0).toFixed(2)),
+      discount: Number(Math.max(0, Number(newOrder.discount) || 0).toFixed(2)),
+      coupon_code: newOrder.couponCode || null,
+      wallet_redeemed: Number(Math.max(0, Number(newOrder.walletRedeemed) || 0).toFixed(2)),
+      total: Number(Math.max(0, Number(newOrder.total) || 0).toFixed(2)),
+      status: 'Payment_Pending',
+      delivery_otp: newOrder.deliveryOtp || null,
+      delivery_boy: newOrder.deliveryBoy || null,
+      rider_phone: newOrder.riderPhone || null,
+      payment_method: newOrder.payment || 'UPI',
+      payment_status: 'Pending',
+      transaction_id: null,
+      eta_minutes: Number(newOrder.etaMinutes) || 30,
+      delivery_progress: Math.max(0, Math.min(100, Number(newOrder.deliveryProgress) || 15)),
+      schedule_mode: newOrder.scheduleMode || 'now',
+      scheduled_slot: newOrder.scheduledSlot || null,
+      chat_history: Array.isArray(newOrder.chatHistory) ? newOrder.chatHistory : []
+    };
+
+    const p_items = (newOrder.items || []).map(item => ({
+      restaurant_id: item.restaurantId != null ? String(item.restaurantId) : null,
+      restaurant_name: item.restaurantName || null,
+      food_id: item.foodId != null ? String(item.foodId) : null,
+      name: item.name || 'Item',
+      base_price: Number(Math.max(0, Number(item.basePrice != null ? item.basePrice : item.price) || 0).toFixed(2)),
+      price: Number(Math.max(0, Number(item.price) || 0).toFixed(2)),
+      qty: Math.max(1, Number(item.qty) || 1),
+      addons: Array.isArray(item.addons) ? item.addons : [],
+      allergies: Array.isArray(item.allergies) ? item.allergies : [],
+      chef_notes: item.chefNotes || null,
+      delivery_share: Number(Math.max(0, Number(item.deliveryShare) || 0).toFixed(2))
+    }));
+
+    const { data, error } = await window.supabaseClient.rpc('create_customer_order_v3', {
+      p_order,
+      p_items
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    const resObj = Array.isArray(data) ? data[0] : (typeof data === 'object' && data !== null ? data : null);
+    if (!resObj || !resObj.order_id || (resObj.status !== 'success' && resObj.status !== 'already_processed')) {
+      throw new Error('Database did not return a valid order confirmation.');
+    }
+
+    if (resObj.order_code && resObj.order_code !== newOrder.id) {
+      console.warn(`Supabase order_code mismatch: returned ${resObj.order_code}, expected ${newOrder.id}`);
+    }
+
+    newOrder.dbId = resObj.order_id;
+    newOrder.status = resObj.order_status || 'Payment_Pending';
+    newOrder.paymentStatus = resObj.payment_status || 'Pending';
+    newOrder._persistedToSupabase = true;
+    newOrder._persistedStatus = resObj.status;
+
+    if (resObj.wallet_redeemed != null) {
+      newOrder.walletRedeemed = Number(resObj.wallet_redeemed);
+    }
+
+    // Authoritative wallet reload from Supabase
+    await loadCustomerWallet();
+
+    return {
+      success: true,
+      order_id: resObj.order_id,
+      order_code: resObj.order_code,
+      status: resObj.status
+    };
+
+  } catch (err) {
+    console.error('persistCustomerOrderV3ToSupabase failed:', err);
+    const msg = err?.message || 'Failed to initialize payment order in database.';
+    showToast(`Order failed: ${msg}`, 'error');
+    try {
+      await loadCustomerWallet();
+    } catch (e) {}
+    return { success: false, error: msg };
+  }
+}
+
+window.persistCustomerOrderV3ToSupabase = persistCustomerOrderV3ToSupabase;
+
+/**
+ * Obtains the current active Supabase customer session access token.
+ * Uses window.supabaseClient.auth.getSession() as the sole source of truth.
+ * Never uses localStorage auth flags, cached user ID, or publishable keys.
+ * Never logs the access token.
+ */
+async function getAuthenticatedCustomerSession() {
+  if (!window.supabaseClient?.auth) {
+    return { session: null, accessToken: null, error: 'Authentication service is unavailable.' };
+  }
+  try {
+    const { data, error } = await window.supabaseClient.auth.getSession();
+    if (error) {
+      return { session: null, accessToken: null, error: 'Failed to verify customer authentication session.' };
+    }
+    const session = data?.session;
+    if (!session || !session.user || !session.access_token) {
+      return { session: null, accessToken: null, error: 'Your session has expired. Please log in again to continue payment.' };
+    }
+    return { session, accessToken: session.access_token, user: session.user, error: null };
+  } catch (err) {
+    return { session: null, accessToken: null, error: 'Authentication check failed.' };
+  }
+}
+
+window.getAuthenticatedCustomerSession = getAuthenticatedCustomerSession;
+
+/**
+ * Calls backend POST /api/payment/create-order for an authenticated customer order.
+ * - Requires authoritative order.dbId (Parcelkar UUID).
+ * - Sends Bearer token from verified Supabase session.
+ * - Sends ONLY { "order_id": order.dbId }.
+ * - Validates backend response defensively.
+ * - Stores temporary in-memory payment session in pendingRazorpayPayment.
+ */
+async function createRazorpayOrderForPendingOrder(order) {
+  if (!order || !order.dbId) {
+    return { success: false, error: 'Missing authoritative database order ID.' };
+  }
+
+  const { accessToken, error: authError } = await getAuthenticatedCustomerSession();
+  if (authError || !accessToken) {
+    showToast(authError || 'Please log in to continue payment.', 'error');
+    return { success: false, error: authError || 'Authentication required' };
+  }
+
+  try {
+    const response = await fetch('/api/payment/create-order', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      },
+      body: JSON.stringify({
+        order_id: order.dbId
+      })
+    });
+
+    let payload = null;
+    try {
+      payload = await response.json();
+    } catch (parseErr) {
+      throw new Error('Invalid response from payment server.');
+    }
+
+    if (!response.ok || !payload || payload.success !== true) {
+      const code = payload?.code || 'UNKNOWN_ERROR';
+      const rawMsg = payload?.error || 'Failed to initialize gateway payment.';
+      let userFriendlyMsg = 'Payment could not be started. Your order is still pending payment. Please retry payment.';
+
+      switch (code) {
+        case 'PAYMENT_ATTEMPT_UNCERTAIN':
+          userFriendlyMsg = 'A previous payment attempt is still being checked. Please wait before trying again.';
+          break;
+        case 'ORDER_ALREADY_PAID':
+          userFriendlyMsg = 'This order has already been paid.';
+          if (typeof loadCustomerOrders === 'function') {
+            loadCustomerOrders().catch(() => {});
+          }
+          break;
+        case 'UNAUTHORIZED':
+          userFriendlyMsg = 'Authentication error. Please log in again to continue payment.';
+          break;
+        case 'FORBIDDEN':
+          userFriendlyMsg = 'You are not authorized to pay for this order.';
+          break;
+        case 'ORDER_NOT_FOUND':
+          userFriendlyMsg = 'Order not found in database.';
+          break;
+        case 'ORDER_NOT_PAYABLE':
+          userFriendlyMsg = 'This order cannot be paid at this time.';
+          break;
+        case 'INVALID_PAYMENT_METHOD':
+          userFriendlyMsg = 'Selected payment method is invalid for online payment.';
+          break;
+        case 'INVALID_ORDER_TOTAL':
+          userFriendlyMsg = 'Invalid order amount for online payment.';
+          break;
+        case 'REGISTRATION_FAILED':
+          userFriendlyMsg = 'Could not register gateway payment order. Please retry.';
+          break;
+        case 'PAYMENT_SERVICE_UNAVAILABLE':
+          userFriendlyMsg = 'Payment service is temporarily unavailable. Please try again shortly.';
+          break;
+        default:
+          userFriendlyMsg = rawMsg || userFriendlyMsg;
+          break;
+      }
+
+      showToast(userFriendlyMsg, 'error');
+      return {
+        success: false,
+        code,
+        error: userFriendlyMsg
+      };
+    }
+
+    // Defensive client-side validation of backend response
+    const isValidOrderId = payload.parcelkar_order_id === order.dbId;
+    const isValidGatewayId = typeof payload.razorpay_order_id === 'string' && payload.razorpay_order_id.startsWith('order_');
+    const isValidAmount = Number.isInteger(payload.amount) && payload.amount > 0;
+    const isValidCurrency = payload.currency === 'INR';
+    const isValidKey = typeof payload.key_id === 'string' && payload.key_id.trim().length > 0;
+
+    if (!isValidOrderId || !isValidGatewayId || !isValidAmount || !isValidCurrency || !isValidKey) {
+      console.error('Invalid create-order payload structure:', payload);
+      showToast('Received an unexpected response from payment server.', 'error');
+      return {
+        success: false,
+        error: 'Invalid response from payment server'
+      };
+    }
+
+    // Store temporary in-memory payment session
+    pendingRazorpayPayment = {
+      parcelkarOrderId: payload.parcelkar_order_id,
+      gatewayOrderId: payload.razorpay_order_id,
+      amount: payload.amount,
+      currency: payload.currency,
+      keyId: payload.key_id,
+      reused: !!payload.reused
+    };
+    window.pendingRazorpayPayment = pendingRazorpayPayment;
+
+    return {
+      success: true,
+      paymentSession: pendingRazorpayPayment
+    };
+  } catch (err) {
+    console.error('createRazorpayOrderForPendingOrder network/runtime error:', err);
+    showToast('Payment could not be started. Your order is still pending payment. Please retry payment.', 'error');
+    return {
+      success: false,
+      error: err?.message || 'Network error'
+    };
+  }
+}
+
+window.createRazorpayOrderForPendingOrder = createRazorpayOrderForPendingOrder;
+
+let razorpayScriptLoadingPromise = null;
+
+/**
+ * Lazily and idempotently loads official Razorpay Checkout SDK.
+ * Source: https://checkout.razorpay.com/v1/checkout.js
+ * Never bundles or accepts secrets.
+ */
+function loadRazorpayCheckoutScript() {
+  if (typeof window.Razorpay === 'function') {
+    return Promise.resolve(true);
+  }
+
+  if (razorpayScriptLoadingPromise) {
+    return razorpayScriptLoadingPromise;
+  }
+
+  razorpayScriptLoadingPromise = new Promise((resolve, reject) => {
+    const existingScript = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+    if (existingScript) {
+      if (typeof window.Razorpay === 'function') {
+        resolve(true);
+        return;
+      }
+      existingScript.addEventListener('load', () => {
+        if (typeof window.Razorpay === 'function') {
+          resolve(true);
+        } else {
+          reject(new Error('Razorpay SDK loaded but window.Razorpay is unavailable.'));
+        }
+      });
+      existingScript.addEventListener('error', () => {
+        razorpayScriptLoadingPromise = null;
+        reject(new Error('Failed to load Razorpay Checkout SDK.'));
+      });
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => {
+      if (typeof window.Razorpay === 'function') {
+        resolve(true);
+      } else {
+        razorpayScriptLoadingPromise = null;
+        reject(new Error('Razorpay SDK loaded but window.Razorpay is unavailable.'));
+      }
+    };
+    script.onerror = () => {
+      razorpayScriptLoadingPromise = null;
+      script.remove();
+      reject(new Error('Failed to load Razorpay Checkout SDK.'));
+    };
+    document.head.appendChild(script);
+  });
+
+  return razorpayScriptLoadingPromise;
+}
+
+window.loadRazorpayCheckoutScript = loadRazorpayCheckoutScript;
+
+/**
+ * Authoritatively clears customer cart and presents order tracking view
+ * ONLY after confirmed backend payment verification and database order/wallet sync.
+ */
+function clearCartAfterVerifiedOrder(order) {
+  currentCart = [];
+  appliedDiscount = 0;
+  appliedCouponCode = '';
+  isWalletRedeemedInCart = false;
+  currentDriverTip = 0;
+  document.querySelectorAll('.tip-chip').forEach(c => {
+    c.classList.toggle('selected', c.textContent.trim().toLowerCase().includes('no tip'));
+  });
+  const chk = document.getElementById('redeemWalletCheck');
+  if (chk) chk.checked = false;
+  const tag = document.getElementById('walletAppliedTag');
+  if (tag) tag.style.display = 'none';
+
+  updateCartBadge();
+  if (typeof saveState === 'function') saveState();
+  if (typeof playSound === 'function') playSound('chime');
+  if (typeof pushNotification === 'function') {
+    pushNotification('🛍️', `Order #${order.id} confirmed! Estimated arrival in 30 mins.`);
+  }
+  showToast('Payment verified successfully. Your order has been placed.', 'success');
+  currentTrackedOrderId = order.id;
+  if (typeof show === 'function') show('track');
+}
+
+/**
+ * Verifies Razorpay payment and finalizes the order authoritatively with backend POST /api/payment/verify.
+ * - Obtains a fresh Supabase customer session access token.
+ * - Sends ONLY { order_id, razorpay_order_id, razorpay_payment_id, razorpay_signature }.
+ * - Evaluates authoritative backend response (success && verified && order_status === 'New' && payment_status === 'Paid').
+ * - Only upon confirmed success: updates local order, reloads authoritative orders and wallet, clears cart, and displays success.
+ * - Never clears cart on error or uncertain states.
+ * - Guarded by isPaymentVerificationInFlight against double callback execution.
+ */
+async function verifyRazorpayPaymentWithBackend(order, verificationContext) {
+  if (isPaymentVerificationInFlight) {
+    console.warn('verifyRazorpayPaymentWithBackend: verification already in flight, ignoring duplicate call');
+    return { success: false, inFlight: true };
+  }
+
+  if (!order || !order.dbId || !verificationContext) {
+    console.error('verifyRazorpayPaymentWithBackend: missing required verification context');
+    showToast('Payment verification details are incomplete. Please contact support.', 'error');
+    return { success: false, error: 'Incomplete verification context' };
+  }
+
+  // Obtain fresh Supabase session
+  const { session, accessToken, error: authError } = await getAuthenticatedCustomerSession();
+  if (authError || !accessToken) {
+    // Session expired after payment captured
+    console.warn('verifyRazorpayPaymentWithBackend: session expired after payment response');
+    showToast('Payment response was received, but verification could not be completed because your session expired. Please sign in again. Do not make another payment.', 'warning');
+    isOrderSubmissionInFlight = false;
+    isRazorpayCheckoutOpen = false;
+    return { success: false, error: 'Session expired after payment' };
+  }
+
+  isPaymentVerificationInFlight = true;
+
+  try {
+    const response = await fetch('/api/payment/verify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      },
+      body: JSON.stringify({
+        order_id: verificationContext.parcelkarOrderId,
+        razorpay_order_id: verificationContext.razorpayOrderId,
+        razorpay_payment_id: verificationContext.razorpayPaymentId,
+        razorpay_signature: verificationContext.razorpaySignature
+      })
+    });
+
+    let payload = null;
+    try {
+      payload = await response.json();
+    } catch (parseErr) {
+      throw new Error('Invalid response from payment verification server.');
+    }
+
+    // 1. Success validation: authoritative confirmation of New + Paid
+    const isSuccess = response.ok && payload?.success === true && payload?.verified === true;
+    const isAuthoritativePaid = payload?.payment_status === 'Paid' && (payload?.order_status === 'New' || payload?.already_processed === true);
+    const isMatchingPaymentId = payload?.payment_id === verificationContext.razorpayPaymentId;
+
+    if (isSuccess && isAuthoritativePaid && isMatchingPaymentId) {
+      // Authoritative payment confirmed
+      order.status = payload.order_status || 'New';
+      order.paymentStatus = payload.payment_status || 'Paid';
+      order.transactionId = payload.payment_id;
+
+      // Authoritative reload of customer orders & wallet
+      try {
+        if (typeof loadCustomerOrders === 'function') {
+          await loadCustomerOrders();
+        }
+      } catch (loadErr) {
+        console.warn('Failed to reload customer orders after verification:', loadErr);
+      }
+
+      try {
+        if (typeof loadCustomerWallet === 'function') {
+          await loadCustomerWallet();
+        }
+      } catch (walletErr) {
+        console.warn('Failed to reload customer wallet after verification:', walletErr);
+      }
+
+      // Safe cart clearing and success transition
+      clearCartAfterVerifiedOrder(order);
+
+      // Clean up temporary in-memory payment session
+      pendingRazorpayVerification = null;
+      pendingRazorpayPayment = null;
+      pendingOrderForPayment = null;
+      window.pendingRazorpayVerification = null;
+      window.pendingRazorpayPayment = null;
+
+      isOrderSubmissionInFlight = false;
+      isRazorpayCheckoutOpen = false;
+      isPaymentVerificationInFlight = false;
+
+      return {
+        success: true,
+        alreadyProcessed: !!payload.already_processed
+      };
+    }
+
+    // 2. Specific Backend Error Code Handling
+    const code = payload?.code || 'UNKNOWN_ERROR';
+    const rawError = payload?.error || 'Payment verification failed.';
+
+    if (code === 'PAYMENT_CAPTURED_FINALIZATION_PENDING') {
+      showToast('Your payment was received, but order confirmation is still processing. Please do not pay again.', 'warning');
+      try {
+        if (typeof loadCustomerOrders === 'function') loadCustomerOrders().catch(() => {});
+        if (typeof loadCustomerWallet === 'function') loadCustomerWallet().catch(() => {});
+      } catch (e) {}
+      // Retain verification context so it can be verified/reconciled
+      isOrderSubmissionInFlight = false;
+      isRazorpayCheckoutOpen = false;
+      isPaymentVerificationInFlight = false;
+      return { success: false, code, error: rawError };
+    }
+
+    if (code === 'PAYMENT_NOT_CAPTURED') {
+      showToast('Payment is awaiting confirmation. Please do not make another payment.', 'warning');
+      try {
+        if (typeof loadCustomerOrders === 'function') loadCustomerOrders().catch(() => {});
+        if (typeof loadCustomerWallet === 'function') loadCustomerWallet().catch(() => {});
+      } catch (e) {}
+      isOrderSubmissionInFlight = false;
+      isRazorpayCheckoutOpen = false;
+      isPaymentVerificationInFlight = false;
+      return { success: false, code, error: rawError };
+    }
+
+    if (code === 'SIGNATURE_VERIFICATION_FAILED' || code === 'PROVIDER_PAYMENT_MISMATCH') {
+      showToast('Payment verification could not be completed. Please contact support before making another payment.', 'error');
+      isOrderSubmissionInFlight = false;
+      isRazorpayCheckoutOpen = false;
+      isPaymentVerificationInFlight = false;
+      return { success: false, code, error: rawError };
+    }
+
+    if (code === 'ORDER_ALREADY_PAID_DIFFERENT_PAYMENT' || code === 'TRANSACTION_ALREADY_CAPTURED') {
+      showToast('This order has already been recorded under another transaction. Please check your orders.', 'warning');
+      try {
+        if (typeof loadCustomerOrders === 'function') loadCustomerOrders().catch(() => {});
+      } catch (e) {}
+      isOrderSubmissionInFlight = false;
+      isRazorpayCheckoutOpen = false;
+      isPaymentVerificationInFlight = false;
+      return { success: false, code, error: rawError };
+    }
+
+    if (code === 'UNAUTHORIZED') {
+      showToast('Your session expired during verification. Please sign in again. Do not make another payment.', 'warning');
+      isOrderSubmissionInFlight = false;
+      isRazorpayCheckoutOpen = false;
+      isPaymentVerificationInFlight = false;
+      return { success: false, code, error: rawError };
+    }
+
+    // Generic safe error fallback
+    showToast(`Payment verification error: ${rawError} Your order remains pending payment.`, 'error');
+    isOrderSubmissionInFlight = false;
+    isRazorpayCheckoutOpen = false;
+    isPaymentVerificationInFlight = false;
+    return { success: false, code, error: rawError };
+
+  } catch (err) {
+    console.error('verifyRazorpayPaymentWithBackend network/runtime error:', err);
+    showToast('Network error verifying payment. Please check your orders or contact support before paying again.', 'error');
+    isOrderSubmissionInFlight = false;
+    isRazorpayCheckoutOpen = false;
+    isPaymentVerificationInFlight = false;
+    return { success: false, error: err?.message || 'Network error' };
+  }
+}
+
+window.verifyRazorpayPaymentWithBackend = verifyRazorpayPaymentWithBackend;
+
+/**
+ * Opens real Razorpay Standard Checkout modal for an authenticated customer order.
+ * - Sourced strictly from validated paymentContext (pendingRazorpayPayment).
+ * - Prefills only safe customer profile fields.
+ * - Handles payment response callback, modal dismissal, and failure events.
+ * - Zero client claims of Paid or New in Step 6J.5C/6J.5D.
+ */
+function openRealRazorpayCheckout(order, paymentContext) {
+  if (!order || !order.dbId || !paymentContext || !paymentContext.gatewayOrderId) {
+    console.error('openRealRazorpayCheckout: missing required order or payment context');
+    showToast('Payment initialization details are missing. Please retry.', 'error');
+    isOrderSubmissionInFlight = false;
+    isRazorpayCheckoutOpen = false;
+    return;
+  }
+
+  if (typeof window.Razorpay !== 'function') {
+    console.error('openRealRazorpayCheckout: window.Razorpay is not available');
+    showToast('Secure payment window could not be loaded. Please try again.', 'error');
+    isOrderSubmissionInFlight = false;
+    isRazorpayCheckoutOpen = false;
+    return;
+  }
+
+  // Safe customer prefill
+  const prefill = {
+    name: (appData.currentUser?.name || order.customer?.name || '').trim(),
+    email: (appData.currentUser?.email || '').trim(),
+    contact: (appData.currentUser?.phone || order.customer?.phone || '').trim()
+  };
+
+  if (order.payment === 'UPI') {
+    prefill.method = 'upi';
+  } else if (order.payment === 'CARD') {
+    prefill.method = 'card';
+  }
+
+  const options = {
+    key: paymentContext.keyId,
+    amount: paymentContext.amount,
+    currency: paymentContext.currency || 'INR',
+    order_id: paymentContext.gatewayOrderId,
+    name: 'Parcelkar',
+    description: `Order #${order.id}`,
+    prefill,
+    theme: {
+      color: '#e23744'
+    },
+    modal: {
+      ondismiss: function() {
+        console.log('Razorpay Checkout modal dismissed by user');
+        isRazorpayCheckoutOpen = false;
+        isOrderSubmissionInFlight = false;
+        // Order remains in Payment_Pending state; preserve cart and pending payment context
+        showToast('Payment was not completed. Your order is still pending payment.', 'warning');
+      }
+    },
+    handler: async function(response) {
+      console.log('Razorpay Checkout payment response received');
+
+      // Strict callback correlation
+      const isValidOrderId = response && response.razorpay_order_id === paymentContext.gatewayOrderId;
+      const hasPaymentId = response && typeof response.razorpay_payment_id === 'string' && response.razorpay_payment_id.trim().length > 0;
+      const hasSignature = response && typeof response.razorpay_signature === 'string' && response.razorpay_signature.trim().length > 0;
+      const isMatchingDbOrder = order.dbId === paymentContext.parcelkarOrderId;
+
+      if (!isValidOrderId || !hasPaymentId || !hasSignature || !isMatchingDbOrder) {
+        console.error('Razorpay callback correlation mismatch:', {
+          receivedOrderId: response?.razorpay_order_id,
+          expectedOrderId: paymentContext.gatewayOrderId,
+          hasPaymentId,
+          hasSignature,
+          isMatchingDbOrder
+        });
+        isRazorpayCheckoutOpen = false;
+        isOrderSubmissionInFlight = false;
+        showToast('Payment response correlation mismatch. Verification cannot proceed.', 'error');
+        return;
+      }
+
+      // Store temporarily in memory for Step 6J.5D backend verification
+      pendingRazorpayVerification = {
+        parcelkarOrderId: order.dbId,
+        razorpayOrderId: response.razorpay_order_id,
+        razorpayPaymentId: response.razorpay_payment_id,
+        razorpaySignature: response.razorpay_signature
+      };
+      window.pendingRazorpayVerification = pendingRazorpayVerification;
+
+      // Keep checkout open guard active while verification is in-flight
+      isRazorpayCheckoutOpen = true;
+
+      // Authoritatively verify payment with backend
+      await verifyRazorpayPaymentWithBackend(order, pendingRazorpayVerification);
+    }
+  };
+
+  try {
+    const rzp = new window.Razorpay(options);
+
+    rzp.on('payment.failed', function(response) {
+      console.warn('Razorpay payment.failed event received:', response?.error?.code);
+      isRazorpayCheckoutOpen = false;
+      isOrderSubmissionInFlight = false;
+      // Do NOT mutate financial state or mark DB failed
+      const safeDesc = response?.error?.description || 'Payment could not be completed.';
+      showToast(`Payment could not be completed: ${safeDesc} Your order is still pending payment.`, 'error');
+    });
+
+    isRazorpayCheckoutOpen = true;
+    isOrderSubmissionInFlight = false; // Relinquish submission guard to active modal
+    rzp.open();
+  } catch (err) {
+    console.error('Failed to open Razorpay Checkout instance:', err);
+    showToast('Could not open payment window. Please try again.', 'error');
+    isRazorpayCheckoutOpen = false;
+    isOrderSubmissionInFlight = false;
+  }
+}
+
+window.openRealRazorpayCheckout = openRealRazorpayCheckout;
+
+/**
+ * Step 6J.5H: Validates whether current checkout details match the active pending order.
+ * Strictly verifies item counts, food IDs, quantities, total, wallet deduction, payment method,
+ * service mode, and restaurant ID to prevent silently attaching a modified cart to an old order.
+ */
+function isSamePendingCheckout(pendingOrder, currentDetails) {
+  if (!pendingOrder || !currentDetails) return false;
+  if (Number(pendingOrder.total) !== Number(currentDetails.total)) return false;
+  if (Number(pendingOrder.walletRedeemed || 0) !== Number(currentDetails.walletDeduction || 0)) return false;
+  if (pendingOrder.payment !== currentDetails.payment) return false;
+  if (pendingOrder.serviceMode !== currentDetails.serviceMode) return false;
+  if (pendingOrder.restaurantId != null && currentDetails.restaurantId != null) {
+    if (String(pendingOrder.restaurantId) !== String(currentDetails.restaurantId)) return false;
+  }
+  const pendingItems = pendingOrder.items || [];
+  const cartItems = currentDetails.cart || [];
+  if (pendingItems.length !== cartItems.length) return false;
+  for (let i = 0; i < cartItems.length; i++) {
+    const ci = cartItems[i];
+    const pi = pendingItems[i];
+    if (!pi) return false;
+    const cFoodId = String(ci.foodId != null ? ci.foodId : (ci.id || ''));
+    const pFoodId = String(pi.foodId != null ? pi.foodId : (pi.id || ''));
+    if (cFoodId !== pFoodId || Number(ci.qty) !== Number(pi.qty)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+if (typeof window !== 'undefined') {
+  window.isSamePendingCheckout = isSamePendingCheckout;
+}
+
 async function submitOrder() {
-  if (isOrderSubmissionInFlight) {
-    console.warn('submitOrder: order submission already in flight, ignoring duplicate click');
+  if (isOrderSubmissionInFlight || isRazorpayCheckoutOpen) {
+    console.warn('submitOrder: order submission or payment already in flight, ignoring duplicate click');
     return;
   }
 
@@ -3690,12 +4426,12 @@ async function submitOrder() {
     couponCode: appliedCouponCode,
     walletRedeemed: walletDeduction,
     total,
-    status: 'New',
+    status: (isAuthCustomer() && total > 0 && (payment === 'UPI' || payment === 'CARD')) ? 'Payment_Pending' : 'New',
     deliveryOtp: Math.floor(1000 + Math.random() * 9000).toString(),
     deliveryBoy: isDineIn ? 'Table Captain' : '',
     riderPhone: isDineIn ? '+91 9822001100' : '',
     payment,
-    paymentStatus: (payment === 'COD') ? 'Pending' : 'Paid',
+    paymentStatus: (payment === 'COD' || (isAuthCustomer() && total > 0 && (payment === 'UPI' || payment === 'CARD'))) ? 'Pending' : 'Paid',
     transactionId: (payment === 'COD') ? 'COD-PAY-ON-DELIVERY' : (payment === 'WALLET') ? 'TXN-WALLET-REDEEM' : '',
     createdAt: now.toISOString(),
     etaMinutes: isDineIn ? 15 : 30,
@@ -3709,7 +4445,7 @@ async function submitOrder() {
   };
 
   // Step 6H: Deduct wallet if redeemed — GUEST/DEMO local simulation only.
-  // For authenticated customers, Supabase create_customer_order_v2 is authoritative.
+  // For authenticated customers, Supabase create_customer_order_v2/v3 is authoritative.
   if (walletDeduction > 0 && appData.currentUser && !isAuthCustomer()) {
     appData.currentUser.walletBalance -= walletDeduction;
     if (!Array.isArray(appData.currentUser.walletLedger)) appData.currentUser.walletLedger = [];
@@ -3725,11 +4461,127 @@ async function submitOrder() {
   }
 
   try {
-    // If Online Payment and remaining total > 0, open the interactive gateway modal
+    // If Online Payment and remaining total > 0
     if (total > 0 && (payment === 'UPI' || payment === 'CARD')) {
-      pendingOrderForPayment = newOrder;
-      openPaymentGateway(newOrder);
-      return; // Keep submission guard active while payment modal is open
+      if (isAuthCustomer()) {
+        // Step 6J.5H: Check for safe in-memory payment resume for the SAME pending checkout
+        const isEligibleForResume = (
+          pendingOrderForPayment &&
+          pendingOrderForPayment.dbId &&
+          pendingOrderForPayment.status === 'Payment_Pending' &&
+          pendingOrderForPayment.paymentStatus === 'Pending' &&
+          pendingOrderForPayment.userId === appData.currentUser?.id
+        );
+
+        if (isEligibleForResume) {
+          const checkoutDetails = {
+            total,
+            walletDeduction,
+            payment,
+            serviceMode: currentServiceMode,
+            restaurantId: currentCart[0]?.restaurantId,
+            cart: currentCart
+          };
+
+          if (!isSamePendingCheckout(pendingOrderForPayment, checkoutDetails)) {
+            console.warn('[Payment Resume] Cart or checkout parameters materially changed while order was pending payment');
+            showToast(`You have an unpaid order (#${pendingOrderForPayment.id}) with your previous cart items. Please complete or cancel it from your Orders tab before checking out with a different cart.`, 'warning');
+            isOrderSubmissionInFlight = false;
+            return;
+          }
+
+          // SAME CHECKOUT: Resume existing pending order.
+          // DO NOT call create_customer_order_v3 again.
+          // DO NOT locally debit wallet.
+          // DO NOT mark order Paid/New.
+          // Preserve cart.
+          console.log(`[Payment Resume] Resuming existing pending order: ${pendingOrderForPayment.id} (DB ID: ${pendingOrderForPayment.dbId})`);
+
+          // 1. Check if a valid pendingRazorpayPayment exists for this exact dbId
+          const hasValidPaymentContext = (
+            pendingRazorpayPayment &&
+            pendingRazorpayPayment.parcelkarOrderId === pendingOrderForPayment.dbId &&
+            typeof pendingRazorpayPayment.gatewayOrderId === 'string' &&
+            pendingRazorpayPayment.gatewayOrderId.startsWith('order_')
+          );
+
+          if (hasValidPaymentContext) {
+            console.log('[Payment Resume] Reusing existing valid Razorpay payment context:', pendingRazorpayPayment.gatewayOrderId);
+            try {
+              await loadRazorpayCheckoutScript();
+              openRealRazorpayCheckout(pendingOrderForPayment, pendingRazorpayPayment);
+            } catch (sdkErr) {
+              console.error('Failed to load or open Razorpay Checkout on resume:', sdkErr);
+              showToast('Secure payment window could not be loaded. Please try again.', 'error');
+              isOrderSubmissionInFlight = false;
+              isRazorpayCheckoutOpen = false;
+            }
+            return;
+          }
+
+          // 2. Otherwise: Discard invalid/mismatched payment context and obtain a fresh one via backend create-order
+          pendingRazorpayPayment = null;
+          if (typeof window !== 'undefined') window.pendingRazorpayPayment = null;
+
+          const createOrderRes = await createRazorpayOrderForPendingOrder(pendingOrderForPayment);
+          if (!createOrderRes || !createOrderRes.success || !pendingRazorpayPayment) {
+            isOrderSubmissionInFlight = false;
+            return;
+          }
+
+          try {
+            await loadRazorpayCheckoutScript();
+            openRealRazorpayCheckout(pendingOrderForPayment, pendingRazorpayPayment);
+          } catch (sdkErr) {
+            console.error('Failed to load or open Razorpay Checkout on resume:', sdkErr);
+            showToast('Secure payment window could not be loaded. Please try again.', 'error');
+            isOrderSubmissionInFlight = false;
+            isRazorpayCheckoutOpen = false;
+          }
+          return;
+        }
+
+        // Step 6J.5A: Authenticated customer: FIRST create order in Supabase via v3 RPC
+        const v3Result = await persistCustomerOrderV3ToSupabase(newOrder);
+        if (!v3Result || !v3Result.success) {
+          isOrderSubmissionInFlight = false;
+          return;
+        }
+
+        // V3 order successfully created with status = 'Payment_Pending', payment_status = 'Pending'
+        // Authoritative DB UUID is stored in newOrder.dbId
+        pendingOrderForPayment = newOrder;
+        if (typeof window !== 'undefined') window.pendingOrderForPayment = pendingOrderForPayment;
+
+        // Step 6J.5B: Call real backend /api/payment/create-order
+        // Note: isOrderSubmissionInFlight remains TRUE across v3 and create-order
+        const createOrderRes = await createRazorpayOrderForPendingOrder(newOrder);
+        if (!createOrderRes || !createOrderRes.success || !pendingRazorpayPayment) {
+          // Failure after v3:
+          // Order remains in DB as Payment_Pending, wallet debited if applicable.
+          // DO NOT recreate v3, DO NOT refund wallet, DO NOT clear cart, DO NOT finalize.
+          // Keep pendingOrderForPayment = newOrder and newOrder.dbId.
+          isOrderSubmissionInFlight = false;
+          return;
+        }
+
+        // Step 6J.5C: Load Razorpay Checkout SDK and open standard checkout modal
+        try {
+          await loadRazorpayCheckoutScript();
+          openRealRazorpayCheckout(newOrder, pendingRazorpayPayment);
+        } catch (sdkErr) {
+          console.error('Failed to load or open Razorpay Checkout:', sdkErr);
+          showToast('Secure payment window could not be loaded. Please try again.', 'error');
+          isOrderSubmissionInFlight = false;
+          isRazorpayCheckoutOpen = false;
+        }
+        return;
+      } else {
+        // Guest/demo checkout continues using existing simulated gateway modal
+        pendingOrderForPayment = newOrder;
+        openPaymentGateway(newOrder);
+        return; // Keep submission guard active while payment modal is open
+      }
     }
 
     // Finalize directly for COD or Full Wallet Payment
@@ -3738,11 +4590,16 @@ async function submitOrder() {
     console.error('submitOrder unexpected error:', err);
     showToast('An unexpected error occurred while placing order.', 'error');
   } finally {
-    // If online payment modal was not opened, release the in-flight guard
+    // If online payment modal was not opened and no pending online order exists, release guard
     if (!pendingOrderForPayment) {
       isOrderSubmissionInFlight = false;
     }
   }
+}
+
+if (typeof window !== 'undefined') {
+  window.submitOrder = submitOrder;
+  window.clearStaleCustomerAuth = clearStaleCustomerAuth;
 }
 
 // Open Payment Gateway Modal

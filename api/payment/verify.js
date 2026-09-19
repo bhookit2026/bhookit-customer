@@ -1,15 +1,21 @@
-const crypto = require('crypto');
+/**
+ * api/payment/verify.js
+ * Vercel Serverless Function Adapter for Real Razorpay Payment Verification & Finalization
+ * Delegates all business logic to server/services/paymentService.js.
+ */
 
-const RZP_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
-if (!RZP_KEY_SECRET) throw new Error('RAZORPAY_KEY_SECRET environment variable is required');
+const { verifyAndFinalizePayment } = require('../../server/services/paymentService');
 
 function parseJsonBody(req) {
+  if (req.body && typeof req.body === 'object') {
+    return Promise.resolve(req.body);
+  }
   return new Promise((resolve, reject) => {
     let body = '';
     req.on('data', chunk => {
       body += chunk.toString();
       if (body.length > 1e6) {
-        req.connection.destroy();
+        req.connection?.destroy?.();
         reject(new Error('Payload too large'));
       }
     });
@@ -23,42 +29,52 @@ function parseJsonBody(req) {
   });
 }
 
-module.exports = async function verify(req, res) {
+module.exports = async function handleVerifyPayment(req, res) {
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
-    return res.status(204).end();
+    if (typeof res.status === 'function') return res.status(204).end();
+    res.writeHead(204);
+    return res.end();
   }
+
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    const errPayload = {
+      success: false,
+      verified: false,
+      error: 'Method not allowed',
+      code: 'METHOD_NOT_ALLOWED'
+    };
+    if (typeof res.status === 'function') return res.status(405).json(errPayload);
+    res.writeHead(405);
+    return res.end(JSON.stringify(errPayload));
   }
 
   try {
     const body = await parseJsonBody(req);
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = body;
+    const result = await verifyAndFinalizePayment({
+      headers: req.headers,
+      body
+    });
 
-    if (!razorpay_order_id || !razorpay_payment_id) {
-      return res.status(400).json({ verified: false, error: 'Missing payment verification credentials' });
+    if (typeof res.status === 'function') {
+      return res.status(result.status).json(result.response);
     }
-
-    const text = `${razorpay_order_id}|${razorpay_payment_id}`;
-    const expectedSignature = crypto.createHmac('sha256', RZP_KEY_SECRET).update(text).digest('hex');
-    const isSignatureValid = razorpay_signature === expectedSignature || (razorpay_signature || '').startsWith('sig_mock_');
-
-    if (isSignatureValid) {
-      return res.status(200).json({
-        verified: true,
-        status: 'captured',
-        transaction_id: razorpay_payment_id,
-        order_id: razorpay_order_id,
-        message: 'Payment verified successfully and funds captured by ParcelKar Gateway.'
-      });
-    }
-    return res.status(400).json({ verified: false, error: 'Signature mismatch' });
+    res.writeHead(result.status);
+    return res.end(JSON.stringify(result.response));
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    console.error('[API verify] Unhandled adapter error:', err.message);
+    const errResp = {
+      success: false,
+      verified: false,
+      error: 'Internal server error',
+      code: 'INTERNAL_ERROR'
+    };
+    if (typeof res.status === 'function') return res.status(500).json(errResp);
+    res.writeHead(500);
+    return res.end(JSON.stringify(errResp));
   }
 };

@@ -1,16 +1,21 @@
-const crypto = require('crypto');
+/**
+ * api/payment/create-order.js
+ * Vercel Serverless Function Adapter for Real Razorpay Create Order
+ * Delegates all business logic to server/services/paymentService.js.
+ */
 
-const RZP_KEY_ID = process.env.RAZORPAY_KEY_ID || 'rzp_test_ParcelKar_Demo';
-const RZP_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
-if (!RZP_KEY_SECRET) throw new Error('RAZORPAY_KEY_SECRET environment variable is required');
+const { createPaymentOrder } = require('../../server/services/paymentService');
 
 function parseJsonBody(req) {
+  if (req.body && typeof req.body === 'object') {
+    return Promise.resolve(req.body);
+  }
   return new Promise((resolve, reject) => {
     let body = '';
     req.on('data', chunk => {
       body += chunk.toString();
       if (body.length > 1e6) {
-        req.connection.destroy();
+        req.connection?.destroy?.();
         reject(new Error('Payload too large'));
       }
     });
@@ -24,45 +29,50 @@ function parseJsonBody(req) {
   });
 }
 
-module.exports = async function createOrder(req, res) {
+module.exports = async function handleCreateOrder(req, res) {
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
-    return res.status(204).end();
+    if (typeof res.status === 'function') return res.status(204).end();
+    res.writeHead(204);
+    return res.end();
   }
+
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    const errPayload = {
+      success: false,
+      error: 'Method not allowed',
+      code: 'METHOD_NOT_ALLOWED'
+    };
+    if (typeof res.status === 'function') return res.status(405).json(errPayload);
+    res.writeHead(405);
+    return res.end(JSON.stringify(errPayload));
   }
 
   try {
     const body = await parseJsonBody(req);
-    const amount = Number(body.amount) || 0;
-    const orderId = body.orderId || 'FB-' + Date.now();
-
-    if (amount <= 0) {
-      return res.status(400).json({ error: 'Invalid order amount' });
-    }
-
-    const rzpOrderId = 'order_' + crypto.randomBytes(8).toString('hex');
-    const amountInPaise = Math.round(amount * 100);
-    const preSignData = `${rzpOrderId}|${amountInPaise}`;
-    const mockSignature = crypto.createHmac('sha256', RZP_KEY_SECRET).update(preSignData).digest('hex');
-
-    return res.status(200).json({
-      success: true,
-      gateway: 'Razorpay / UPI Instant',
-      order_id: rzpOrderId,
-      internal_order_id: orderId,
-      amount: amountInPaise,
-      currency: 'INR',
-      key_id: RZP_KEY_ID,
-      mock_signature: mockSignature,
-      created_at: Math.floor(Date.now() / 1000)
+    const result = await createPaymentOrder({
+      headers: req.headers,
+      body
     });
+
+    if (typeof res.status === 'function') {
+      return res.status(result.status).json(result.response);
+    }
+    res.writeHead(result.status);
+    return res.end(JSON.stringify(result.response));
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    console.error('[API create-order] Unhandled adapter error:', err.message);
+    const errResp = {
+      success: false,
+      error: 'Internal server error',
+      code: 'INTERNAL_ERROR'
+    };
+    if (typeof res.status === 'function') return res.status(500).json(errResp);
+    res.writeHead(500);
+    return res.end(JSON.stringify(errResp));
   }
 };
